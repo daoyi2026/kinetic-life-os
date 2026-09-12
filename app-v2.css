@@ -407,10 +407,12 @@ svg { display: block; }
 .date-strip-label strong { display: block; }
 .date-strip-label small { color: var(--muted); }
 .routine-list { display: grid; gap: 7px; }
+.routine-list-scroll { max-height: 354px; overflow-y: auto; overscroll-behavior: contain; padding-right: 5px; }
 .routine-row { display: grid; grid-template-columns: 22px 1fr; gap: 9px; padding: 10px 11px; border-radius: 12px; background: var(--surface-soft); }
 .routine-row strong { display: block; font-size: 12px; }
 .routine-row small { color: var(--muted); font-size: 10px; }
 .routine-edit-list { display: grid; gap: 8px; }
+.routine-edit-list.routine-list-scroll { max-height: 540px; }
 .routine-edit-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 9px; align-items: start; padding: 10px 0; border-bottom: 1px solid #e9ece8; }
 .routine-edit-fields { min-width: 0; display: grid; gap: 7px; }
 .routine-edit-fields .field { gap: 4px; }
