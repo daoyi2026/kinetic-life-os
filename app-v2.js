@@ -2,6 +2,7 @@
   "use strict";
 
   const STORE = "serene-personal-workspace-v1";
+  const APP_VERSION = "v1.0";
   const pad = (value) => String(value).padStart(2, "0");
   const keyOf = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   const fromKey = (key) => {
@@ -282,7 +283,7 @@
             </section>
           </section>
 
-          <p class="v2-footer">KINETIC LIFE OS · 本地保存</p>
+          <p class="v2-footer">KINETIC LIFE OS · 本地保存 · ${APP_VERSION}</p>
         </div>
       </main>
     </div>
@@ -1309,13 +1310,14 @@
   function routineMarkup(key, context = "fitness") {
     const day = ensureDay(key);
     const items = currentRoutineItems();
+    const scrollClass = items.length > 6 ? " routine-list-scroll" : "";
     if (!editingRoutines) {
-      return items.map((item) => `
+      return `<div class="routine-list${scrollClass}">${items.map((item) => `
         <label class="routine-row"><input class="check" type="checkbox" data-routine="${esc(item.id)}" data-routine-date="${key}" ${day.routines[item.id] ? "checked" : ""} /><span><strong>${esc(item.title)}</strong><small>${esc(item.detail)}</small></span></label>
-      `).join("");
+      `).join("")}</div>`;
     }
     return `
-      <div class="routine-edit-list">
+      <div class="routine-list routine-edit-list${scrollClass}">
         ${items.map((item) => `
           <div class="routine-edit-row">
             <input class="check" type="checkbox" data-routine="${esc(item.id)}" data-routine-date="${key}" ${day.routines[item.id] ? "checked" : ""} aria-label="${esc(`完成${item.title}`)}" />
