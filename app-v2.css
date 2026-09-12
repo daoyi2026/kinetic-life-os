@@ -564,8 +564,9 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 .completed-project-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .completed-project-row:last-child { border-bottom: 0; }
 .completed-project-row > div { min-width: 0; }
-.completed-project-row .tag { margin-bottom: 6px; }
-.completed-project-row strong { display: block; overflow-wrap: anywhere; font-size: 14px; }
+.completed-project-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.completed-project-title .tag { flex: 0 0 auto; margin-bottom: 0; }
+.completed-project-title strong { min-width: 0; overflow-wrap: anywhere; font-size: 14px; }
 .completed-project-row p { margin: 4px 0 0; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
 .completed-project-row .completed-project-duration { color: var(--green); font-weight: 700; }
 .completed-project-row time { flex: 0 0 auto; color: var(--muted); font-size: 10px; }

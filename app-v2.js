@@ -1508,7 +1508,7 @@
     const completed = completedItems();
     document.getElementById("calendarCompletedPanel").innerHTML = `
       <div class="card-head"><div><h3>已完成项目</h3><small>完成的长期待办和工作项目会归档到这里 · 工作项目会统计创建到完成的用时</small></div><span class="tag neutral">${completed.length} 项</span></div>
-      ${completed.length ? `<div class="completed-project-list">${completed.map((item) => `<div class="completed-project-row"><div><span class="tag neutral">${esc(item.type)}</span><strong>${esc(item.title)}</strong>${item.note ? `<p>${esc(item.note)}</p>` : ""}${item.duration ? `<p class="completed-project-duration">完成用时：${esc(item.duration)}</p>` : ""}</div>${item.completedAt ? `<time>${esc(item.completedAt)}</time>` : ""}</div>`).join("")}</div>` : '<div class="empty-state">还没有已完成项目。</div>'}
+      ${completed.length ? `<div class="completed-project-list">${completed.map((item) => `<div class="completed-project-row"><div><div class="completed-project-title"><span class="tag neutral">${esc(item.type)}</span><strong>${esc(item.title)}</strong></div>${item.note ? `<p>${esc(item.note)}</p>` : ""}${item.duration ? `<p class="completed-project-duration">完成用时：${esc(item.duration)}</p>` : ""}</div>${item.completedAt ? `<time>${esc(item.completedAt)}</time>` : ""}</div>`).join("")}</div>` : '<div class="empty-state">还没有已完成项目。</div>'}
     `;
   }
 
