@@ -75,6 +75,7 @@
     "展开更多记录": "Show more history",
     "删除项目": "Delete project",
     "删除这条项目记录": "Delete this project update",
+    "切换项目图标": "Change project icon",
     "健康记录": "Health records",
     "记录体重、饮水、饮食与每日状态，重点观察连续变化。": "Track weight, hydration, nutrition, and daily wellbeing.",
     "体重趋势": "Weight trend",
@@ -247,6 +248,16 @@
     });
   };
   const TRAINING_WEEKDAYS = [1, 2, 3, 5, 6];
+  const PROJECT_ICONS = ["◎", "↗", "⌂", "✎", "✉", "⌛"];
+
+  function projectSymbol(project) {
+    return PROJECT_ICONS.includes(project?.symbol) ? project.symbol : PROJECT_ICONS[0];
+  }
+
+  function nextProjectSymbol(project) {
+    const currentIndex = PROJECT_ICONS.indexOf(project.symbol);
+    project.symbol = PROJECT_ICONS[(currentIndex + 1 + PROJECT_ICONS.length) % PROJECT_ICONS.length];
+  }
 
   function icon(name) {
     const paths = {
@@ -1526,7 +1537,7 @@
         <article class="card project-card">
           <button class="mini-btn danger project-delete-btn" data-action="delete-project" data-id="${project.id}" aria-label="删除项目 ${esc(project.title)}">×</button>
           <div class="project-head">
-            <div class="project-title"><div class="project-symbol">${esc(project.symbol || "•")}</div><div class="project-title-copy"><div class="project-title-line"><span class="tag neutral">工作项目</span><span class="tag neutral">${esc(project.area || "其他")}</span><input class="project-title-input" data-project-title="${project.id}" value="${esc(project.title)}" maxlength="120" aria-label="项目标题" /></div></div></div>
+            <div class="project-title"><div class="project-title-top"><button class="project-symbol" type="button" data-action="cycle-project-symbol" data-id="${project.id}" aria-label="切换项目图标" title="切换项目图标">${esc(projectSymbol(project))}</button><span class="tag neutral project-area-tag">${esc(project.area || "其他")}</span></div><textarea class="project-title-input" data-project-title="${project.id}" maxlength="120" rows="2" aria-label="项目标题">${esc(project.title)}</textarea></div>
             <div class="project-status-control">
               <select class="select" data-project-status="${project.id}" aria-label="${esc(project.title)}的状态">
                 ${["未开始", "待选择", "进行中", "收尾中", "等待回复", "长期维护", "暂缓", "已完成"].map((status) => `<option ${status === project.status ? "selected" : ""}>${status}</option>`).join("")}
@@ -2178,11 +2189,22 @@
     if (action === "add-project") {
       const title = prompt("项目名称");
       if (title?.trim()) {
-        state.projects.unshift({ id: uid("project"), title: title.trim(), description: "", symbol: "•", area: "其他", status: "未开始", progress: 0, next: "", logs: [], createdAt: todayKey(), completed: false });
+        state.projects.unshift({ id: uid("project"), title: title.trim(), description: "", symbol: PROJECT_ICONS[Math.floor(Math.random() * PROJECT_ICONS.length)], area: "其他", status: "未开始", progress: 0, next: "", logs: [], createdAt: todayKey(), completed: false });
         save();
         renderProjects();
         renderHome();
       }
+      return;
+    }
+    if (action === "cycle-project-symbol") {
+      const project = state.projects.find((item) => item.id === id);
+      if (!project) return;
+      nextProjectSymbol(project);
+      save();
+      renderProjects();
+      renderHome();
+      renderCalendar();
+      return;
     }
     if (action === "delete-project") {
       if (!confirm("删除这个项目及其历史记录吗？")) return;
