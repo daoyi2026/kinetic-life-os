@@ -2,11 +2,12 @@
   "use strict";
 
   const STORE = "serene-personal-workspace-v1";
-  const APP_VERSION = "v1.0";
+  const APP_VERSION = "v1.1";
   const LANGUAGE_STORE = "kinetic-life-os:language";
   let currentLanguage = localStorage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
   const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const MONTHS_SHORT_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const TRANSLATIONS = {
     "跳到主要内容": "Skip to main content",
     "总览": "Overview",
@@ -14,7 +15,7 @@
     "健康管理": "Health",
     "健身计划": "Fitness plan",
     "日常提醒": "Daily reminders",
-    "日历看板": "Calendar dashboard",
+    "日历看板": "Dashboard",
     "设置与备份": "Settings & backup",
     "主导航": "Main navigation",
     "移动端导航": "Mobile navigation",
@@ -24,10 +25,16 @@
     "修改会自动保存在当前浏览器": "Changes are saved in this browser automatically",
     "搜索项目": "Search projects",
     "搜索项目…": "Search projects…",
+    "选择备份文件": "Choose a backup file",
+    "切换待办完成状态": "Toggle task completion",
+    "修改待办内容": "Edit task",
+    "删除待办": "Delete task",
+    "项目": "Projects",
     "项目标题": "Project title",
     "上个月": "Previous month",
     "下个月": "Next month",
     "回到今天": "Today",
+    "今": "Today",
     "前一天": "Previous day",
     "后一天": "Next day",
     "切换语言": "Switch language",
@@ -39,7 +46,7 @@
     "随后": "Later",
     "日历": "Calendar",
     "选择日期查看当天概况": "Select a date to view daily overview",
-    "打开日历看板": "Open calendar dashboard",
+    "打开日历看板": "Open dashboard",
     "进度概览": "Progress overview",
     "工作推进与年度方向": "Work progress and annual direction",
     "本月工作完成率": "Monthly work completion",
@@ -67,15 +74,29 @@
     "回顾日期": "Review date",
     "项目描述": "Project description",
     "下一步行动": "Next action",
+    "说明项目要解决的问题、目标和范围": "Describe the problem, goals, and scope of the project",
+    "填写这个日期的下一步行动": "Enter the next action for this date",
+    "当前日期": "Current date",
     "记录日期": "Log date",
+    "记录": "Log",
     "记录一次推进": "Log an update",
     "推进记录": "Project update",
     "添加记录": "Add update",
+    "更新记录": "Update record",
+    "项目日期记录已更新": "Project date record updated",
     "历史记录": "History",
+    "推进历史": "Update history",
+    "项目历史记录": "Project history",
+    "查看项目历史记录": "View project history",
+    "暂无历史记录": "No history yet.",
+    "未标注日期": "Undated",
+    "已完成并归档": "Completed and archived",
+    "关闭": "Close",
     "展开更多记录": "Show more history",
     "删除项目": "Delete project",
     "删除这条项目记录": "Delete this project update",
     "切换项目图标": "Change project icon",
+    "今天": "Today",
     "健康记录": "Health records",
     "记录体重、饮水、饮食与每日状态，重点观察连续变化。": "Track weight, hydration, nutrition, and daily wellbeing.",
     "体重趋势": "Weight trend",
@@ -106,6 +127,7 @@
     "日期": "Date",
     "体重": "Weight",
     "删除体重记录": "Delete weight record",
+    "今日体重，单位千克": "Today's weight in kilograms",
     "训练与恢复": "Training & recovery",
     "每周 3 次力量、2 次有氧；切换日期即可查看当天的完整运动安排。": "Three strength and two cardio sessions per week; switch dates to view the full plan.",
     "训练日历": "Training calendar",
@@ -140,6 +162,12 @@
     "增加面板": "Add panel",
     "删除日常项目": "Delete routine",
     "删除动作": "Delete exercise",
+    "安排名称": "Plan name",
+    "简要说明": "Short description",
+    "运动名称": "Exercise name",
+    "运动时间或次数": "Time or reps",
+    "时间或次数": "Time or reps",
+    "保存安排": "Save plan",
     "热身与拉伸": "Warm-up & stretching",
     "日常计划": "Daily planning",
     "统一管理每日待办、长期事项和需要按日期跟进的工作与生活事件。": "Manage daily tasks, long-term items, and dated work and life events.",
@@ -148,6 +176,9 @@
     "不限定某一天的重要事项": "Important items without a fixed date",
     "事项": "Item",
     "添加一项待办": "Add a task",
+    "添加待办": "Add task",
+    "添加当天待办": "Add today's task",
+    "今天推进了什么？明天需要继续什么？": "What did you move forward today? What needs to continue tomorrow?",
     "重要日期": "Important dates",
     "需要提前准备或按时跟进": "Prepare ahead or follow up on time",
     "日历与复盘": "Calendar & review",
@@ -158,21 +189,32 @@
     "待办事项": "Tasks",
     "当天复盘": "Daily review",
     "保存当天记录": "Save daily record",
+    "保存记录": "Save notes",
     "项目推进记录": "Project updates",
+    "当天的项目更新": "Project updates for this day",
+    "生活健康": "Life & health",
     "已完成项目": "Completed projects",
     "筛选标签": "Filter tags",
     "完成的长期待办和工作项目会归档到这里 · 工作项目显示立项到完成的日期范围": "Completed long-term tasks and work projects are archived here · work projects show the start-to-completion date range",
     "该标签下还没有已完成项目。": "No completed projects under this tag.",
     "还没有已完成项目。": "No completed projects yet.",
+    "没有找到匹配的未完成项目。": "No matching unfinished projects found.",
+    "目前没有正在推进的项目，已完成项目已归档到日历看板。": "No projects are in progress. Completed projects are archived in the calendar dashboard.",
     "数据备份": "Data backup",
     "导出备份": "Export backup",
     "导入备份": "Import backup",
     "清除当前设备记录": "Clear this device's records",
+    "管理本地记录的备份与恢复。": "Manage backups and restore local records.",
+    "导出 JSON 备份后，可以在另一台设备恢复工作台数据。": "Export a JSON backup to restore your workbench data on another device.",
+    "此操作会清除当前浏览器中的工作台记录，且无法撤销。": "This clears workbench records in the current browser and cannot be undone.",
+    "清除全部记录": "Clear all records",
+    "保存日期": "Save date",
     "数据与隐私": "Data & privacy",
     "保存": "Save",
     "取消": "Cancel",
     "删除": "Delete",
     "添加": "Add",
+    "添加年度目标": "Add annual goal",
     "关闭": "Close",
     "未开始": "Not started",
     "待选择": "To decide",
@@ -202,6 +244,12 @@
     "还没有正在推进的项目。": "No projects in progress yet.",
     "还没有推进记录。": "No project updates yet.",
     "今天没有未完成事项。": "No unfinished tasks today.",
+    "未命名动作": "Unnamed exercise",
+    "未设置频次": "Frequency not set",
+    "动作名称": "Exercise name",
+    "例如：每周 2 次 · 10 分钟": "e.g. twice a week · 10 minutes",
+    "例如：午间散步": "e.g. midday walk",
+    "例如：按状态完成 15 分钟": "e.g. 15 minutes based on how you feel",
     "一": "Mon",
     "二": "Tue",
     "三": "Wed",
@@ -210,7 +258,26 @@
     "六": "Sat",
     "日": "Sun",
     "工作项目": "Work project",
-    "长期待办": "Long-term task"
+    "长期待办": "Long-term task",
+    "已删除专项训练动作": "Focused training exercise deleted",
+    "至少保留一个日常项目": "Keep at least one daily routine",
+    "已删除日常项目": "Daily routine deleted",
+    "已记录训练完成": "Workout marked complete",
+    "已取消训练完成": "Workout marked incomplete",
+    "已完成一项待办": "Task completed",
+    "已删除体重记录": "Weight record deleted",
+    "今日状态已保存": "Today's status saved",
+    "饮食记录已保存": "Food notes saved",
+    "当天记录已保存": "Daily record saved",
+    "备份已导出": "Backup exported",
+    "已更新当天及未来同星期的运动安排": "Today's and future same-weekday workouts updated",
+    "已添加日常项目": "Daily routine added",
+    "已添加待办": "Task added",
+    "已添加当天待办": "Today's task added",
+    "今日体重已记录": "Today's weight logged",
+    "已添加待办事项": "Task added",
+    "重要日期已保存": "Important date saved",
+    "备份已恢复": "Backup restored"
   };
   const pad = (value) => String(value).padStart(2, "0");
   const keyOf = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -233,6 +300,7 @@
     if (currentLanguage === "en") return `${MONTHS_EN[date.getMonth()]} ${date.getDate()}, ${WEEKDAYS_EN[date.getDay()]}`;
     return `${date.getMonth() + 1}月${date.getDate()}日 周${"日一二三四五六"[date.getDay()]}`;
   };
+  const uiText = (zh, en) => currentLanguage === "en" ? en : zh;
   const addDays = (key, amount) => {
     const date = fromKey(key);
     date.setDate(date.getDate() + amount);
@@ -248,15 +316,26 @@
     });
   };
   const TRAINING_WEEKDAYS = [1, 2, 3, 5, 6];
-  const PROJECT_ICONS = ["◎", "↗", "⌂", "✎", "✉", "⌛"];
+  const PROJECT_ICONS = [
+    { id: "hourglass", legacy: ["⌛"], paths: '<path d="M7 3h10M7 21h10M8 4c0 3 2 4 4 5-2 1-4 2-4 5v3h8v-3c0-3-2-4-4-5 2-1 4-2 4-5V4Z"/>' },
+    { id: "arrow", legacy: ["↗"], paths: '<path d="M5 19 19 5M10 5h9v9"/>' },
+    { id: "home", legacy: ["⌂"], paths: '<path d="m4 10 8-6 8 6v10H4zM9 20v-6h6v6"/>' },
+    { id: "pencil", legacy: ["✎"], paths: '<path d="m5 16-1 4 4-1L19 8a2.1 2.1 0 0 0-3-3L5 16Z"/><path d="m14.5 6.5 3 3"/>' },
+    { id: "mail", legacy: ["✉"], paths: '<rect x="4" y="6" width="16" height="12" rx="2"/><path d="m5 8 7 5 7-5"/>' },
+    { id: "clock", legacy: ["◎"], paths: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>' }
+  ];
 
-  function projectSymbol(project) {
-    return PROJECT_ICONS.includes(project?.symbol) ? project.symbol : PROJECT_ICONS[0];
+  function projectIcon(project) {
+    return PROJECT_ICONS.find((item) => item.id === project?.symbol || item.legacy.includes(project?.symbol)) || PROJECT_ICONS[0];
+  }
+
+  function projectIconMarkup(project) {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true">${projectIcon(project).paths}</svg>`;
   }
 
   function nextProjectSymbol(project) {
-    const currentIndex = PROJECT_ICONS.indexOf(project.symbol);
-    project.symbol = PROJECT_ICONS[(currentIndex + 1 + PROJECT_ICONS.length) % PROJECT_ICONS.length];
+    const currentIndex = PROJECT_ICONS.findIndex((item) => item.id === project.symbol || item.legacy.includes(project.symbol));
+    project.symbol = PROJECT_ICONS[(currentIndex + 1 + PROJECT_ICONS.length) % PROJECT_ICONS.length].id;
   }
 
   function icon(name) {
@@ -288,7 +367,7 @@
     <a class="skip-link" href="#v2Main">跳到主要内容</a>
     <div class="v2-shell">
       <aside class="v2-sidebar">
-        <div class="v2-brand"><span class="v2-logo" aria-hidden="true">&gt;_</span><div><strong>个人工作台</strong><span>LIFE OS · 本地版</span></div></div>
+        <div class="v2-brand"><span class="v2-logo" aria-hidden="true">&gt;_</span><div><strong>个人工作台</strong><span>${uiText("LIFE OS · 本地版", "LIFE OS · Local edition")}</span></div></div>
         <nav class="v2-nav" aria-label="主导航">
           ${pages.map(([id, label, iconName]) => `<a href="#${id}" data-page="${id}">${icon(iconName)}<span>${label}</span></a>`).join("")}
         </nav>
@@ -504,7 +583,7 @@
             </section>
           </section>
 
-          <p class="v2-footer">KINETIC LIFE OS · 本地保存 · ${APP_VERSION}</p>
+          <p class="v2-footer">${uiText(`KINETIC LIFE OS · 本地保存 · ${APP_VERSION}`, `KINETIC LIFE OS · Local storage · ${APP_VERSION}`)}</p>
         </div>
       </main>
     </div>
@@ -512,6 +591,15 @@
       ${pages.slice(0, 4).concat([pages[5]]).map(([id, label, iconName]) => `<a href="#${id}" data-page="${id}">${icon(iconName)}<span>${label.replace("计划", "")}</span></a>`).join("")}
     </nav>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="modal-backdrop" id="projectHistoryModal" hidden>
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="projectHistoryTitle">
+        <div class="modal-card-head">
+          <div><div class="eyebrow">推进历史</div><h2 id="projectHistoryTitle">项目历史记录</h2></div>
+          <button class="icon-button" type="button" data-action="close-project-history" aria-label="关闭">×</button>
+        </div>
+        <div class="modal-history-scroll" id="projectHistoryList"></div>
+      </section>
+    </div>
   `;
 
   const languageTextSources = new WeakMap();
@@ -522,6 +610,10 @@
     const trimmed = value.trim();
     if (!trimmed) return value;
     if (TRANSLATIONS[trimmed]) return value.replace(trimmed, TRANSLATIONS[trimmed]);
+    const prefixedActionMatch = trimmed.match(/^＋\s*(.+)$/);
+    if (prefixedActionMatch && TRANSLATIONS[prefixedActionMatch[1]]) {
+      return value.replace(trimmed, `＋ ${TRANSLATIONS[prefixedActionMatch[1]]}`);
+    }
     const statusMatch = trimmed.match(/^(未开始|待选择|进行中|收尾中|等待回复|长期维护|暂缓|已完成)\s*·\s*(.+)$/);
     if (statusMatch) return value.replace(trimmed, `${TRANSLATIONS[statusMatch[1]]} · ${statusMatch[2]}`);
     const historyMatch = trimmed.match(/^历史记录（(\d+)）$/);
@@ -531,6 +623,7 @@
     const deleteProjectMatch = trimmed.match(/^删除项目\s+(.+)$/);
     if (deleteProjectMatch) return value.replace(trimmed, `Delete project ${deleteProjectMatch[1]}`);
     const patterns = [
+      [/^(\d+)%\s*完成$/, "$1% complete"],
       [/^(\d+)\s*\/\s*(\d+)\s*项完成$/, "$1 / $2 complete"],
       [/^(\d+)\s*\/\s*(\d+)\s*项$/, "$1 / $2 items"],
       [/^(\d+)\s*\/\s*(\d+)\s*杯$/, "$1 / $2 cups"],
@@ -541,7 +634,7 @@
       [/^(\d+)\s*杯$/, "$1 cups"],
       [/^(\d+)\s*个训练日$/, "$1 training days"],
       [/^(\d+)\s*分钟$/, "$1 minutes"],
-      [/^(\d+)月$/, "$1 month"],
+      [/^(\d+)月$/, (match, month) => MONTHS_SHORT_EN[Number(month) - 1] || match],
       [/^(\d{4})年(\d+)月$/, "$2/$1"]
     ];
     for (const [pattern, replacement] of patterns) {
@@ -563,6 +656,11 @@
 
   function applyLanguage() {
     document.documentElement.lang = currentLanguage === "en" ? "en" : "zh-CN";
+    document.title = currentLanguage === "en" ? "Personal Workbench · Kinetic Life OS" : "个人工作台 · Kinetic Life OS";
+    const brandEdition = document.querySelector(".v2-brand > div > span");
+    if (brandEdition) brandEdition.textContent = currentLanguage === "en" ? "LIFE OS · Local edition" : "LIFE OS · 本地版";
+    const footer = document.querySelector(".v2-footer");
+    if (footer) footer.textContent = currentLanguage === "en" ? `KINETIC LIFE OS · Local storage · ${APP_VERSION}` : `KINETIC LIFE OS · 本地保存 · ${APP_VERSION}`;
     const languageToggle = document.getElementById("languageToggle");
     if (languageToggle) {
       languageToggle.textContent = currentLanguage === "en" ? "中文" : "EN";
@@ -1189,6 +1287,19 @@
       merged.projects.forEach((project) => {
         project.logs = Array.isArray(project.logs) ? project.logs : [];
         project.description = String(project.description || project.next || "项目描述待补充。").trim();
+        project.next = String(project.next || "").trim();
+        project.daily = project.daily && typeof project.daily === "object" && !Array.isArray(project.daily) ? project.daily : {};
+        Object.entries(project.daily).forEach(([date, record]) => {
+          if (!isDateKey(date) || !record || typeof record !== "object") {
+            delete project.daily[date];
+            return;
+          }
+          project.daily[date] = {
+            description: String(record.description || "").trim(),
+            next: String(record.next || "").trim(),
+            logId: String(record.logId || "")
+          };
+        });
         project.createdAt = isDateKey(project.createdAt) ? project.createdAt : "";
         project.completedAt = isDateKey(project.completedAt) ? project.completedAt : "";
         project.completed = project.completed === true || project.status === "已完成";
@@ -1271,10 +1382,45 @@
 
   function notify(message) {
     const toast = document.getElementById("toast");
-    toast.textContent = message;
+    toast.textContent = currentLanguage === "en" ? translateText(message) : message;
     toast.classList.add("show");
     clearTimeout(notify.timer);
     notify.timer = setTimeout(() => toast.classList.remove("show"), 1900);
+  }
+
+  function completedHistoryEntries(item) {
+    if (item.type === "工作项目") {
+      const project = state.projects.find((candidate) => candidate.id === item.id);
+      return [...(project?.logs || [])]
+        .filter((log) => log && (log.date || log.text))
+        .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    }
+    if (item.completedAt || item.description) {
+      return [{ date: item.completedAt || "", text: item.description || "已完成并归档" }];
+    }
+    return [];
+  }
+
+  function openProjectHistory(item) {
+    const modal = document.getElementById("projectHistoryModal");
+    const title = document.getElementById("projectHistoryTitle");
+    const list = document.getElementById("projectHistoryList");
+    if (!modal || !title || !list) return;
+    const entries = completedHistoryEntries(item);
+    title.textContent = item.title;
+    list.innerHTML = entries.length
+      ? entries.map((entry) => `<div class="modal-history-item"><time>${esc(entry.date || "未标注日期")}</time><p>${esc(entry.text || "")}</p></div>`).join("")
+      : '<div class="empty-state">暂无历史记录。</div>';
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+    requestAnimationFrame(() => modal.querySelector("[data-action=close-project-history]")?.focus());
+  }
+
+  function closeProjectHistory() {
+    const modal = document.getElementById("projectHistoryModal");
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove("modal-open");
   }
 
   const scrollbarTimers = new WeakMap();
@@ -1313,6 +1459,12 @@
   function completionDateRange(startAt, endAt, startLabel = "立项") {
     const start = isDateKey(startAt) ? startAt : "";
     const end = isDateKey(endAt) ? endAt : "";
+    if (currentLanguage === "en") {
+      const startVerb = startLabel === "创建" ? "created" : "started";
+      if (start && end) return `${start} ${startVerb} → ${end} completed`;
+      if (end) return `${end} completed`;
+      return start ? `${start} ${startVerb}` : "";
+    }
     if (start && end) return `${start}${startLabel}～${end}完成`;
     if (end) return `${end}完成`;
     return start ? `${start}${startLabel}` : "";
@@ -1322,7 +1474,7 @@
     const text = String(description || "").trim();
     if (!text) return "";
     if (text.length <= 96) return `<p class="completed-project-description">${esc(text)}</p>`;
-    return `<details class="completed-project-description"><summary>${esc(text.slice(0, 96))}… <span>展开</span></summary><p>${esc(text)}</p></details>`;
+    return `<details class="completed-project-description"><summary>${esc(text.slice(0, 96))}… <span>${uiText("展开", "Show more")}</span></summary><p>${esc(text)}</p></details>`;
   }
 
   function completedProjectFilterOptions() {
@@ -1388,7 +1540,8 @@
       const stats = completionFor(key);
       const marker = stats.rate >= 60 ? "done" : hasDayInformation(key) ? "has" : "";
       const eventMarker = eventsOn(key).length > 0;
-      cells.push(`<button class="cal-day ${key === selectedDate ? "selected" : ""} ${key === todayKey() ? "today" : ""} ${eventMarker ? "has-event" : ""}" data-date="${key}" aria-label="${esc(dayText(key))}${eventMarker ? "，有重要日期" : ""}" ${key === selectedDate ? 'aria-pressed="true"' : ""}><span>${day}</span><i class="cal-dot ${marker}"></i></button>`);
+      const eventLabel = eventMarker ? uiText("，有重要日期", ", important date") : "";
+      cells.push(`<button class="cal-day ${key === selectedDate ? "selected" : ""} ${key === todayKey() ? "today" : ""} ${eventMarker ? "has-event" : ""}" data-date="${key}" aria-label="${esc(dayText(key))}${eventLabel}" ${key === selectedDate ? 'aria-pressed="true"' : ""}><span>${day}</span><i class="cal-dot ${marker}"></i></button>`);
     }
     return { title: monthTitle(first), html: cells.join("") };
   }
@@ -1410,20 +1563,21 @@
   }
 
   function calendarCaptionHtml(key, stats = completionFor(key), summary = summaryText(key), showSummary = true) {
-    const importantCopy = eventsOn(key).map((event) => event.title).filter(Boolean).join("、");
+    const importantCopy = eventsOn(key).map((event) => event.title).filter(Boolean).join(currentLanguage === "en" ? ", " : "、");
     const important = importantCopy ? `<span class="calendar-important-copy"> · ${esc(importantCopy)}</span>` : "";
-    const summaryCopy = showSummary ? `${stats.done}/${stats.total} 项完成 · ${esc(summary)}` : "";
+    const completionCopy = currentLanguage === "en" ? `${stats.done}/${stats.total} complete` : `${stats.done}/${stats.total} 项完成`;
+    const summaryCopy = showSummary ? `${completionCopy} · ${esc(summary)}` : "";
     return `<strong>${esc(dayText(key))}${important}</strong>${summaryCopy}`;
   }
 
   function summaryText(key) {
     const day = state.days[key];
     const parts = [];
-    if (day?.mood) parts.push(`心情 ${day.mood}`);
-    if (day?.water) parts.push(`饮水 ${day.water} 杯`);
-    if (day?.fitness) parts.push("训练已完成");
-    if (projectLogsOn(key).length) parts.push(`${projectLogsOn(key).length} 条项目记录`);
-    return parts.join(" · ") || "暂无当天记录";
+    if (day?.mood) parts.push(currentLanguage === "en" ? `Mood ${day.mood}` : `心情 ${day.mood}`);
+    if (day?.water) parts.push(currentLanguage === "en" ? `Hydration ${day.water} cups` : `饮水 ${day.water} 杯`);
+    if (day?.fitness) parts.push(uiText("训练已完成", "Workout completed"));
+    if (projectLogsOn(key).length) parts.push(currentLanguage === "en" ? `${projectLogsOn(key).length} project updates` : `${projectLogsOn(key).length} 条项目记录`);
+    return parts.join(" · ") || uiText("暂无当天记录", "No records for this day");
   }
 
   function dashboardSummary(key) {
@@ -1431,22 +1585,27 @@
     const stats = completionFor(key);
     const logs = projectLogsOn(key);
     const projectNames = [...new Set(logs.map((log) => log.project).filter(Boolean))];
-    const projectLabel = projectNames.length > 2 ? `${projectNames.slice(0, 2).join("、")}等项目` : `${projectNames.join("、")}项目`;
-    const projectPart = projectLabel ? `推进了${projectLabel}` : "暂无项目推进";
-    const taskPart = stats.total ? `完成了${stats.done}项待办（共${stats.total}项）` : "今天没有待办事项";
+    const projectLabel = projectNames.length ? (currentLanguage === "en"
+      ? (projectNames.length > 2 ? `${projectNames.slice(0, 2).join(", ")} and other projects` : `${projectNames.join(", ")} project updates`)
+      : (projectNames.length > 2 ? `${projectNames.slice(0, 2).join("、")}等项目` : `${projectNames.join("、")}项目`)) : "";
+    const projectPart = currentLanguage === "en" ? (projectLabel ? `Moved forward ${projectLabel}` : "No project updates") : (projectLabel ? `推进了${projectLabel}` : "暂无项目推进");
+    const taskPart = currentLanguage === "en"
+      ? (stats.total ? `${stats.done} of ${stats.total} tasks completed` : "No tasks today")
+      : (stats.total ? `完成了${stats.done}项待办（共${stats.total}项）` : "今天没有待办事项");
     const plan = planFor(key);
     const weekday = fromKey(key).getDay();
     const workoutPart = TRAINING_WEEKDAYS.includes(weekday)
-      ? (day.fitness ? `完成了${plan.title}训练计划` : `${plan.title}训练计划待完成`)
-      : `今天是${plan.title}`;
+      ? (currentLanguage === "en" ? (day.fitness ? `${plan.title} workout plan completed` : `${plan.title} workout plan pending`) : (day.fitness ? `完成了${plan.title}训练计划` : `${plan.title}训练计划待完成`))
+      : (currentLanguage === "en" ? `Today is ${plan.title}` : `今天是${plan.title}`);
     const routineDone = currentRoutineItems().filter((item) => day.routines[item.id]).length;
-    const routinePart = `完成了${routineDone}项日常项目`;
+    const routinePart = currentLanguage === "en" ? `${routineDone} daily routines completed` : `完成了${routineDone}项日常项目`;
     const extraParts = [];
-    if (day.water) extraParts.push(`饮水${day.water}杯`);
-    if (day.mood) extraParts.push(`心情${day.mood}`);
+    if (day.water) extraParts.push(currentLanguage === "en" ? `Hydration ${day.water} cups` : `饮水${day.water}杯`);
+    if (day.mood) extraParts.push(currentLanguage === "en" ? `Mood ${day.mood}` : `心情${day.mood}`);
     const events = eventsOn(key);
-    if (events.length) extraParts.push(`${events.length}个重要日期`);
-    const lead = key === todayKey() ? "今天" : dayText(key);
+    if (events.length) extraParts.push(currentLanguage === "en" ? `${events.length} important dates` : `${events.length}个重要日期`);
+    const lead = key === todayKey() ? uiText("今天", "Today") : dayText(key);
+    if (currentLanguage === "en") return `${lead}: ${projectPart}; ${taskPart}; ${workoutPart}; ${routinePart}${extraParts.length ? `; ${extraParts.join(", ")}` : ""}.`;
     return `${lead}${projectPart}，${taskPart}，${workoutPart}，${routinePart}${extraParts.length ? `；${extraParts.join("、")}` : ""}。`;
   }
 
@@ -1507,6 +1666,56 @@
     project.updatedAt = date;
   }
 
+  function latestProjectLogOn(project, date) {
+    return [...(project.logs || [])].reverse().find((log) => log.date === date) || null;
+  }
+
+  function projectRecordDate(project) {
+    return isDateKey(project.reviewDate) ? project.reviewDate : selectedDate;
+  }
+
+  function projectDayRecord(project, date = selectedDate) {
+    project.daily = project.daily && typeof project.daily === "object" && !Array.isArray(project.daily) ? project.daily : {};
+    const saved = project.daily[date];
+    const fallbackLog = latestProjectLogOn(project, date);
+    if (saved) {
+      return {
+        description: String(saved.description || ""),
+        next: String(saved.next || ""),
+        logId: saved.logId || fallbackLog?.id || ""
+      };
+    }
+    return {
+      description: "",
+      next: String(fallbackLog?.text || ""),
+      logId: fallbackLog?.id || ""
+    };
+  }
+
+  function updateProjectDayRecord(project, date, description, next) {
+    const cleanDescription = String(description || "").trim();
+    const cleanNext = String(next || "").trim();
+    project.daily = project.daily && typeof project.daily === "object" && !Array.isArray(project.daily) ? project.daily : {};
+    const currentLog = latestProjectLogOn(project, date);
+    const summary = cleanNext || cleanDescription;
+    if (summary) {
+      if (currentLog) {
+        currentLog.text = summary;
+      } else {
+        addProjectHistory(project, date, summary);
+      }
+    } else if (currentLog) {
+      project.logs = project.logs.filter((log) => log.id !== currentLog.id);
+    }
+    const linkedLog = summary ? latestProjectLogOn(project, date) : null;
+    project.daily[date] = { description: cleanDescription, next: cleanNext, logId: linkedLog?.id || "" };
+    if (date === todayKey()) {
+      project.description = cleanDescription || project.description;
+      project.next = cleanNext;
+    }
+    project.updatedAt = date;
+  }
+
   function confirmProjectCompletion(project, reason) {
     return confirm(`项目「${project.title}」${reason}，确认已完成吗？确认后会归档到日历看板的“已完成项目”。`);
   }
@@ -1533,11 +1742,13 @@
     }
     document.getElementById("projectList").innerHTML = list.length ? list.map((project) => {
       const logs = [...(project.logs || [])].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+      const recordDate = projectRecordDate(project);
+      const dayRecord = projectDayRecord(project, recordDate);
       return `
         <article class="card project-card">
           <button class="mini-btn danger project-delete-btn" data-action="delete-project" data-id="${project.id}" aria-label="删除项目 ${esc(project.title)}">×</button>
           <div class="project-head">
-            <div class="project-title"><div class="project-title-top"><button class="project-symbol" type="button" data-action="cycle-project-symbol" data-id="${project.id}" aria-label="切换项目图标" title="切换项目图标">${esc(projectSymbol(project))}</button><span class="tag neutral project-area-tag">${esc(project.area || "其他")}</span></div><textarea class="project-title-input" data-project-title="${project.id}" maxlength="120" rows="2" aria-label="项目标题">${esc(project.title)}</textarea></div>
+            <div class="project-title"><div class="project-title-top"><button class="project-symbol" type="button" data-action="cycle-project-symbol" data-id="${project.id}" aria-label="切换项目图标" title="切换项目图标">${projectIconMarkup(project)}</button><span class="tag neutral project-area-tag">${esc(project.area || "其他")}</span></div><textarea class="project-title-input" data-project-title="${project.id}" maxlength="120" rows="2" aria-label="项目标题">${esc(project.title)}</textarea></div>
             <div class="project-status-control">
               <select class="select" data-project-status="${project.id}" aria-label="${esc(project.title)}的状态">
                 ${["未开始", "待选择", "进行中", "收尾中", "等待回复", "长期维护", "暂缓", "已完成"].map((status) => `<option ${status === project.status ? "selected" : ""}>${status}</option>`).join("")}
@@ -1545,16 +1756,16 @@
             </div>
           </div>
           <div class="project-progress"><label><span>当前进度</span><b>${Number(project.progress) || 0}%</b></label><input type="range" min="0" max="100" value="${Number(project.progress) || 0}" data-project-progress="${project.id}" aria-label="${esc(project.title)}的进度" /></div>
-          <div class="form-grid project-fields">
+          <div class="form-grid project-fields project-meta-fields">
             <label class="field"><span>所属领域</span><input class="input" data-project-area="${project.id}" value="${esc(project.area || "")}" /></label>
             <label class="field"><span>回顾日期</span><input class="input" type="date" data-project-review="${project.id}" value="${esc(project.reviewDate || "")}" /></label>
-            <label class="field wide"><span>项目描述</span><textarea class="textarea" data-project-description="${project.id}" maxlength="260" placeholder="说明项目要解决的问题、目标和范围">${esc(project.description || "")}</textarea></label>
-            <label class="field wide"><span>下一步行动</span><textarea class="textarea" data-project-next="${project.id}">${esc(project.next || "")}</textarea></label>
           </div>
-          <form class="log-form" data-project-log="${project.id}">
-            <input class="input" type="date" data-log-date value="${todayKey()}" aria-label="记录日期" />
-            <input class="input" maxlength="240" placeholder="记录一次推进" aria-label="推进记录" required />
-            <button class="btn secondary" type="submit">添加记录</button>
+          <form class="project-day-form" data-project-update="${project.id}" data-project-update-date="${recordDate}">
+            <div class="form-grid project-fields project-day-fields">
+              <label class="field wide"><span>项目描述</span><textarea class="textarea" data-project-description="${project.id}" maxlength="260" placeholder="说明项目要解决的问题、目标和范围">${esc(dayRecord.description)}</textarea></label>
+              <label class="field wide"><span>下一步行动</span><textarea class="textarea" data-project-next="${project.id}" maxlength="260" placeholder="填写这个日期的下一步行动">${esc(dayRecord.next)}</textarea></label>
+            </div>
+            <div class="project-update-actions"><small><span>记录日期</span> · <time>${esc(dayText(recordDate))}</time></small><button class="btn secondary" type="submit">更新记录</button></div>
           </form>
           <details class="history" open>
             <summary>历史记录（${logs.length}）</summary>
@@ -1566,12 +1777,14 @@
   }
 
   function chartSummary(data) {
-    if (!data.length) return "还没有体重记录。";
-    if (data.length === 1) return `当前记录为 ${data[0].weight} kg。`;
+    if (!data.length) return uiText("还没有体重记录。", "No weight records yet.");
+    if (data.length === 1) return currentLanguage === "en" ? `Current record: ${data[0].weight} kg.` : `当前记录为 ${data[0].weight} kg。`;
     const first = Number(data[0].weight);
     const last = Number(data[data.length - 1].weight);
     const change = Math.round((last - first) * 10) / 10;
-    return `最近 ${data.length} 次记录从 ${first} kg 到 ${last} kg，变化 ${change > 0 ? "+" : ""}${change} kg。`;
+    return currentLanguage === "en"
+      ? `Last ${data.length} records: ${first} kg to ${last} kg, a change of ${change > 0 ? "+" : ""}${change} kg.`
+      : `最近 ${data.length} 次记录从 ${first} kg 到 ${last} kg，变化 ${change > 0 ? "+" : ""}${change} kg。`;
   }
 
   function renderWeightChart(targetId, limit = 12) {
@@ -1582,7 +1795,7 @@
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(-limit);
     if (!data.length) {
-      target.innerHTML = '<div class="empty-state" style="margin-bottom:16px">还没有体重记录，记录后会在这里形成折线。</div>';
+      target.innerHTML = `<div class="empty-state" style="margin-bottom:16px">${uiText("还没有体重记录，记录后会在这里形成折线。", "No weight records yet. Log one to start the trend.")}</div>`;
       return;
     }
     const width = 640;
@@ -1606,20 +1819,20 @@
       return `<line class="chart-grid" x1="${left}" y1="${yy}" x2="${width - right}" y2="${yy}"/>`;
     }).join("");
     const pointNodes = data.map((entry, index) => `
-      <g tabindex="0" aria-label="${esc(entry.date)}，${entry.weight} 千克">
+      <g tabindex="0" aria-label="${esc(entry.date)}, ${entry.weight} kg">
         <circle class="chart-point" cx="${x(index)}" cy="${y(Number(entry.weight))}" r="5"><title>${esc(entry.date)} · ${entry.weight} kg</title></circle>
         <text class="chart-value" x="${x(index)}" y="${y(Number(entry.weight)) - 11}" text-anchor="middle">${entry.weight}</text>
         <text class="chart-label" x="${x(index)}" y="${height - 12}" text-anchor="middle">${esc(entry.date.slice(5))}</text>
       </g>
     `).join("");
     target.innerHTML = `
-      <svg class="line-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="体重折线图。${esc(chartSummary(data))}">
+      <svg class="line-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${uiText("体重折线图。", "Weight trend chart. ")}${esc(chartSummary(data))}">
         ${gridLines}
         ${data.length > 1 ? `<polyline class="chart-line" points="${points}"/>` : ""}
         ${pointNodes}
       </svg>
       <p class="chart-summary">${esc(chartSummary(data))}</p>
-      <details><summary class="text-btn">查看数据表</summary><div class="data-table-scroll"><table class="data-table"><thead><tr><th>日期</th><th>体重</th><th><span class="sr-only">操作</span></th></tr></thead><tbody>${data.map((entry) => `<tr><td>${esc(entry.date)}</td><td>${entry.weight} kg</td><td class="data-table-action"><button class="mini-btn danger" data-action="delete-weight" data-weight-date="${esc(entry.date)}" aria-label="删除体重记录 ${esc(entry.date)}">×</button></td></tr>`).join("")}</tbody></table></div></details>
+      <details><summary class="text-btn">${uiText("查看数据表", "View data table")}</summary><div class="data-table-scroll"><table class="data-table"><thead><tr><th>${uiText("日期", "Date")}</th><th>${uiText("体重", "Weight")}</th><th><span class="sr-only">${uiText("操作", "Actions")}</span></th></tr></thead><tbody>${data.map((entry) => `<tr><td>${esc(entry.date)}</td><td>${entry.weight} kg</td><td class="data-table-action"><button class="mini-btn danger" data-action="delete-weight" data-weight-date="${esc(entry.date)}" aria-label="${uiText("删除体重记录", "Delete weight record")} ${esc(entry.date)}">×</button></td></tr>`).join("")}</tbody></table></div></details>
     `;
   }
 
@@ -1645,6 +1858,11 @@
   }
 
   function workoutEditorMarkup(key, plan) {
+    const weekday = fromKey(key).getDay();
+    const weekdayLabel = currentLanguage === "en" ? WEEKDAYS_EN[weekday] : `周${"日一二三四五六"[weekday]}`;
+    const helper = currentLanguage === "en"
+      ? `Changes apply from ${dayText(key)} to this day and all future ${weekdayLabel} sessions; past dates stay unchanged.`
+      : `修改将从 ${dayText(key)} 起，应用于当天及以后所有${weekdayLabel}；过去日期保持原样。`;
     return `
       <form class="workout-editor" data-workout-editor="${key}">
         <div class="workout-edit-meta">
@@ -1661,7 +1879,7 @@
           `).join("")}
         </div>
         <div class="workout-edit-actions"><button class="btn green" type="submit">保存安排</button><button class="btn secondary" type="button" data-action="cancel-workout-edit">取消</button></div>
-        <p class="helper">修改将从 ${esc(dayText(key))} 起，应用于当天及以后所有周${"日一二三四五六"[fromKey(key).getDay()]}；过去日期保持原样。</p>
+        <p class="helper">${esc(helper)}</p>
       </form>
     `;
   }
@@ -1751,23 +1969,23 @@
     const perfectWeeks = perfectWeekCount();
     const streak = trainingStreak();
     document.getElementById("fitnessWeeklySummary").innerHTML = `
-      <div class="fitness-summary-head"><div><h3>本周运动概况</h3><small>${esc(dayText(week[0]))} — ${esc(dayText(week[week.length - 1]))}</small></div><span class="tag ${completed === trainingDays.length ? "green" : ""}">${completed === trainingDays.length ? "本周已完成" : "进行中"}</span></div>
+      <div class="fitness-summary-head"><div><h3>${uiText("本周运动概况", "This week's workout summary")}</h3><small>${esc(dayText(week[0]))} — ${esc(dayText(week[week.length - 1]))}</small></div><span class="tag ${completed === trainingDays.length ? "green" : ""}">${completed === trainingDays.length ? uiText("本周已完成", "Week completed") : uiText("进行中", "In progress")}</span></div>
       <div class="fitness-summary-stats">
-        <div class="fitness-summary-stat"><span>已完成运动日</span><strong>${completed} 天</strong><small>本周训练记录</small></div>
-        <div class="fitness-summary-stat"><span>完美周</span><strong>${perfectWeeks} 周</strong><small>每天完成运动计划</small></div>
-        <div class="fitness-summary-stat"><span>本周计划进度</span><strong>${weekProgress}%</strong><small>${completed} / ${trainingDays.length} 个训练日</small></div>
-        <div class="fitness-summary-stat"><span>连续完成天数</span><strong>${streak} 天</strong><small>按计划训练日连续计算</small></div>
+        <div class="fitness-summary-stat"><span>${uiText("已完成运动日", "Completed workout days")}</span><strong>${completed} ${uiText("天", "days")}</strong><small>${uiText("本周训练记录", "This week's workout records")}</small></div>
+        <div class="fitness-summary-stat"><span>${uiText("完美周", "Perfect weeks")}</span><strong>${perfectWeeks} ${uiText("周", "weeks")}</strong><small>${uiText("每天完成运动计划", "Workout plan completed every day")}</small></div>
+        <div class="fitness-summary-stat"><span>${uiText("本周计划进度", "This week's plan progress")}</span><strong>${weekProgress}%</strong><small>${completed} / ${trainingDays.length} ${uiText("个训练日", "training days")}</small></div>
+        <div class="fitness-summary-stat"><span>${uiText("连续完成天数", "Consecutive days")}</span><strong>${streak} ${uiText("天", "days")}</strong><small>${uiText("按计划训练日连续计算", "Counted across scheduled workout days")}</small></div>
       </div>
     `;
     renderFitnessCalendar();
     document.getElementById("fitnessDateTitle").textContent = dayText(selectedFitnessDate);
-    document.getElementById("fitnessDateHint").textContent = selectedFitnessDate === todayKey() ? "今天" : planFor(selectedFitnessDate).title;
+    document.getElementById("fitnessDateHint").textContent = selectedFitnessDate === todayKey() ? uiText("今天", "Today") : planFor(selectedFitnessDate).title;
     document.getElementById("fitnessDayPlan").innerHTML = workoutMarkup(selectedFitnessDate, "fitness");
     document.getElementById("fitnessRoutines").innerHTML = routineMarkup(selectedFitnessDate);
     const panels = currentSupplementaryTraining();
     const panelActions = document.getElementById("supplementTrainingSectionActions");
     if (panelActions) {
-      panelActions.innerHTML = `${editingSupplementaryTraining ? '<button class="btn green" data-action="add-supplementary-panel">＋ 增加面板</button>' : ""}<button class="text-btn" data-action="toggle-supplementary-edit">${editingSupplementaryTraining ? "完成" : "编辑"}</button>`;
+      panelActions.innerHTML = `${editingSupplementaryTraining ? '<button class="btn green" data-action="add-supplementary-panel">＋ 增加面板</button>' : ""}<button class="text-btn" data-action="toggle-supplementary-edit">${editingSupplementaryTraining ? uiText("完成", "Done") : uiText("编辑", "Edit")}</button>`;
     }
     document.getElementById("supplementTrainingPanels").innerHTML = panels.map((panel) => editingSupplementaryTraining ? supplementaryTrainingEditorMarkup(panel) : supplementaryTrainingPanelMarkup(panel)).join("");
   }
@@ -1786,7 +2004,9 @@
       const completed = Boolean(state.days[key]?.fitness);
       const scheduled = TRAINING_WEEKDAYS.includes(date.getDay());
       const eventMarker = eventsOn(key).length > 0;
-      cells.push(`<button class="fitness-cal-day ${key === selectedFitnessDate ? "selected" : ""} ${key === todayKey() ? "today" : ""} ${completed ? "completed" : ""} ${eventMarker ? "has-event" : ""}" data-action="select-fitness-date" data-fitness-date="${key}" aria-label="${esc(dayText(key))}${completed ? "，训练已完成" : scheduled ? "，计划训练日" : ""}${eventMarker ? "，有重要日期" : ""}" ${key === selectedFitnessDate ? 'aria-pressed="true"' : ""}><span>${day}</span><i class="fitness-cal-marker" aria-hidden="true">${completed ? "👏" : scheduled ? "·" : ""}</i></button>`);
+      const status = completed ? uiText("，训练已完成", "; workout completed") : scheduled ? uiText("，计划训练日", "; scheduled workout day") : "";
+      const event = eventMarker ? uiText("，有重要日期", "; important date") : "";
+      cells.push(`<button class="fitness-cal-day ${key === selectedFitnessDate ? "selected" : ""} ${key === todayKey() ? "today" : ""} ${completed ? "completed" : ""} ${eventMarker ? "has-event" : ""}" data-action="select-fitness-date" data-fitness-date="${key}" aria-label="${esc(dayText(key))}${status}${event}" ${key === selectedFitnessDate ? 'aria-pressed="true"' : ""}><span>${day}</span><i class="fitness-cal-marker" aria-hidden="true">${completed ? "👏" : scheduled ? "·" : ""}</i></button>`);
     }
     document.getElementById("fitnessCalendarMonth").textContent = monthTitle(new Date(year, month, 1));
     document.getElementById("fitnessCalendarGrid").innerHTML = cells.join("");
@@ -1834,7 +2054,7 @@
   function renderReminders() {
     const stats = completionFor(selectedDate);
     document.getElementById("reminderDateTitle").textContent = dayText(selectedDate);
-    document.getElementById("reminderProgress").textContent = `${stats.done} / ${stats.total} 项完成`;
+    document.getElementById("reminderProgress").textContent = currentLanguage === "en" ? `${stats.done} / ${stats.total} complete` : `${stats.done} / ${stats.total} 项完成`;
     document.getElementById("reminderList").innerHTML = taskRows(selectedDate, "reminders");
     document.getElementById("notesDateLabel").textContent = dayText(selectedDate);
     document.getElementById("dayNotesInput").value = ensureDay(selectedDate).notes;
@@ -1867,48 +2087,53 @@
     const weight = weightOn(selectedDate);
     const logs = projectLogsOn(selectedDate);
     const events = eventsOn(selectedDate);
-    const dateHint = selectedDate === todayKey() ? "今天 · 修改会自动保存" : selectedDate < todayKey() ? "历史记录 · 可以补记" : "未来计划 · 可以提前安排";
+    const dateHint = currentLanguage === "en"
+      ? (selectedDate === todayKey() ? "Today · changes save automatically" : selectedDate < todayKey() ? "History · you can add a record" : "Future plan · you can plan ahead")
+      : (selectedDate === todayKey() ? "今天 · 修改会自动保存" : selectedDate < todayKey() ? "历史记录 · 可以补记" : "未来计划 · 可以提前安排");
+    const unrecorded = uiText("未记录", "Not recorded");
+    const cupUnit = uiText("杯", "cups");
+    const itemUnit = uiText("项", "items");
     document.getElementById("calendarWorkoutPanel").innerHTML = `
-      <div class="card-head"><div><h3>运动安排</h3><small>${esc(dayText(selectedDate))} · ${esc(planFor(selectedDate).title)}</small></div></div>
+      <div class="card-head"><div><h3>${uiText("运动安排", "Workout plan")}</h3><small>${esc(dayText(selectedDate))} · ${esc(planFor(selectedDate).title)}</small></div></div>
       ${workoutMarkup(selectedDate, "calendar")}
     `;
     document.getElementById("calendarWorkPanel").innerHTML = `
-      <div class="card-head"><div><h3>事务工作</h3><small>${esc(dayText(selectedDate))} · ${esc(dateHint)}</small></div><span class="tag">${stats.rate}% 完成</span></div>
+      <div class="card-head"><div><h3>${uiText("事务工作", "Work tasks")}</h3><small>${esc(dayText(selectedDate))} · ${esc(dateHint)}</small></div><span class="tag">${currentLanguage === "en" ? `${stats.rate}% complete` : `${stats.rate}% 完成`}</span></div>
       <section class="day-section">
-        <div class="subhead"><h4>待办事项</h4><span class="tag neutral">${stats.done} / ${stats.total}</span></div>
+        <div class="subhead"><h4>${uiText("待办事项", "Tasks")}</h4><span class="tag neutral">${stats.done} / ${stats.total}</span></div>
         <div class="todo-list">${taskRows(selectedDate, "calendar")}</div>
         <form class="form-row" id="calendarTaskForm" style="margin-top:10px"><label class="sr-only" for="calendarTaskInput">添加当天待办</label><input class="input" id="calendarTaskInput" maxlength="120" placeholder="添加当天待办" required /><button class="btn green" type="submit">添加</button></form>
       </section>
     `;
 
     document.getElementById("calendarHealthPanel").innerHTML = `
-      <div class="card-head"><div><h3>生活健康</h3><small class="calendar-summary-copy">${esc(dashboardSummary(selectedDate))}</small></div></div>
+      <div class="card-head"><div><h3>${uiText("生活健康", "Life & health")}</h3><small class="calendar-summary-copy">${esc(dashboardSummary(selectedDate))}</small></div></div>
       <section class="day-section health-summary-section">
         <div class="day-summary calendar-health-summary">
-          <div class="summary-item"><small>心情</small><strong>${esc(day.mood || "未记录")}</strong></div>
-          <div class="summary-item"><small>精力</small><strong>${esc(day.energy || "未记录")}</strong></div>
-          <div class="summary-item"><small>饮水</small><strong>${Number(day.water) || 0} 杯</strong></div>
-          <div class="summary-item"><small>体重</small><strong>${weight ? `${weight.weight} kg` : "未记录"}</strong></div>
+          <div class="summary-item"><small>${uiText("心情", "Mood")}</small><strong>${esc(day.mood || unrecorded)}</strong></div>
+          <div class="summary-item"><small>${uiText("精力", "Energy")}</small><strong>${esc(day.energy || unrecorded)}</strong></div>
+          <div class="summary-item"><small>${uiText("饮水", "Hydration")}</small><strong>${Number(day.water) || 0} ${cupUnit}</strong></div>
+          <div class="summary-item"><small>${uiText("体重", "Weight")}</small><strong>${weight ? `${weight.weight} kg` : unrecorded}</strong></div>
         </div>
       </section>
 
       <section class="day-section">
         <div class="form-grid health-notes-grid">
-          <label class="field wide"><span>饮食简记</span><textarea class="textarea" id="calendarFoodInput" placeholder="记录主要食物和大致份量">${esc(day.food)}</textarea></label>
-          <label class="field wide"><span>当天复盘</span><textarea class="textarea" id="calendarNotesInput" placeholder="记录推进情况和明天需要继续的事项">${esc(day.notes)}</textarea></label>
+          <label class="field wide"><span>${uiText("饮食简记", "Food notes")}</span><textarea class="textarea" id="calendarFoodInput" placeholder="${uiText("记录主要食物和大致份量", "Record main foods and approximate portions")}">${esc(day.food)}</textarea></label>
+          <label class="field wide"><span>${uiText("当天复盘", "Daily review")}</span><textarea class="textarea" id="calendarNotesInput" placeholder="${uiText("记录推进情况和明天需要继续的事项", "Record progress and what should continue tomorrow")}">${esc(day.notes)}</textarea></label>
         </div>
         <button class="btn secondary" data-action="save-calendar-notes" style="margin-top:10px">保存当天记录</button>
       </section>
     `;
 
     document.getElementById("calendarProjectLogPanel").innerHTML = `
-      <div class="card-head"><div><h3>项目推进记录</h3><small>${esc(dayText(selectedDate))} · 当天的项目更新</small></div><span class="tag neutral">${logs.length} 条</span></div>
+      <div class="card-head"><div><h3>${uiText("项目推进记录", "Project updates")}</h3><small>${esc(dayText(selectedDate))} · ${uiText("当天的项目更新", "Project updates for this day")}</small></div><span class="tag neutral">${logs.length} ${currentLanguage === "en" ? "updates" : "条"}</span></div>
       ${logs.length ? `<div class="calendar-project-log-list">${logs.map((log) => `<div class="history-item"><time>${esc(log.project)}</time><span>${esc(log.text)}</span><span></span></div>`).join("")}</div>` : '<div class="empty-state">当天没有项目推进记录。</div>'}
     `;
 
     document.getElementById("calendarEventPanel").innerHTML = `
-      <div class="card-head"><div><h3>重要日期</h3><small>${esc(dayText(selectedDate))} · 需要提前准备或按时跟进</small></div><span class="tag neutral">${events.length} 项</span></div>
-      ${events.length ? events.map((event) => `<div class="event-row"><div class="event-date"><span><small>当天</small>${fromKey(event.date).getDate()}</span></div><div><strong>${esc(event.title)}</strong><p>${esc(event.copy || "")}</p></div></div>`).join("") : '<div class="empty-state">当天没有重要日期。</div>'}
+      <div class="card-head"><div><h3>${uiText("重要日期", "Important dates")}</h3><small>${esc(dayText(selectedDate))} · ${uiText("需要提前准备或按时跟进", "Prepare ahead or follow up on time")}</small></div><span class="tag neutral">${events.length} ${itemUnit}</span></div>
+      ${events.length ? events.map((event) => `<div class="event-row"><div class="event-date"><span><small>${uiText("当天", "Today")}</small>${fromKey(event.date).getDate()}</span></div><div><strong>${esc(event.title)}</strong><p>${esc(event.copy || "")}</p></div></div>`).join("") : `<div class="empty-state">${uiText("当天没有重要日期。", "No important dates for this day.")}</div>`}
     `;
 
     const completed = completedItems();
@@ -1919,7 +2144,7 @@
       : completed.filter((item) => item.tags.includes(completedProjectFilter));
     document.getElementById("calendarCompletedPanel").innerHTML = `
       <div class="card-head completed-project-card-head"><div><h3>已完成项目</h3><small>完成的长期待办和工作项目会归档到这里 · 工作项目显示立项到完成的日期范围</small></div><div class="completed-project-tools"><label class="completed-project-filter"><span>筛选标签</span><select class="select" id="completedProjectFilter">${filterOptions.map((option) => `<option value="${esc(option)}" ${option === completedProjectFilter ? "selected" : ""}>${esc(option)}</option>`).join("")}</select></label><span class="tag neutral">${completedProjectFilter === "全部" ? completed.length : `${filteredCompleted.length} / ${completed.length}`} 项</span></div></div>
-      ${filteredCompleted.length ? `<div class="completed-project-list">${filteredCompleted.map((item) => `<div class="completed-project-row"><div><div class="completed-project-title">${item.tags.map((tag) => `<span class="tag neutral">${esc(tag)}</span>`).join("")}<strong>${esc(item.title)}</strong></div>${completedDescriptionMarkup(item.description)}</div>${item.dateRange ? `<time class="completed-project-range">${esc(item.dateRange)}</time>` : ""}</div>`).join("")}</div>` : `<div class="empty-state">${completed.length ? "该标签下还没有已完成项目。" : "还没有已完成项目。"}</div>`}
+      ${filteredCompleted.length ? `<div class="completed-project-list">${filteredCompleted.map((item) => `<div class="completed-project-row"><div><div class="completed-project-title">${item.tags.map((tag) => `<span class="tag neutral">${esc(tag)}</span>`).join("")}<button class="completed-project-name" type="button" data-action="open-project-history" data-history-id="${esc(item.id)}" data-history-type="${esc(item.type)}" aria-label="${esc(uiText("查看项目历史记录：", "View project history: "))}${esc(item.title)}">${esc(item.title)}</button></div>${completedDescriptionMarkup(item.description)}</div>${item.dateRange ? `<time class="completed-project-range">${esc(item.dateRange)}</time>` : ""}</div>`).join("")}</div>` : `<div class="empty-state">${completed.length ? "该标签下还没有已完成项目。" : "还没有已完成项目。"}</div>`}
     `;
   }
 
@@ -1965,6 +2190,7 @@
     monthCursor = new Date(date.getFullYear(), date.getMonth(), 1);
     renderHome();
     renderReminders();
+    renderProjects();
     renderCalendar();
   }
 
@@ -1979,6 +2205,10 @@
   }
 
   document.addEventListener("click", (event) => {
+    if (event.target.id === "projectHistoryModal") {
+      closeProjectHistory();
+      return;
+    }
     const pageLink = event.target.closest("[data-page]");
     if (pageLink) {
       event.preventDefault();
@@ -1996,6 +2226,16 @@
     if (!actionButton) return;
     const action = actionButton.dataset.action;
     const id = actionButton.dataset.id;
+
+    if (action === "open-project-history") {
+      const item = completedItems().find((candidate) => candidate.id === actionButton.dataset.historyId && candidate.type === actionButton.dataset.historyType);
+      if (item) openProjectHistory(item);
+      return;
+    }
+    if (action === "close-project-history") {
+      closeProjectHistory();
+      return;
+    }
 
     if (action === "toggle-goal-edit") {
       editingGoals = !editingGoals;
@@ -2189,7 +2429,7 @@
     if (action === "add-project") {
       const title = prompt("项目名称");
       if (title?.trim()) {
-        state.projects.unshift({ id: uid("project"), title: title.trim(), description: "", symbol: PROJECT_ICONS[Math.floor(Math.random() * PROJECT_ICONS.length)], area: "其他", status: "未开始", progress: 0, next: "", logs: [], createdAt: todayKey(), completed: false });
+        state.projects.unshift({ id: uid("project"), title: title.trim(), description: "", symbol: PROJECT_ICONS[Math.floor(Math.random() * PROJECT_ICONS.length)].id, area: "其他", status: "未开始", progress: 0, next: "", daily: {}, logs: [], createdAt: todayKey(), completed: false });
         save();
         renderProjects();
         renderHome();
@@ -2219,6 +2459,9 @@
       const project = state.projects.find((item) => item.id === actionButton.dataset.project);
       if (project) {
         project.logs = project.logs.filter((log) => log.id !== id);
+        Object.values(project.daily || {}).forEach((record) => {
+          if (record?.logId === id) record.logId = "";
+        });
         save();
         renderProjects();
         renderCalendar();
@@ -2321,6 +2564,10 @@
     }
   });
 
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeProjectHistory();
+  });
+
   document.addEventListener("change", (event) => {
     const target = event.target;
     if (target.matches("[data-task-toggle]")) {
@@ -2398,6 +2645,7 @@
       const project = state.projects.find((item) => item.id === target.dataset.projectReview);
       if (project) project.reviewDate = target.value;
       save();
+      renderProjects();
     }
     if (target.matches("[data-project-area]")) {
       renderProjects();
@@ -2406,9 +2654,6 @@
     }
     if (target.matches("[data-master-title], [data-master-note]")) {
       renderMilestones();
-      renderCalendar();
-    }
-    if (target.matches("[data-project-description]")) {
       renderCalendar();
     }
     if (target.matches("#completedProjectFilter")) {
@@ -2483,13 +2728,11 @@
       }
       save();
     }
-    if (target.matches("[data-project-area], [data-project-description], [data-project-next]")) {
-      const id = target.dataset.projectArea || target.dataset.projectDescription || target.dataset.projectNext;
+    if (target.matches("[data-project-area]")) {
+      const id = target.dataset.projectArea;
       const project = state.projects.find((item) => item.id === id);
       if (project) {
-        if (target.dataset.projectArea) project.area = target.value;
-        if (target.dataset.projectDescription) project.description = target.value;
-        if (target.dataset.projectNext) project.next = target.value;
+        project.area = target.value;
       }
       save();
     }
@@ -2560,19 +2803,20 @@
       renderCalendar();
       notify("已添加当天待办");
     }
-    if (form.matches("[data-project-log]")) {
-      const project = state.projects.find((item) => item.id === form.dataset.projectLog);
-      const date = form.querySelector("[data-log-date]").value || todayKey();
-      const input = form.querySelector('input:not([type="date"])');
-      if (project && input.value.trim()) {
-        addProjectHistory(project, date, input.value.trim());
-        input.value = "";
+    if (form.matches("[data-project-update]")) {
+      const project = state.projects.find((item) => item.id === form.dataset.projectUpdate);
+      const description = form.querySelector("[data-project-description]")?.value || "";
+      const next = form.querySelector("[data-project-next]")?.value || "";
+      if (project) {
+        const recordDate = isDateKey(form.dataset.projectUpdateDate) ? form.dataset.projectUpdateDate : projectRecordDate(project);
+        updateProjectDayRecord(project, recordDate, description, next);
         save();
         renderProjects();
         renderHome();
         renderCalendar();
-        notify("项目记录已保存");
+        notify("项目日期记录已更新");
       }
+      return;
     }
     if (form.id === "weightForm") {
       const input = document.getElementById("weightInput");
