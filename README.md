@@ -34,6 +34,13 @@ Record weight, hydration, nutrition, and daily wellbeing, then use trend views t
 
 ![健康记录界面 / Health records screen](assets/health-record.png)
 
+### 日常提醒 / Daily reminders
+
+管理当天待办、长期待办和重要日期，把需要行动的事项集中在一个页面。<br>
+Manage daily tasks, long-term items, and important dates in one place so every actionable item stays visible.
+
+![日常提醒界面 / Daily reminders screen](assets/daily-reminders.png)
+
 ### 日历看板 / Calendar dashboard
 
 按日期集中查看当天计划、运动、状态、饮水、体重、重要日期和项目推进。<br>
