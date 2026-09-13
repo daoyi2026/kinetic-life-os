@@ -2,8 +2,8 @@
 
 个人工作台 · 本地优先 / Personal life dashboard · local-first
 
-当前版本：v1.0（正式版）<br>
-Current release: v1.0 (stable)
+当前版本：v1.1（正式版）<br>
+Current release: v1.1 (stable)
 
 ## 产品介绍 / Product overview
 

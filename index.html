@@ -146,7 +146,7 @@
     }
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
   </style>
-    <link rel="stylesheet" href="app-v2.css?v=54" />
+    <link rel="stylesheet" href="app-v2.css?v=58" />
 </head>
 <body>
   <a class="skip-link" href="#mainContent">跳到主要内容</a>
@@ -263,11 +263,19 @@
     document.getElementById('focusSeconds')?.remove();renderFocus();renderAll();const initial=PAGE_NAMES[location.hash.slice(1)]?location.hash.slice(1):'home';switchPage(initial,false);
   })();
   </script>
-    <script src="app-v2.js?v=50" defer></script>
+    <script src="app-v2.js?v=58" defer></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js", { scope: "./" }).catch(() => {});
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
+        navigator.serviceWorker.register("./service-worker.js?v=15", { scope: "./", updateViaCache: "none" })
+          .then((registration) => registration.update().catch(() => {}))
+          .catch(() => {});
       });
     }
   </script>
