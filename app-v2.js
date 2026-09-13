@@ -3,6 +3,214 @@
 
   const STORE = "serene-personal-workspace-v1";
   const APP_VERSION = "v1.0";
+  const LANGUAGE_STORE = "kinetic-life-os:language";
+  let currentLanguage = localStorage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
+  const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const TRANSLATIONS = {
+    "跳到主要内容": "Skip to main content",
+    "总览": "Overview",
+    "工作计划": "Work planning",
+    "健康管理": "Health",
+    "健身计划": "Fitness plan",
+    "日常提醒": "Daily reminders",
+    "日历看板": "Calendar dashboard",
+    "设置与备份": "Settings & backup",
+    "主导航": "Main navigation",
+    "移动端导航": "Mobile navigation",
+    "个人工作台": "Personal Workbench",
+    "本地版": "Local edition",
+    "本地保存": "Local storage",
+    "修改会自动保存在当前浏览器": "Changes are saved in this browser automatically",
+    "搜索项目": "Search projects",
+    "搜索项目…": "Search projects…",
+    "项目标题": "Project title",
+    "上个月": "Previous month",
+    "下个月": "Next month",
+    "回到今天": "Today",
+    "前一天": "Previous day",
+    "后一天": "Next day",
+    "切换语言": "Switch language",
+    "生活总览": "Life overview",
+    "近期重点": "Current focus",
+    "当前阶段的行动、目的与下一步": "Current actions, purpose, and next steps",
+    "现在": "Now",
+    "接下来": "Next",
+    "随后": "Later",
+    "日历": "Calendar",
+    "选择日期查看当天概况": "Select a date to view daily overview",
+    "打开日历看板": "Open calendar dashboard",
+    "进度概览": "Progress overview",
+    "工作推进与年度方向": "Work progress and annual direction",
+    "本月工作完成率": "Monthly work completion",
+    "工作事项": "Work items",
+    "年度目标完成率": "Annual goal completion",
+    "平均进度": "Average progress",
+    "年度目标": "Annual goals",
+    "位于本月工作进度下方": "Shown below monthly work progress",
+    "待办、重要事项与日期": "Tasks, important items, and dates",
+    "体重、饮食与饮水": "Weight, nutrition, and hydration",
+    "查看当天训练安排": "View today's workout",
+    "推进记录与历史": "Updates and history",
+    "今天要做": "Today's tasks",
+    "可直接修改，内容与日常提醒、日历同步。": "Edit directly; synced with daily reminders and calendar.",
+    "打开日常提醒": "Open daily reminders",
+    "项目推进": "Project progress",
+    "管理工作与长期项目，记录每一次推进，并随时回看完整历史。": "Manage work and long-term projects, record every update, and review the full history.",
+    "项目总进度": "Project overview",
+    "与下方项目状态和进度实时同步": "Synced with project status and progress below",
+    "正在推进": "In progress",
+    "状态、进度和下一步会自动保存。": "Status, progress, and next action are saved automatically.",
+    "＋ 新项目": "＋ New project",
+    "当前进度": "Current progress",
+    "所属领域": "Area",
+    "回顾日期": "Review date",
+    "项目描述": "Project description",
+    "下一步行动": "Next action",
+    "记录日期": "Log date",
+    "记录一次推进": "Log an update",
+    "推进记录": "Project update",
+    "添加记录": "Add update",
+    "历史记录": "History",
+    "展开更多记录": "Show more history",
+    "删除项目": "Delete project",
+    "删除这条项目记录": "Delete this project update",
+    "健康记录": "Health records",
+    "记录体重、饮水、饮食与每日状态，重点观察连续变化。": "Track weight, hydration, nutrition, and daily wellbeing.",
+    "体重趋势": "Weight trend",
+    "按日期形成折线趋势": "Trend by date",
+    "今日体重（kg）": "Today's weight (kg)",
+    "今日状态": "Today's status",
+    "心情": "Mood",
+    "精力": "Energy",
+    "尚未记录": "Not recorded",
+    "很好": "Great",
+    "平稳": "Steady",
+    "一般": "Okay",
+    "低落": "Low",
+    "充足": "Energized",
+    "正常": "Normal",
+    "偏低": "Low",
+    "疲惫": "Tired",
+    "饮食热量（可选）": "Calories (optional)",
+    "保存状态": "Save status",
+    "今日饮水": "Today's hydration",
+    "每杯按约 250 毫升估算": "Each cup is estimated at about 250 ml",
+    "＋ 记录一杯": "＋ Log one cup",
+    "减少一杯": "Remove one cup",
+    "饮食简记": "Food notes",
+    "记录主要食物和大致份量": "Record main foods and approximate portions",
+    "保存饮食记录": "Save food notes",
+    "查看数据表": "View data table",
+    "日期": "Date",
+    "体重": "Weight",
+    "删除体重记录": "Delete weight record",
+    "训练与恢复": "Training & recovery",
+    "每周 3 次力量、2 次有氧；切换日期即可查看当天的完整运动安排。": "Three strength and two cardio sessions per week; switch dates to view the full plan.",
+    "训练日历": "Training calendar",
+    "完成训练的日期会显示赞扬图标": "Completed dates show a praise icon",
+    "每日安排": "Daily plan",
+    "切换日期查看当天训练项目": "Switch dates to view that day's workout",
+    "日常项目": "Daily routines",
+    "早上激活，晚上恢复": "Activate in the morning, recover at night",
+    "专项训练": "Focused training",
+    "动作和建议频次保持同一行，作为现有计划的灵活补充。": "Keep exercises and suggested frequency on one line as a flexible supplement.",
+    "编辑": "Edit",
+    "完成": "Done",
+    "本周运动概况": "This week's workout summary",
+    "本周已完成": "Week completed",
+    "进行中": "In progress",
+    "已完成运动日": "Completed workout days",
+    "本周训练记录": "This week's workout records",
+    "完美周": "Perfect weeks",
+    "每天完成运动计划": "Workout plan completed every day",
+    "本周计划进度": "This week's plan progress",
+    "连续完成天数": "Consecutive days",
+    "按计划训练日连续计算": "Counted across scheduled workout days",
+    "训练已完成": "Workout completed",
+    "计划训练日": "Scheduled workout day",
+    "添加项目": "Add routine",
+    "项目名称": "Routine name",
+    "补充说明": "Additional notes",
+    "面板名称": "Panel name",
+    "动作": "Exercise",
+    "频次 / 时长": "Frequency / duration",
+    "添加动作": "Add exercise",
+    "增加面板": "Add panel",
+    "删除日常项目": "Delete routine",
+    "删除动作": "Delete exercise",
+    "热身与拉伸": "Warm-up & stretching",
+    "日常计划": "Daily planning",
+    "统一管理每日待办、长期事项和需要按日期跟进的工作与生活事件。": "Manage daily tasks, long-term items, and dated work and life events.",
+    "当天记录": "Daily notes",
+    "长期待办清单": "Long-term tasks",
+    "不限定某一天的重要事项": "Important items without a fixed date",
+    "事项": "Item",
+    "添加一项待办": "Add a task",
+    "重要日期": "Important dates",
+    "需要提前准备或按时跟进": "Prepare ahead or follow up on time",
+    "日历与复盘": "Calendar & review",
+    "每日计划": "Daily plan",
+    "选择日期后，集中查看当天计划、运动、状态、饮水、体重和项目推进。": "Select a date to review plans, workouts, wellbeing, hydration, weight, and project updates.",
+    "运动安排": "Workout plan",
+    "事务工作": "Work tasks",
+    "待办事项": "Tasks",
+    "当天复盘": "Daily review",
+    "保存当天记录": "Save daily record",
+    "项目推进记录": "Project updates",
+    "已完成项目": "Completed projects",
+    "筛选标签": "Filter tags",
+    "完成的长期待办和工作项目会归档到这里 · 工作项目显示立项到完成的日期范围": "Completed long-term tasks and work projects are archived here · work projects show the start-to-completion date range",
+    "该标签下还没有已完成项目。": "No completed projects under this tag.",
+    "还没有已完成项目。": "No completed projects yet.",
+    "数据备份": "Data backup",
+    "导出备份": "Export backup",
+    "导入备份": "Import backup",
+    "清除当前设备记录": "Clear this device's records",
+    "数据与隐私": "Data & privacy",
+    "保存": "Save",
+    "取消": "Cancel",
+    "删除": "Delete",
+    "添加": "Add",
+    "关闭": "Close",
+    "未开始": "Not started",
+    "待选择": "To decide",
+    "收尾中": "Wrapping up",
+    "等待回复": "Awaiting reply",
+    "长期维护": "Long-term",
+    "暂缓": "Paused",
+    "已完成": "Completed",
+    "其他": "Other",
+    "全部": "All",
+    "生活": "Life",
+    "工作": "Work",
+    "学习": "Study",
+    "健康": "Health",
+    "训练": "Workout",
+    "健身": "Fitness",
+    "未记录": "Not recorded",
+    "当天": "Today",
+    "暂无动作，可先保存面板后再补充。": "No exercises yet. Save the panel first.",
+    "还没有动作。": "No exercises yet.",
+    "暂无当天记录": "No records for this day",
+    "当天还没有待办事项。": "No tasks for this day.",
+    "没有未完成的长期待办，已完成事项会归档到日历看板。": "No unfinished long-term tasks. Completed items are archived in the calendar dashboard.",
+    "还没有重要日期。": "No important dates yet.",
+    "当天没有项目推进记录。": "No project updates for this day.",
+    "当天没有重要日期。": "No important dates for this day.",
+    "还没有正在推进的项目。": "No projects in progress yet.",
+    "还没有推进记录。": "No project updates yet.",
+    "今天没有未完成事项。": "No unfinished tasks today.",
+    "一": "Mon",
+    "二": "Tue",
+    "三": "Wed",
+    "四": "Thu",
+    "五": "Fri",
+    "六": "Sat",
+    "日": "Sun",
+    "工作项目": "Work project",
+    "长期待办": "Long-term task"
+  };
   const pad = (value) => String(value).padStart(2, "0");
   const keyOf = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   const fromKey = (key) => {
@@ -21,6 +229,7 @@
   })[char]);
   const dayText = (key) => {
     const date = fromKey(key);
+    if (currentLanguage === "en") return `${MONTHS_EN[date.getMonth()]} ${date.getDate()}, ${WEEKDAYS_EN[date.getDay()]}`;
     return `${date.getMonth() + 1}月${date.getDate()}日 周${"日一二三四五六"[date.getDay()]}`;
   };
   const addDays = (key, amount) => {
@@ -80,6 +289,7 @@
         <header class="v2-topbar">
           <div class="v2-topbar-brand"><span class="v2-mobile-logo" aria-hidden="true">&gt;_</span><div class="v2-crumb" id="pageCrumb">总览</div></div>
           <div class="v2-top-actions">
+            <button class="lang-switch" id="languageToggle" type="button" aria-label="切换语言">EN</button>
             <label class="search-field">
               <span class="sr-only">搜索项目</span>
               ${icon("search")}
@@ -292,6 +502,78 @@
     </nav>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   `;
+
+  const languageTextSources = new WeakMap();
+  const languageAttributeSources = new WeakMap();
+
+  function translateText(value) {
+    if (currentLanguage === "zh") return value;
+    const trimmed = value.trim();
+    if (!trimmed) return value;
+    if (TRANSLATIONS[trimmed]) return value.replace(trimmed, TRANSLATIONS[trimmed]);
+    const statusMatch = trimmed.match(/^(未开始|待选择|进行中|收尾中|等待回复|长期维护|暂缓|已完成)\s*·\s*(.+)$/);
+    if (statusMatch) return value.replace(trimmed, `${TRANSLATIONS[statusMatch[1]]} · ${statusMatch[2]}`);
+    const historyMatch = trimmed.match(/^历史记录（(\d+)）$/);
+    if (historyMatch) return value.replace(trimmed, `History (${historyMatch[1]})`);
+    const moreHistoryMatch = trimmed.match(/^展开更多记录（(\d+)）$/);
+    if (moreHistoryMatch) return value.replace(trimmed, `Show more history (${moreHistoryMatch[1]})`);
+    const deleteProjectMatch = trimmed.match(/^删除项目\s+(.+)$/);
+    if (deleteProjectMatch) return value.replace(trimmed, `Delete project ${deleteProjectMatch[1]}`);
+    const patterns = [
+      [/^(\d+)\s*\/\s*(\d+)\s*项完成$/, "$1 / $2 complete"],
+      [/^(\d+)\s*\/\s*(\d+)\s*项$/, "$1 / $2 items"],
+      [/^(\d+)\s*\/\s*(\d+)\s*杯$/, "$1 / $2 cups"],
+      [/^(\d+)\s*项$/, "$1 items"],
+      [/^(\d+)\s*条$/, "$1 updates"],
+      [/^(\d+)\s*天$/, "$1 days"],
+      [/^(\d+)\s*周$/, "$1 weeks"],
+      [/^(\d+)\s*杯$/, "$1 cups"],
+      [/^(\d+)\s*个训练日$/, "$1 training days"],
+      [/^(\d+)\s*分钟$/, "$1 minutes"],
+      [/^(\d+)月$/, "$1 month"],
+      [/^(\d{4})年(\d+)月$/, "$2/$1"]
+    ];
+    for (const [pattern, replacement] of patterns) {
+      if (pattern.test(trimmed)) return value.replace(trimmed, trimmed.replace(pattern, replacement));
+    }
+    return value;
+  }
+
+  function translateAttribute(element, name) {
+    if (!element.hasAttribute(name)) return;
+    const current = element.getAttribute(name);
+    const source = languageAttributeSources.get(element)?.[name] ?? current;
+    if (!languageAttributeSources.has(element)) languageAttributeSources.set(element, {});
+    languageAttributeSources.get(element)[name] = source;
+    if (name === "placeholder" || name === "aria-label" || name === "title") {
+      element.setAttribute(name, translateText(source));
+    }
+  }
+
+  function applyLanguage() {
+    document.documentElement.lang = currentLanguage === "en" ? "en" : "zh-CN";
+    const languageToggle = document.getElementById("languageToggle");
+    if (languageToggle) {
+      languageToggle.textContent = currentLanguage === "en" ? "中文" : "EN";
+    }
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    let node;
+    while ((node = walker.nextNode())) textNodes.push(node);
+    textNodes.forEach((textNode) => {
+      const parent = textNode.parentElement;
+      if (!parent || ["SCRIPT", "STYLE", "TEXTAREA"].includes(parent.tagName)) return;
+      if (!languageTextSources.has(textNode)) languageTextSources.set(textNode, textNode.nodeValue);
+      textNode.nodeValue = translateText(languageTextSources.get(textNode));
+    });
+    document.querySelectorAll("[placeholder], [aria-label], [title]").forEach((element) => {
+      ["placeholder", "aria-label", "title"].forEach((name) => translateAttribute(element, name));
+    });
+    if (languageToggle) languageToggle.setAttribute("aria-label", currentLanguage === "en" ? "Switch to Chinese" : "切换到英文");
+  }
+
+  const languageObserver = new MutationObserver(() => requestAnimationFrame(applyLanguage));
+  languageObserver.observe(document.body, { childList: true, subtree: true });
 
   const routineData = [
     ["stand", "早上站桩 15 分钟", "以呼吸平稳、身体放松为准。"],
@@ -1076,6 +1358,12 @@
       Object.values(day.routines).some(Boolean) || eventsOn(key).length > 0 || projectLogsOn(key).length > 0 || Boolean(weightOn(key));
   }
 
+  function monthTitle(date) {
+    return currentLanguage === "en"
+      ? `${MONTHS_EN[date.getMonth()]} ${date.getFullYear()}`
+      : `${date.getFullYear()}年${date.getMonth() + 1}月`;
+  }
+
   function monthGrid() {
     const year = monthCursor.getFullYear();
     const month = monthCursor.getMonth();
@@ -1091,7 +1379,7 @@
       const eventMarker = eventsOn(key).length > 0;
       cells.push(`<button class="cal-day ${key === selectedDate ? "selected" : ""} ${key === todayKey() ? "today" : ""} ${eventMarker ? "has-event" : ""}" data-date="${key}" aria-label="${esc(dayText(key))}${eventMarker ? "，有重要日期" : ""}" ${key === selectedDate ? 'aria-pressed="true"' : ""}><span>${day}</span><i class="cal-dot ${marker}"></i></button>`);
     }
-    return { title: `${year}年${month + 1}月`, html: cells.join("") };
+    return { title: monthTitle(first), html: cells.join("") };
   }
 
   function renderCalendars() {
@@ -1238,7 +1526,7 @@
         <article class="card project-card">
           <button class="mini-btn danger project-delete-btn" data-action="delete-project" data-id="${project.id}" aria-label="删除项目 ${esc(project.title)}">×</button>
           <div class="project-head">
-            <div class="project-title"><div class="project-symbol">${esc(project.symbol || "•")}</div><div class="project-title-copy"><div class="project-title-line"><span class="tag neutral">工作项目</span><span class="tag neutral">${esc(project.area || "其他")}</span><h3>${esc(project.title)}</h3></div></div></div>
+            <div class="project-title"><div class="project-symbol">${esc(project.symbol || "•")}</div><div class="project-title-copy"><div class="project-title-line"><span class="tag neutral">工作项目</span><span class="tag neutral">${esc(project.area || "其他")}</span><input class="project-title-input" data-project-title="${project.id}" value="${esc(project.title)}" maxlength="120" aria-label="项目标题" /></div></div></div>
             <div class="project-status-control">
               <select class="select" data-project-status="${project.id}" aria-label="${esc(project.title)}的状态">
                 ${["未开始", "待选择", "进行中", "收尾中", "等待回复", "长期维护", "暂缓", "已完成"].map((status) => `<option ${status === project.status ? "selected" : ""}>${status}</option>`).join("")}
@@ -1489,7 +1777,7 @@
       const eventMarker = eventsOn(key).length > 0;
       cells.push(`<button class="fitness-cal-day ${key === selectedFitnessDate ? "selected" : ""} ${key === todayKey() ? "today" : ""} ${completed ? "completed" : ""} ${eventMarker ? "has-event" : ""}" data-action="select-fitness-date" data-fitness-date="${key}" aria-label="${esc(dayText(key))}${completed ? "，训练已完成" : scheduled ? "，计划训练日" : ""}${eventMarker ? "，有重要日期" : ""}" ${key === selectedFitnessDate ? 'aria-pressed="true"' : ""}><span>${day}</span><i class="fitness-cal-marker" aria-hidden="true">${completed ? "👏" : scheduled ? "·" : ""}</i></button>`);
     }
-    document.getElementById("fitnessCalendarMonth").textContent = `${year}年${month + 1}月`;
+    document.getElementById("fitnessCalendarMonth").textContent = monthTitle(new Date(year, month, 1));
     document.getElementById("fitnessCalendarGrid").innerHTML = cells.join("");
   }
 
@@ -2183,6 +2471,15 @@
       }
       save();
     }
+    if (target.matches("[data-project-title]")) {
+      const project = state.projects.find((item) => item.id === target.dataset.projectTitle);
+      if (project) {
+        project.title = target.value;
+        save();
+        renderHome();
+        renderCalendar();
+      }
+    }
   });
 
   document.addEventListener("submit", (event) => {
@@ -2295,6 +2592,14 @@
     renderProjects();
   });
 
+  document.getElementById("languageToggle").addEventListener("click", () => {
+    currentLanguage = currentLanguage === "zh" ? "en" : "zh";
+    localStorage.setItem(LANGUAGE_STORE, currentLanguage);
+    renderAll();
+    switchPage(location.hash.slice(1) || "home", false);
+    applyLanguage();
+  });
+
   document.getElementById("importInput").addEventListener("change", async (event) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -2322,4 +2627,5 @@
   save();
   renderAll();
   switchPage(location.hash.slice(1) || "home", false);
+  applyLanguage();
 })();
