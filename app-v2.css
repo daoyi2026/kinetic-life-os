@@ -474,6 +474,12 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 .data-table { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 11px; }
 .data-table th, .data-table td { padding: 7px 5px; border-top: 1px solid #e9ece8; text-align: left; }
 .data-table th { color: var(--muted); font-weight: 600; }
+.data-table th:last-child, .data-table td:last-child { width: 34px; text-align: right; }
+.data-table-action { text-align: right !important; }
+.data-table-scroll { max-height: 276px; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; scrollbar-width: thin; scrollbar-color: transparent transparent; }
+.data-table-scroll::-webkit-scrollbar { width: 6px; }
+.data-table-scroll::-webkit-scrollbar-track { background: transparent; }
+.data-table-scroll::-webkit-scrollbar-thumb { border-radius: 999px; background: transparent; }
 .water-meter { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 16px; }
 .water-cup { width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 50%; background: var(--surface-soft); }
 .water-cup.full { background: #77a9bd; border-color: #77a9bd; }
@@ -512,6 +518,16 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 .training-panel { padding: 20px; }
 .training-panel .card-head { margin-bottom: 8px; }
 .training-panel .card-head h3 { font-size: 19px; }
+.section-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.v2-shell .section-head > div { margin-right: 0; }
+.training-panel-editor { display: grid; gap: 12px; }
+.training-panel-editor .card-head { margin-bottom: 0; }
+.training-panel-editor-fields { gap: 8px; }
+.supplementary-row-editor-list { display: grid; gap: 8px; }
+.supplementary-row-editor { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, .85fr) auto; gap: 8px; padding-top: 8px; border-top: 1px solid #e9ece8; }
+.supplementary-row-remove { align-self: end; margin-bottom: 1px; }
+.supplementary-add-row { justify-self: start; }
+.training-panel-editor .empty-state { padding: 12px; }
 .training-row-list { display: grid; }
 .training-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 0; border-top: 1px solid #e9ece8; }
 .training-row strong { font-size: 12px; }
@@ -669,6 +685,7 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
   .project-head { flex-direction: column; }
   .project-title { width: 100%; padding-right: 0; }
   .project-status-control { position: static; width: 104px; align-self: flex-end; }
+  .section-actions { width: 100%; justify-content: flex-start; margin-left: 0; }
   .completed-project-card-head { flex-direction: column; }
   .completed-project-tools { width: 100%; justify-content: space-between; }
   .completed-project-row { flex-wrap: wrap; gap: 8px; }
@@ -678,6 +695,10 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
   .workout-edit-row .field:last-child { grid-column: 2; }
   .training-row { align-items: flex-start; }
   .training-row span { max-width: 118px; white-space: normal; }
+  .supplementary-row-editor { grid-template-columns: minmax(0, 1fr) auto; }
+  .supplementary-row-editor .field:first-child { grid-column: 1 / -1; }
+  .supplementary-row-editor .field:nth-child(2) { grid-column: 1; }
+  .supplementary-row-remove { grid-column: 2; grid-row: 2; }
   .mobile-nav-v2 {
     position: fixed;
     z-index: 30;

@@ -206,7 +206,7 @@
               </article>
             </section>
             <section class="section">
-              <div class="section-head"><div><h3>专项训练</h3><p>动作和建议频次保持同一行，作为现有计划的灵活补充。</p></div></div>
+              <div class="section-head"><div><h3>专项训练</h3><p>动作和建议频次保持同一行，作为现有计划的灵活补充。</p></div><div class="section-actions" id="supplementTrainingSectionActions"></div></div>
               <div class="grid grid-3 training-panels" id="supplementTrainingPanels"></div>
             </section>
           </section>
@@ -420,6 +420,43 @@
     }
   ];
 
+  function cloneSupplementaryTraining() {
+    return supplementaryTraining.map((panel, panelIndex) => {
+      const panelId = panel.id || `supplementary-panel-${panelIndex + 1}`;
+      return {
+        id: panelId,
+        title: panel.title,
+        note: panel.note,
+        rows: panel.rows.map(([action, frequency], rowIndex) => ({
+          id: `${panelId}-row-${rowIndex + 1}`,
+          action,
+          frequency
+        }))
+      };
+    });
+  }
+
+  function normalizeSupplementaryTraining(items) {
+    const source = Array.isArray(items) && items.length ? items : cloneSupplementaryTraining();
+    const normalized = source.map((panel, panelIndex) => {
+      const rows = Array.isArray(panel?.rows) ? panel.rows.map((row, rowIndex) => {
+        const tuple = Array.isArray(row) ? row : [row?.action, row?.frequency];
+        return {
+          id: String(row?.id || `${panel?.id || `supplementary-panel-${panelIndex + 1}`}-row-${rowIndex + 1}`),
+          action: String(tuple[0] || "").trim(),
+          frequency: String(tuple[1] || "").trim()
+        };
+      }) : [];
+      return {
+        id: String(panel?.id || `supplementary-panel-${panelIndex + 1}`),
+        title: String(panel?.title || "").trim(),
+        note: String(panel?.note || "").trim(),
+        rows
+      };
+    }).filter((panel) => panel.title);
+    return normalized.length ? normalized : cloneSupplementaryTraining();
+  }
+
   const emptyDay = () => ({
     tasks: [],
     notes: "",
@@ -469,6 +506,7 @@
       workoutPlanChanges: [],
       weightHistory: [],
       routineItems: normalizeRoutineItems(),
+      supplementaryTraining: cloneSupplementaryTraining(),
       reminders: [],
       focusSeconds: 1500,
       migratedToV2: true
@@ -786,6 +824,7 @@
       ],
       days,
       workoutPlanChanges: Array.isArray(raw?.workoutPlanChanges) ? raw.workoutPlanChanges : base.workoutPlanChanges,
+      supplementaryTraining: normalizeSupplementaryTraining(raw?.supplementaryTraining),
       weightHistory: [-28, -24, -20, -16, -12, -9, -6, -3, 0].map((offset, index) => ({
         date: addDays(today, offset),
         weight: [68.4, 68.0, 67.8, 67.5, 67.2, 67.0, 66.8, 66.7, 66.6][index]
@@ -817,6 +856,7 @@
         events: Array.isArray(input.events) ? input.events : [],
         days: input.days && typeof input.days === "object" ? input.days : {},
         workoutPlanChanges: Array.isArray(input.workoutPlanChanges) ? input.workoutPlanChanges : [],
+        supplementaryTraining: normalizeSupplementaryTraining(input.supplementaryTraining),
         weightHistory: Array.isArray(input.weightHistory) ? input.weightHistory : [],
         routineItems: normalizeRoutineItems(input.routineItems)
       };
@@ -914,6 +954,7 @@
   let editingPriorities = false;
   let editingWorkoutDate = null;
   let editingRoutines = false;
+  let editingSupplementaryTraining = false;
   let completedProjectFilter = "全部";
 
   function ensureDay(key) {
@@ -924,6 +965,11 @@
   function currentRoutineItems() {
     if (!Array.isArray(state.routineItems) || !state.routineItems.length) state.routineItems = normalizeRoutineItems();
     return state.routineItems;
+  }
+
+  function currentSupplementaryTraining() {
+    if (!Array.isArray(state.supplementaryTraining) || !state.supplementaryTraining.length) state.supplementaryTraining = normalizeSupplementaryTraining();
+    return state.supplementaryTraining;
   }
 
   function save() {
@@ -1274,7 +1320,7 @@
         ${pointNodes}
       </svg>
       <p class="chart-summary">${esc(chartSummary(data))}</p>
-      <details><summary class="text-btn">查看数据表</summary><table class="data-table"><thead><tr><th>日期</th><th>体重</th></tr></thead><tbody>${data.map((entry) => `<tr><td>${esc(entry.date)}</td><td>${entry.weight} kg</td></tr>`).join("")}</tbody></table></details>
+      <details><summary class="text-btn">查看数据表</summary><div class="data-table-scroll"><table class="data-table"><thead><tr><th>日期</th><th>体重</th><th><span class="sr-only">操作</span></th></tr></thead><tbody>${data.map((entry) => `<tr><td>${esc(entry.date)}</td><td>${entry.weight} kg</td><td class="data-table-action"><button class="mini-btn danger" data-action="delete-weight" data-weight-date="${esc(entry.date)}" aria-label="删除体重记录 ${esc(entry.date)}">×</button></td></tr>`).join("")}</tbody></table></div></details>
     `;
   }
 
@@ -1365,6 +1411,39 @@
     `;
   }
 
+  function supplementaryTrainingPanelMarkup(panel) {
+    return `
+      <article class="card training-panel">
+        <div class="card-head"><div><h3>${esc(panel.title)}</h3><small>${esc(panel.note || "")}</small></div></div>
+        <div class="training-row-list">
+          ${panel.rows.length ? panel.rows.map((row) => `<div class="training-row"><strong>${esc(row.action || "未命名动作")}</strong><span>${esc(row.frequency || "未设置频次")}</span></div>`).join("") : '<div class="empty-state">还没有动作。</div>'}
+        </div>
+      </article>
+    `;
+  }
+
+  function supplementaryTrainingEditorMarkup(panel) {
+    return `
+      <article class="card training-panel training-panel-editor" data-supplementary-panel="${esc(panel.id)}">
+        <div class="card-head"><div><span class="tag neutral">专项训练</span></div></div>
+        <div class="form-grid training-panel-editor-fields">
+          <label class="field"><span>面板名称</span><input class="input" data-supplementary-title="${esc(panel.id)}" maxlength="50" value="${esc(panel.title)}" required /></label>
+          <label class="field"><span>补充说明</span><input class="input" data-supplementary-note="${esc(panel.id)}" maxlength="100" value="${esc(panel.note)}" /></label>
+        </div>
+        <div class="supplementary-row-editor-list">
+          ${panel.rows.length ? panel.rows.map((row) => `
+            <div class="supplementary-row-editor">
+              <label class="field"><span>动作</span><input class="input" data-supplementary-action="${esc(row.id)}" data-supplementary-panel-id="${esc(panel.id)}" maxlength="80" value="${esc(row.action)}" placeholder="动作名称" /></label>
+              <label class="field"><span>频次 / 时长</span><input class="input" data-supplementary-frequency="${esc(row.id)}" data-supplementary-panel-id="${esc(panel.id)}" maxlength="100" value="${esc(row.frequency)}" placeholder="例如：每周 2 次 · 10 分钟" /></label>
+              <button class="mini-btn danger supplementary-row-remove" data-action="delete-supplementary-row" data-panel-id="${esc(panel.id)}" data-row-id="${esc(row.id)}" aria-label="删除动作 ${esc(row.action || "未命名动作")}">×</button>
+            </div>
+          `).join("") : '<div class="empty-state">暂无动作，可先保存面板后再补充。</div>'}
+        </div>
+        <button class="btn secondary supplementary-add-row" data-action="add-supplementary-row" data-panel-id="${esc(panel.id)}">＋ 添加动作</button>
+      </article>
+    `;
+  }
+
   function renderFitness() {
     const week = weekKeys(fromKey(selectedFitnessDate));
     const trainingDays = week.filter((key) => TRAINING_WEEKDAYS.includes(fromKey(key).getDay()));
@@ -1386,12 +1465,12 @@
     document.getElementById("fitnessDateHint").textContent = selectedFitnessDate === todayKey() ? "今天" : planFor(selectedFitnessDate).title;
     document.getElementById("fitnessDayPlan").innerHTML = workoutMarkup(selectedFitnessDate, "fitness");
     document.getElementById("fitnessRoutines").innerHTML = routineMarkup(selectedFitnessDate);
-    document.getElementById("supplementTrainingPanels").innerHTML = supplementaryTraining.map((panel) => `
-      <article class="card training-panel">
-        <div class="card-head"><div><h3>${esc(panel.title)}</h3><small>${esc(panel.note)}</small></div></div>
-        <div class="training-row-list">${panel.rows.map(([action, frequency]) => `<div class="training-row"><strong>${esc(action)}</strong><span>${esc(frequency)}</span></div>`).join("")}</div>
-      </article>
-    `).join("");
+    const panels = currentSupplementaryTraining();
+    const panelActions = document.getElementById("supplementTrainingSectionActions");
+    if (panelActions) {
+      panelActions.innerHTML = `${editingSupplementaryTraining ? '<button class="btn green" data-action="add-supplementary-panel">＋ 增加面板</button>' : ""}<button class="text-btn" data-action="toggle-supplementary-edit">${editingSupplementaryTraining ? "完成" : "编辑"}</button>`;
+    }
+    document.getElementById("supplementTrainingPanels").innerHTML = panels.map((panel) => editingSupplementaryTraining ? supplementaryTrainingEditorMarkup(panel) : supplementaryTrainingPanelMarkup(panel)).join("");
   }
 
   function renderFitnessCalendar() {
@@ -1711,6 +1790,51 @@
       renderFitness();
       return;
     }
+    if (action === "toggle-supplementary-edit") {
+      editingSupplementaryTraining = !editingSupplementaryTraining;
+      renderFitness();
+      return;
+    }
+    if (action === "add-supplementary-panel") {
+      const panel = {
+        id: uid("supplementary-panel"),
+        title: "新专项训练",
+        note: "",
+        rows: [{ id: uid("supplementary-row"), action: "", frequency: "" }]
+      };
+      currentSupplementaryTraining().push(panel);
+      editingSupplementaryTraining = true;
+      save();
+      renderFitness();
+      requestAnimationFrame(() => {
+        const input = document.querySelector(`[data-supplementary-title="${panel.id}"]`);
+        input?.focus();
+        input?.select();
+      });
+      return;
+    }
+    if (action === "add-supplementary-row") {
+      const panel = currentSupplementaryTraining().find((item) => item.id === actionButton.dataset.panelId);
+      if (!panel) return;
+      const row = { id: uid("supplementary-row"), action: "", frequency: "" };
+      panel.rows.push(row);
+      editingSupplementaryTraining = true;
+      save();
+      renderFitness();
+      requestAnimationFrame(() => document.querySelector(`[data-supplementary-action="${row.id}"]`)?.focus());
+      return;
+    }
+    if (action === "delete-supplementary-row") {
+      const panels = currentSupplementaryTraining();
+      const panel = panels.find((item) => item.id === actionButton.dataset.panelId);
+      const row = panel?.rows.find((item) => item.id === actionButton.dataset.rowId);
+      if (!panel || !row || !confirm(`删除动作“${row.action || "未命名动作"}”吗？`)) return;
+      panel.rows = panel.rows.filter((item) => item.id !== row.id);
+      save();
+      renderFitness();
+      notify("已删除专项训练动作");
+      return;
+    }
     if (action === "delete-routine") {
       const items = currentRoutineItems();
       if (items.length <= 1) {
@@ -1790,11 +1914,25 @@
         renderCalendar();
       }
     }
+    if (action === "delete-weight") {
+      const date = actionButton.dataset.weightDate;
+      const entry = state.weightHistory.find((item) => item.date === date);
+      if (!entry || !confirm(`删除 ${date} 的体重记录吗？`)) return;
+      state.weightHistory = state.weightHistory.filter((item) => item.date !== date);
+      save();
+      renderHealth();
+      renderCalendar();
+      renderHome();
+      notify("已删除体重记录");
+      return;
+    }
     if (action === "delete-master-todo") {
       if (!confirm("删除这条待办事项吗？")) return;
       state.milestones = state.milestones.filter((item) => item.id !== id);
       save();
       renderMilestones();
+      renderCalendar();
+      renderHome();
     }
     if (action === "toggle-event-form") {
       const form = document.getElementById("eventForm");
@@ -1899,6 +2037,7 @@
       save();
       renderMilestones();
       renderCalendar();
+      renderHome();
     }
     if (target.matches("[data-project-status]")) {
       const project = state.projects.find((item) => item.id === target.dataset.projectStatus);
@@ -1949,6 +2088,18 @@
       const project = state.projects.find((item) => item.id === target.dataset.projectReview);
       if (project) project.reviewDate = target.value;
       save();
+    }
+    if (target.matches("[data-project-area]")) {
+      renderProjects();
+      renderHome();
+      renderCalendar();
+    }
+    if (target.matches("[data-master-title], [data-master-note]")) {
+      renderMilestones();
+      renderCalendar();
+    }
+    if (target.matches("[data-project-description]")) {
+      renderCalendar();
     }
     if (target.matches("#completedProjectFilter")) {
       completedProjectFilter = target.value;
@@ -2001,6 +2152,24 @@
         if (target.dataset.routineTitle) item.title = target.value;
         if (target.dataset.routineDetail) item.detail = target.value;
         state.routineItems = currentRoutineItems();
+      }
+      save();
+    }
+    if (target.matches("[data-supplementary-title], [data-supplementary-note], [data-supplementary-action], [data-supplementary-frequency]")) {
+      const panels = currentSupplementaryTraining();
+      const panelId = target.dataset.supplementaryTitle || target.dataset.supplementaryNote || target.dataset.supplementaryPanelId;
+      const panel = panels.find((item) => item.id === panelId);
+      if (panel) {
+        if (target.dataset.supplementaryTitle) panel.title = target.value.trim() || "新专项训练";
+        if (target.dataset.supplementaryNote) panel.note = target.value;
+        if (target.dataset.supplementaryAction || target.dataset.supplementaryFrequency) {
+          const rowId = target.dataset.supplementaryAction || target.dataset.supplementaryFrequency;
+          const row = panel.rows.find((item) => item.id === rowId);
+          if (row) {
+            if (target.dataset.supplementaryAction) row.action = target.value;
+            if (target.dataset.supplementaryFrequency) row.frequency = target.value;
+          }
+        }
       }
       save();
     }
@@ -2093,6 +2262,7 @@
         save();
         renderHealth();
         renderCalendar();
+        renderHome();
         notify("今日体重已记录");
       }
     }
