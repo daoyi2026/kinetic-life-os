@@ -51,6 +51,12 @@ Serve this directory with any static web server and open `index.html` through th
 
 The included GitHub Actions workflow publishes the repository as a static GitHub Pages site after every push to `main`.
 
+## Progressive Web App
+
+The site includes a web app manifest and a service worker. On a supported browser, open the deployed HTTPS URL and choose the browser's install action to add Kinetic Life OS to the desktop, Dock, Start menu, or home screen. The service worker caches the application shell for offline launches after the first successful visit.
+
+PWA installation does not add an account system or cloud synchronization. User data remains local to the browser profile, so use the built-in JSON export before moving to another browser or device.
+
 ## Security and privacy
 
 - Do not enter passwords, identity documents, payment data, or other highly sensitive information.
