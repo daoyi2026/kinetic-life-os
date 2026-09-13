@@ -430,14 +430,15 @@ svg { display: block; }
 .project-status-control .select { min-height: 52px; }
 .project-delete-btn { position: absolute; top: 10px; right: 10px; z-index: 1; width: 30px; min-width: 30px; height: 30px; min-height: 30px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(163, 60, 53, 0.12); border-radius: 50%; background: #fbefed; color: var(--danger); font-size: 16px; line-height: 1; }
 .project-delete-btn:hover { background: #f4dcd8; color: var(--danger); transform: scale(1.04); }
-.project-title { display: flex; align-items: flex-start; gap: 11px; }
 .project-title-copy { min-width: 0; flex: 1 1 auto; }
-.project-title-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.project-title-line .tag { flex: 0 0 auto; }
-.project-symbol { width: 52px; height: 52px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 12px; background: var(--green-soft); color: var(--green); font: 600 19px var(--serif); }
+.project-title-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.project-area-tag { max-width: min(100%, 18rem); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.project-symbol { width: 72px; height: 72px; display: grid; place-items: center; flex: 0 0 auto; padding: 0; border: 1px solid transparent; border-radius: 16px; background: var(--green-soft); color: var(--green); font: 600 24px var(--serif); }
+.project-symbol:hover, .project-symbol:focus-visible { border-color: rgba(54, 113, 22, 0.25); background: #d8efca; outline: none; transform: translateY(-1px); }
 .project-title h3 { margin: 0; font: 600 20px/1.2 var(--serif); }
-.project-title-input { width: min(100%, 36rem); min-width: 0; max-width: 100%; margin: 0; padding: 2px 6px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--ink); font: 600 20px/1.2 var(--serif); }
+.project-title-input { display: block; width: min(100%, 36rem); min-width: 0; max-width: 100%; height: 54px; min-height: 54px; max-height: 54px; margin-top: 12px; padding: 2px 6px; overflow: hidden; resize: none; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--ink); font: 600 20px/1.2 var(--serif); }
 .project-title-input:hover, .project-title-input:focus { border-color: var(--line-strong, var(--line)); background: rgba(255,255,255,0.7); outline: none; }
+.project-title-input:focus { overflow-y: auto; }
 .project-title p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
 .project-fields { margin-top: 16px; }
 .project-progress { margin: 16px 0 0; }

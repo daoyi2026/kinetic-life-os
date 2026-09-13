@@ -1,9 +1,9 @@
-const CACHE_NAME = "kinetic-life-os-v4-shell";
+const CACHE_NAME = "kinetic-life-os-v5-shell";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./app-v2.css?v=53",
-  "./app-v2.js?v=49",
+  "./app-v2.css?v=54",
+  "./app-v2.js?v=50",
   "./assets/icon-180.png",
   "./assets/icon-192.png",
   "./assets/icon-512.png"
