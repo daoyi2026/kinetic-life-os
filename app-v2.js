@@ -450,19 +450,19 @@
         { id: "priority-later", label: "随后", text: "完成个人房间的首个可见区块", detail: "先完成空间建模和首屏，不等待职业定位完全确定。" }
       ],
       projects: [
-        { id: "p-job", title: "投简历与远程工作", symbol: "↗", area: "求职与远程", status: "进行中", progress: 10, next: "完成一版主简历，开始记录投递与跟进。", logs: [], createdAt, completed: false },
-        { id: "p-phd", title: "博士项目与导师沟通", symbol: "✉", area: "博士与研究", status: "进行中", progress: 25, next: "整理研究方向说明、导师名单和第一封邮件。", logs: [], createdAt, completed: false },
-        { id: "p-app", title: "入睡时间记录 App", symbol: "⌛", area: "产品与空间", status: "收尾中", progress: 80, next: "列出发布前剩余事项并逐件关闭。", logs: [], createdAt, completed: false },
-        { id: "p-room", title: "个人房间与网站", symbol: "⌂", area: "产品与空间", status: "进行中", progress: 15, next: "先完成一个可用初版，再根据实际使用补充内容。", logs: [], createdAt, completed: false },
-        { id: "p-novel", title: "年代文小说", symbol: "✎", area: "创作与学习", status: "长期维护", progress: 5, next: "安排本周一次写作时段，先完成一个小片段。", logs: [], createdAt, completed: false },
-        { id: "p-media", title: "个人自媒体输出", symbol: "◎", area: "创作与学习", status: "长期维护", progress: 5, next: "完成一个不完美但完整的主题输出。", logs: [], createdAt, completed: false },
-        { id: "p-healing", title: "疗愈网页：森林 / 极光二选一", symbol: "◌", area: "产品与空间", status: "待选择", progress: 0, next: "先确定一个主题，再研究循环视频。", logs: [], createdAt, completed: false }
+        { id: "p-job", title: "投简历与远程工作", description: "整理岗位、投递材料和跟进节奏，逐步建立稳定的机会管道。", symbol: "↗", area: "求职与远程", status: "进行中", progress: 10, next: "完成一版主简历，开始记录投递与跟进。", logs: [], createdAt, completed: false },
+        { id: "p-phd", title: "博士项目与导师沟通", description: "围绕研究方向整理说明、筛选合适的导师，并持续记录沟通结果。", symbol: "✉", area: "博士与研究", status: "进行中", progress: 25, next: "整理研究方向说明、导师名单和第一封邮件。", logs: [], createdAt, completed: false },
+        { id: "p-app", title: "入睡时间记录 App", description: "做一个足够轻量的记录工具，帮助观察作息变化并形成可回看的趋势。", symbol: "⌛", area: "产品与空间", status: "收尾中", progress: 80, next: "列出发布前剩余事项并逐件关闭。", logs: [], createdAt, completed: false },
+        { id: "p-room", title: "个人房间与网站", description: "把个人空间、作品入口和持续记录整合成一个可以逐步扩展的数字基地。", symbol: "⌂", area: "产品与空间", status: "进行中", progress: 15, next: "先完成一个可用初版，再根据实际使用补充内容。", logs: [], createdAt, completed: false },
+        { id: "p-novel", title: "年代文小说", description: "保持低压力、可持续的写作节奏，逐步完善故事设定和章节内容。", symbol: "✎", area: "创作与学习", status: "长期维护", progress: 5, next: "安排本周一次写作时段，先完成一个小片段。", logs: [], createdAt, completed: false },
+        { id: "p-media", title: "个人自媒体输出", description: "围绕真实兴趣持续产出完整主题，先保持稳定，再逐步形成自己的表达方式。", symbol: "◎", area: "创作与学习", status: "长期维护", progress: 5, next: "完成一个不完美但完整的主题输出。", logs: [], createdAt, completed: false },
+        { id: "p-healing", title: "疗愈网页：森林 / 极光二选一", description: "探索一个节奏舒缓的沉浸式网页，用简单的视觉和声音帮助进入放松状态。", symbol: "◌", area: "产品与空间", status: "待选择", progress: 0, next: "先确定一个主题，再研究循环视频。", logs: [], createdAt, completed: false }
       ],
       milestones: [
-        { id: "m1", title: "研究方向说明第一版", note: "先写清楚问题、对象和方法，不追求最终稿。", done: false },
-        { id: "m2", title: "建立导师候选名单", note: "记录研究重合度、近期发表和招生信息。", done: false },
-        { id: "m3", title: "发送第一封沟通邮件", note: "整理内容后发送，并记录后续跟进。", done: false },
-        { id: "m4", title: "建立申请材料清单", note: "研究计划、简历、语言和推荐材料逐项推进。", done: false }
+        { id: "m1", title: "研究方向说明第一版", note: "先写清楚问题、对象和方法，不追求最终稿。", done: false, createdAt },
+        { id: "m2", title: "建立导师候选名单", note: "记录研究重合度、近期发表和招生信息。", done: false, createdAt },
+        { id: "m3", title: "发送第一封沟通邮件", note: "整理内容后发送，并记录后续跟进。", done: false, createdAt },
+        { id: "m4", title: "建立申请材料清单", note: "研究计划、简历、语言和推荐材料逐项推进。", done: false, createdAt }
       ],
       events: [],
       days: {},
@@ -652,6 +652,7 @@
       {
         id: "demo-project-course",
         title: "城市观察课程提案",
+        description: "围绕城市观察设计一套可讨论的课程提案，包含结构、案例和练习安排。",
         symbol: "◎",
         area: "学习与创作",
         status: "进行中",
@@ -669,6 +670,7 @@
       {
         id: "demo-project-portfolio",
         title: "作品集首页改版",
+        description: "重新整理作品集首页的信息层级，让作品入口、项目背景和移动端阅读路径更清晰。",
         symbol: "↗",
         area: "产品与空间",
         status: "收尾中",
@@ -686,6 +688,7 @@
       {
         id: "demo-project-route",
         title: "周末城市探索",
+        description: "保留一条轻量、可执行的周末路线，记录交通、停留时间和沿途值得回看的地点。",
         symbol: "⌂",
         area: "生活方式",
         status: "待选择",
@@ -699,6 +702,7 @@
       {
         id: "demo-project-reading",
         title: "阅读资料整理",
+        description: "把分散的阅读卡片整理成稳定的主题结构，合并重复内容并留下可复用的摘要。",
         symbol: "✎",
         area: "学习与创作",
         status: "长期维护",
@@ -716,6 +720,7 @@
       {
         id: "demo-project-newsletter",
         title: "月度通讯试刊",
+        description: "完成一份月度通讯试刊，从选题、版式到反馈归档，验证稳定输出的基本流程。",
         symbol: "✉",
         area: "学习与创作",
         status: "已完成",
@@ -733,6 +738,7 @@
       {
         id: "demo-project-workflow",
         title: "桌面工作流整理",
+        description: "整理桌面、文件夹和快捷入口，减少寻找资料的阻力，建立更稳定的日常工作环境。",
         symbol: "□",
         area: "效率与成长",
         status: "已完成",
@@ -767,11 +773,11 @@
       projects,
       routineItems: normalizeRoutineItems(raw?.routineItems),
       milestones: [
-        { id: "demo-milestone-1", title: "准备课程提案框架", note: "整理目标、结构和示例，先形成可以讨论的草稿。", done: false, completedAt: "" },
-        { id: "demo-milestone-2", title: "完成作品集首页改版", note: "确认首页层级、移动端排版和入口说明。", done: false, completedAt: "" },
-        { id: "demo-milestone-3", title: "整理季度阅读主题", note: "从现有卡片中合并重复主题并保留可复用摘要。", done: true, completedAt: projectDate(-6) },
-        { id: "demo-milestone-4", title: "确定周末城市路线", note: "保留一条轻量路线，记录交通和预计停留时间。", done: false, completedAt: "" },
-        { id: "demo-milestone-5", title: "完成资料库标签清理", note: "统一标签命名，避免同义标签重复出现。", done: false, completedAt: "" }
+        { id: "demo-milestone-1", title: "准备课程提案框架", note: "整理目标、结构和示例，先形成可以讨论的草稿。", done: false, createdAt: projectDate(-10), completedAt: "" },
+        { id: "demo-milestone-2", title: "完成作品集首页改版", note: "确认首页层级、移动端排版和入口说明。", done: false, createdAt: projectDate(-9), completedAt: "" },
+        { id: "demo-milestone-3", title: "整理季度阅读主题", note: "从现有卡片中合并重复主题并保留可复用摘要。", done: true, createdAt: projectDate(-14), completedAt: projectDate(-6) },
+        { id: "demo-milestone-4", title: "确定周末城市路线", note: "保留一条轻量路线，记录交通和预计停留时间。", done: false, createdAt: projectDate(-5), completedAt: "" },
+        { id: "demo-milestone-5", title: "完成资料库标签清理", note: "统一标签命名，避免同义标签重复出现。", done: false, createdAt: projectDate(-7), completedAt: "" }
       ],
       events: [
         { id: "demo-event-1", date: today, title: "课程提案内部评审", copy: "整理开场页和待确认问题。" },
@@ -849,9 +855,15 @@
       merged.workoutPlanChanges = [...workoutChanges.values()].sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
       merged.projects.forEach((project) => {
         project.logs = Array.isArray(project.logs) ? project.logs : [];
+        project.description = String(project.description || project.next || "项目描述待补充。").trim();
         project.createdAt = isDateKey(project.createdAt) ? project.createdAt : "";
         project.completedAt = isDateKey(project.completedAt) ? project.completedAt : "";
         project.completed = project.completed === true || project.status === "已完成";
+      });
+      merged.milestones.forEach((item) => {
+        item.createdAt = isDateKey(item.createdAt) ? item.createdAt : "";
+        item.completedAt = isDateKey(item.completedAt) ? item.completedAt : "";
+        item.done = item.done === true;
       });
       merged.priorities = merged.priorities.map((item, index) => ({
         ...(base.priorities[index] || {}),
@@ -902,6 +914,7 @@
   let editingPriorities = false;
   let editingWorkoutDate = null;
   let editingRoutines = false;
+  let completedProjectFilter = "全部";
 
   function ensureDay(key) {
     if (!state.days[key]) state.days[key] = emptyDay();
@@ -958,32 +971,46 @@
     return project.completed === true || project.status === "已完成";
   }
 
-  function projectDuration(project) {
-    const logDates = (project.logs || []).map((log) => log.date).filter(isDateKey).sort();
-    const createdAt = isDateKey(project.createdAt) ? project.createdAt : logDates[0] || "";
-    const completedAt = isDateKey(project.completedAt)
-      ? project.completedAt
-      : isDateKey(project.updatedAt) ? project.updatedAt : "";
-    if (!createdAt || !completedAt) return "创建日期未记录";
-    const days = Math.max(0, Math.round((fromKey(completedAt) - fromKey(createdAt)) / 86400000));
-    return days === 0 ? "当天完成" : `${days} 天`;
+  function completionDateRange(startAt, endAt, startLabel = "立项") {
+    const start = isDateKey(startAt) ? startAt : "";
+    const end = isDateKey(endAt) ? endAt : "";
+    if (start && end) return `${start}${startLabel}～${end}完成`;
+    if (end) return `${end}完成`;
+    return start ? `${start}${startLabel}` : "";
+  }
+
+  function completedDescriptionMarkup(description) {
+    const text = String(description || "").trim();
+    if (!text) return "";
+    if (text.length <= 96) return `<p class="completed-project-description">${esc(text)}</p>`;
+    return `<details class="completed-project-description"><summary>${esc(text.slice(0, 96))}… <span>展开</span></summary><p>${esc(text)}</p></details>`;
+  }
+
+  function completedProjectFilterOptions() {
+    const areas = state.projects
+      .map((project) => String(project.area || "其他").trim())
+      .filter(Boolean);
+    return ["全部", "工作项目", "长期待办", ...[...new Set(areas)].filter((area) => !["工作项目", "长期待办"].includes(area))];
   }
 
   function completedItems() {
     const todos = state.milestones.filter((item) => item.done).map((item) => ({
       id: item.id,
       type: "长期待办",
+      tags: ["长期待办"],
       title: item.title,
-      note: item.note || "",
-      completedAt: item.completedAt || ""
+      description: item.note || "",
+      completedAt: item.completedAt || "",
+      dateRange: completionDateRange(item.createdAt, item.completedAt, "创建")
     }));
     const projects = state.projects.filter(isCompletedProject).map((project) => ({
       id: project.id,
       type: "工作项目",
+      tags: ["工作项目", String(project.area || "其他").trim() || "其他"],
       title: project.title,
-      note: project.area || "",
+      description: project.description || "",
       completedAt: project.completedAt || project.updatedAt || "",
-      duration: projectDuration(project)
+      dateRange: completionDateRange(project.createdAt, project.completedAt || project.updatedAt, "立项")
     }));
     return [...todos, ...projects].sort((a, b) => (b.completedAt || "").localeCompare(a.completedAt || ""));
   }
@@ -1149,7 +1176,7 @@
   function renderProjects() {
     const query = (document.getElementById("globalSearch").value || "").trim().toLowerCase();
     const activeProjects = state.projects.filter((project) => !isCompletedProject(project));
-    const list = activeProjects.filter((project) => !query || `${project.title}${project.area}${project.next}`.toLowerCase().includes(query));
+    const list = activeProjects.filter((project) => !query || `${project.title}${project.area}${project.description}${project.next}`.toLowerCase().includes(query));
     const overview = document.getElementById("projectOverview");
     if (overview) {
       overview.innerHTML = activeProjects.length ? activeProjects.map((project) => `
@@ -1165,7 +1192,7 @@
         <article class="card project-card">
           <button class="mini-btn danger project-delete-btn" data-action="delete-project" data-id="${project.id}" aria-label="删除项目 ${esc(project.title)}">×</button>
           <div class="project-head">
-            <div class="project-title"><div class="project-symbol">${esc(project.symbol || "•")}</div><div><h3>${esc(project.title)}</h3><p>${esc(project.area || "其他")} · 最近更新：${esc(project.updatedAt || "尚未记录")}</p></div></div>
+            <div class="project-title"><div class="project-symbol">${esc(project.symbol || "•")}</div><div class="project-title-copy"><div class="project-title-line"><span class="tag neutral">工作项目</span><span class="tag neutral">${esc(project.area || "其他")}</span><h3>${esc(project.title)}</h3></div></div></div>
             <div class="project-status-control">
               <select class="select" data-project-status="${project.id}" aria-label="${esc(project.title)}的状态">
                 ${["未开始", "待选择", "进行中", "收尾中", "等待回复", "长期维护", "暂缓", "已完成"].map((status) => `<option ${status === project.status ? "selected" : ""}>${status}</option>`).join("")}
@@ -1176,6 +1203,7 @@
           <div class="form-grid project-fields">
             <label class="field"><span>所属领域</span><input class="input" data-project-area="${project.id}" value="${esc(project.area || "")}" /></label>
             <label class="field"><span>回顾日期</span><input class="input" type="date" data-project-review="${project.id}" value="${esc(project.reviewDate || "")}" /></label>
+            <label class="field wide"><span>项目描述</span><textarea class="textarea" data-project-description="${project.id}" maxlength="260" placeholder="说明项目要解决的问题、目标和范围">${esc(project.description || "")}</textarea></label>
             <label class="field wide"><span>下一步行动</span><textarea class="textarea" data-project-next="${project.id}">${esc(project.next || "")}</textarea></label>
           </div>
           <form class="log-form" data-project-log="${project.id}">
@@ -1442,7 +1470,7 @@
       <div class="master-todo-row">
         <input class="check" type="checkbox" data-master-done="${item.id}" ${item.done ? "checked" : ""} aria-label="切换待办完成状态" />
         <div class="fields">
-          <input class="inline-input" data-master-title="${item.id}" value="${esc(item.title)}" aria-label="修改待办内容" />
+          <div class="master-todo-title-line"><span class="tag neutral">长期待办</span><input class="inline-input" data-master-title="${item.id}" value="${esc(item.title)}" aria-label="修改待办内容" /></div>
           <input class="inline-input" data-master-note="${item.id}" value="${esc(item.note || "")}" placeholder="补充说明" aria-label="修改补充说明" />
         </div>
         <button class="mini-btn danger" data-action="delete-master-todo" data-id="${item.id}" aria-label="删除待办">×</button>
@@ -1506,9 +1534,14 @@
     `;
 
     const completed = completedItems();
+    const filterOptions = completedProjectFilterOptions();
+    if (!filterOptions.includes(completedProjectFilter)) completedProjectFilter = "全部";
+    const filteredCompleted = completedProjectFilter === "全部"
+      ? completed
+      : completed.filter((item) => item.tags.includes(completedProjectFilter));
     document.getElementById("calendarCompletedPanel").innerHTML = `
-      <div class="card-head"><div><h3>已完成项目</h3><small>完成的长期待办和工作项目会归档到这里 · 工作项目会统计创建到完成的用时</small></div><span class="tag neutral">${completed.length} 项</span></div>
-      ${completed.length ? `<div class="completed-project-list">${completed.map((item) => `<div class="completed-project-row"><div><div class="completed-project-title"><span class="tag neutral">${esc(item.type)}</span><strong>${esc(item.title)}</strong></div>${item.note ? `<p>${esc(item.note)}</p>` : ""}${item.duration ? `<p class="completed-project-duration">完成用时：${esc(item.duration)}</p>` : ""}</div>${item.completedAt ? `<time>${esc(item.completedAt)}</time>` : ""}</div>`).join("")}</div>` : '<div class="empty-state">还没有已完成项目。</div>'}
+      <div class="card-head completed-project-card-head"><div><h3>已完成项目</h3><small>完成的长期待办和工作项目会归档到这里 · 工作项目显示立项到完成的日期范围</small></div><div class="completed-project-tools"><label class="completed-project-filter"><span>筛选标签</span><select class="select" id="completedProjectFilter">${filterOptions.map((option) => `<option value="${esc(option)}" ${option === completedProjectFilter ? "selected" : ""}>${esc(option)}</option>`).join("")}</select></label><span class="tag neutral">${completedProjectFilter === "全部" ? completed.length : `${filteredCompleted.length} / ${completed.length}`} 项</span></div></div>
+      ${filteredCompleted.length ? `<div class="completed-project-list">${filteredCompleted.map((item) => `<div class="completed-project-row"><div><div class="completed-project-title">${item.tags.map((tag) => `<span class="tag neutral">${esc(tag)}</span>`).join("")}<strong>${esc(item.title)}</strong></div>${completedDescriptionMarkup(item.description)}</div>${item.dateRange ? `<time class="completed-project-range">${esc(item.dateRange)}</time>` : ""}</div>`).join("")}</div>` : `<div class="empty-state">${completed.length ? "该标签下还没有已完成项目。" : "还没有已完成项目。"}</div>`}
     `;
   }
 
@@ -1733,7 +1766,7 @@
     if (action === "add-project") {
       const title = prompt("项目名称");
       if (title?.trim()) {
-        state.projects.unshift({ id: uid("project"), title: title.trim(), symbol: "•", area: "其他", status: "未开始", progress: 0, next: "", logs: [], createdAt: todayKey(), completed: false });
+        state.projects.unshift({ id: uid("project"), title: title.trim(), description: "", symbol: "•", area: "其他", status: "未开始", progress: 0, next: "", logs: [], createdAt: todayKey(), completed: false });
         save();
         renderProjects();
         renderHome();
@@ -1917,6 +1950,10 @@
       if (project) project.reviewDate = target.value;
       save();
     }
+    if (target.matches("#completedProjectFilter")) {
+      completedProjectFilter = target.value;
+      renderCalendar();
+    }
   });
 
   document.addEventListener("input", (event) => {
@@ -1967,11 +2004,12 @@
       }
       save();
     }
-    if (target.matches("[data-project-area], [data-project-next]")) {
-      const id = target.dataset.projectArea || target.dataset.projectNext;
+    if (target.matches("[data-project-area], [data-project-description], [data-project-next]")) {
+      const id = target.dataset.projectArea || target.dataset.projectDescription || target.dataset.projectNext;
       const project = state.projects.find((item) => item.id === id);
       if (project) {
         if (target.dataset.projectArea) project.area = target.value;
+        if (target.dataset.projectDescription) project.description = target.value;
         if (target.dataset.projectNext) project.next = target.value;
       }
       save();
@@ -2061,7 +2099,7 @@
     if (form.id === "masterTodoForm") {
       const title = document.getElementById("masterTodoTitle");
       const note = document.getElementById("masterTodoNote");
-      if (title.value.trim()) state.milestones.push({ id: uid("todo"), title: title.value.trim(), note: note.value.trim(), done: false, completedAt: "" });
+      if (title.value.trim()) state.milestones.push({ id: uid("todo"), title: title.value.trim(), note: note.value.trim(), done: false, createdAt: todayKey(), completedAt: "" });
       form.reset();
       save();
       renderMilestones();
