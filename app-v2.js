@@ -5,6 +5,10 @@
   const APP_VERSION = "v1.1";
   const LANGUAGE_STORE = "kinetic-life-os:language";
   let currentLanguage = localStorage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
+  const pageScrollPositions = new Map();
+  let activePage = "home";
+  let internalHistoryDepth = 0;
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
   const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const MONTHS_SHORT_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -38,6 +42,8 @@
     "前一天": "Previous day",
     "后一天": "Next day",
     "切换语言": "Switch language",
+    "返回": "Back",
+    "返回上一页": "Go back",
     "生活总览": "Life overview",
     "近期重点": "Current focus",
     "当前阶段的行动、目的与下一步": "Current actions, purpose, and next steps",
@@ -380,6 +386,7 @@
         <header class="v2-topbar">
           <div class="v2-topbar-brand"><span class="v2-mobile-logo" aria-hidden="true">&gt;_</span><div class="v2-crumb" id="pageCrumb">总览</div></div>
           <div class="v2-top-actions">
+            <button class="back-button" id="backButton" type="button" data-action="go-back" aria-label="返回上一页" title="返回上一页" disabled><span class="back-button-icon" aria-hidden="true">←</span><span class="back-button-label">返回</span></button>
             <button class="lang-switch" id="languageToggle" type="button" aria-label="切换语言">EN</button>
             <label class="search-field">
               <span class="sr-only">搜索项目</span>
@@ -2224,9 +2231,51 @@
     renderCalendar();
   }
 
-  function switchPage(page, updateHash = true) {
+  function setScrollPosition(top) {
+    const root = document.documentElement;
+    const previousBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
+    window.scrollTo(0, top);
+    root.style.scrollBehavior = previousBehavior;
+  }
+
+  function restorePageScroll(page) {
+    const top = pageScrollPositions.get(page) || 0;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setScrollPosition(top));
+    });
+  }
+
+  function updateBackButton() {
+    const button = document.getElementById("backButton");
+    if (!button) return;
+    const canGoBack = internalHistoryDepth > 0;
+    button.disabled = !canGoBack;
+    button.setAttribute("aria-label", uiText("返回上一页", "Go back"));
+    button.title = uiText("返回上一页", "Go back");
+    const label = button.querySelector(".back-button-label");
+    if (label) label.textContent = uiText("返回", "Back");
+  }
+
+  function goBack() {
+    if (internalHistoryDepth > 0) history.back();
+  }
+
+  function switchPage(page, updateHash = true, restoreScroll = false) {
     const requested = page === "milestones" ? "reminders" : page;
     const valid = pageNames[requested] ? requested : "home";
+    const pageChanged = valid !== activePage;
+    if (updateHash && pageChanged) {
+      pageScrollPositions.set(activePage, window.scrollY);
+      internalHistoryDepth += 1;
+      const nextState = { ...(history.state || {}), kineticRoute: valid, kineticDepth: internalHistoryDepth };
+      if (location.hash === `#${valid}` && !history.state?.kineticRoute) {
+        history.replaceState(nextState, "", `#${valid}`);
+      } else {
+        history.pushState(nextState, "", `#${valid}`);
+      }
+    }
+    activePage = valid;
     document.querySelectorAll("[data-screen]").forEach((screen) => screen.classList.toggle("active", screen.dataset.screen === valid));
     document.querySelectorAll("[data-page]").forEach((link) => {
       const active = link.dataset.page === valid;
@@ -2242,7 +2291,9 @@
     if (valid === "calendar") renderCalendar();
     if (valid === "work") renderProjects();
     if (valid === "fitness") renderFitness();
-    window.scrollTo(0, 0);
+    updateBackButton();
+    if (restoreScroll) restorePageScroll(valid);
+    else if (pageChanged) setScrollPosition(0);
   }
 
   function updateSelectedDate(key) {
@@ -2288,6 +2339,10 @@
     const action = actionButton.dataset.action;
     const id = actionButton.dataset.id;
 
+    if (action === "go-back") {
+      goBack();
+      return;
+    }
     if (action === "open-project-history") {
       const item = completedItems().find((candidate) => candidate.id === actionButton.dataset.historyId && candidate.type === actionButton.dataset.historyType);
       if (item) openProjectHistory(item);
@@ -2975,9 +3030,15 @@
     }
   });
 
-  window.addEventListener("popstate", () => switchPage(location.hash.slice(1), false));
+  window.addEventListener("popstate", (event) => {
+    internalHistoryDepth = Number.isInteger(event.state?.kineticDepth) ? event.state.kineticDepth : 0;
+    switchPage(location.hash.slice(1), false, true);
+  });
   save();
   renderAll();
-  switchPage(location.hash.slice(1) || "home", false);
+  const initialPage = pageNames[location.hash.slice(1)] ? location.hash.slice(1) : "home";
+  internalHistoryDepth = 0;
+  history.replaceState({ ...(history.state || {}), kineticRoute: initialPage, kineticDepth: 0 }, "", `#${initialPage}`);
+  switchPage(initialPage, false);
   applyLanguage();
 })();
