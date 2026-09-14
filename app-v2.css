@@ -166,6 +166,7 @@ svg { display: block; }
 .card-head h3, .card-head h4 { margin: 0; font: 600 22px/1.2 var(--serif); letter-spacing: -0.025em; }
 .card-head h4 { font-size: 18px; }
 .card-head p, .card-head small { display: block; margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+.card-head-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 7px; }
 .muted { color: var(--muted); }
 .empty-state { padding: 24px; border: 1px dashed var(--line); border-radius: 14px; color: var(--muted); text-align: center; font-size: 13px; }
 
@@ -263,6 +264,11 @@ html[lang="en"] .date-nav-btn[data-action="fitness-calendar-today"] { min-width:
 .priority-item small { display: block; margin-bottom: 3px; color: var(--green); font-size: 10px; font-weight: 800; }
 .priority-item span { font-weight: 650; }
 .priority-item p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.home-priority-card.is-inspiration #homePriorities { animation: inspiration-reveal 180ms ease both; }
+.home-inspiration-view { display: grid; gap: 10px; }
+.home-inspiration-date { color: var(--muted); font-size: 11px; }
+.inspiration-textarea { min-height: 126px; }
+@keyframes inspiration-reveal { from { opacity: 0; transform: rotateY(-4deg) translateY(3px); } to { opacity: 1; transform: none; } }
 
 .donut { width: 148px; height: 148px; margin: 6px auto 0; border-radius: 50%; display: grid; place-items: center; position: relative; background: conic-gradient(var(--green-bright) 0 var(--p), #e3e7e2 var(--p) 100%); }
 .donut::after { content: ""; position: absolute; inset: 10px; border-radius: 50%; background: var(--surface); }
@@ -492,6 +498,31 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 .line-chart { width: 100%; height: auto; overflow: visible; }
 .chart-grid { stroke: #e3e7e3; stroke-width: 1; }
 .chart-line { fill: none; stroke: var(--green); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.health-trend-card { min-width: 0; }
+.trend-switcher { display: flex; flex: 0 0 auto; gap: 5px; }
+.trend-arrow { width: 36px; height: 36px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--surface-soft); color: var(--muted); font-size: 21px; line-height: 1; }
+.trend-arrow:hover, .trend-arrow:focus-visible { border-color: var(--green); background: var(--green-soft); color: var(--green); outline: none; }
+.trend-grid { display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 5px; min-width: 0; padding: 9px 0 7px; }
+.trend-cell { min-width: 0; aspect-ratio: 1; border: 1px solid #e1e6e0; border-radius: 4px; background: #f1f3ef; }
+.trend-cell[title] { cursor: help; }
+.mood-great { background: #8aca72; border-color: #7bbd65; }
+.mood-steady { background: #b8d99a; border-color: #a8cc8b; }
+.mood-okay { background: #dec78f; border-color: #d0b979; }
+.mood-low { background: #d8a7af; border-color: #c9929c; }
+.water-level-1 { background: linear-gradient(135deg, #e3f1f6, #cfe6ef); border-color: #c4dfe9; }
+.water-level-2 { background: linear-gradient(135deg, #b9dce9, #9dc9dc); border-color: #91c2d6; }
+.water-level-3 { background: linear-gradient(135deg, #82b9cf, #639fb9); border-color: #5d98b3; }
+.water-level-4 { background: linear-gradient(135deg, #4d91ad, #2e708e); border-color: #2b6b87; }
+.trend-range { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 10px; }
+.trend-legend { display: flex; flex-wrap: wrap; gap: 9px 14px; margin-top: 13px; color: var(--muted); font-size: 10px; }
+.trend-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.trend-legend-dot { width: 10px; height: 10px; display: inline-block; border: 1px solid transparent; border-radius: 3px; }
+.calorie-line { stroke: var(--gold); }
+.calorie-point { stroke: var(--gold); }
+.calorie-average-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 15px; }
+.calorie-average-item { min-width: 0; padding: 11px 10px; border-radius: 13px; background: var(--surface-soft); }
+.calorie-average-item span { display: block; color: var(--muted); font-size: 10px; line-height: 1.35; }
+.calorie-average-item strong { display: block; margin: 5px 0 3px; font-size: 16px; overflow-wrap: anywhere; }
 .chart-point { fill: #fff; stroke: var(--green); stroke-width: 3; }
 .chart-label { fill: var(--muted); font: 11px var(--sans); }
 .chart-value { fill: var(--ink); font: 700 11px var(--sans); }
@@ -592,7 +623,7 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 .calendar-health-pane .day-summary { gap: 8px; }
 .calendar-health-pane .summary-item { padding: 10px; }
 .calendar-health-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 14px; }
-.calendar-summary-copy { max-width: 100%; line-height: 1.6; overflow-wrap: anywhere; }
+.calendar-health-pane .calendar-summary-copy { max-width: 100%; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }
 .calendar-health-pane .day-section { padding-top: 12px; border-top: 0; }
 .calendar-health-pane .form-grid { gap: 8px; }
 .calendar-health-pane .textarea { min-height: 72px; }
@@ -606,6 +637,7 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 .calendar-bottom-grid > .card { height: 100%; }
 .calendar-bottom-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
 .calendar-bottom-grid > * { min-width: 0; }
+.calendar-inspiration-panel .inspiration-textarea { min-height: 112px; }
 .calendar-completed-panel { min-width: 0; }
 .completed-project-list { max-height: 320px; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; scrollbar-width: thin; scrollbar-color: transparent transparent; }
 .completed-project-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
@@ -706,6 +738,11 @@ body.modal-open { overflow: hidden; }
   .input, .select, .textarea, .inline-input { font-size: 16px; }
   .grid-2, .grid-3, .grid-4, .home-top, .quick-links, .project-overview { grid-template-columns: 1fr; }
   .card { padding: 18px; border-radius: 18px; }
+  .health-trend-card .card-head { align-items: center; }
+  .trend-grid { grid-template-columns: repeat(18, minmax(0, 1fr)); gap: 4px; }
+  .trend-arrow { width: 34px; height: 34px; }
+  .card-head-actions { gap: 5px; }
+  .calorie-average-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .quick-links { grid-template-columns: 1fr 1fr; gap: 10px; }
   .quick-link { min-height: 118px; padding: 15px; }
   .calendar-layout { gap: 12px; }
@@ -779,6 +816,7 @@ body.modal-open { overflow: hidden; }
   .search-field { width: calc(100vw - 138px); }
   .cal-day { width: min(38px, 100%); height: auto; min-height: 0; font-size: 11px; }
   .card { padding: 16px; }
+  .trend-grid { grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 3px; }
   .quick-links { grid-template-columns: 1fr 1fr; }
 }
 
