@@ -111,6 +111,10 @@ svg { display: block; }
 .v2-mobile-logo { display: none; }
 .v2-crumb { font-weight: 700; font-size: 13px; }
 .v2-top-actions { display: flex; align-items: center; gap: 9px; }
+.back-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 7px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--muted); font-size: 11px; font-weight: 800; white-space: nowrap; }
+.back-button:hover:not(:disabled), .back-button:focus-visible:not(:disabled) { border-color: var(--green); background: var(--green-soft); color: var(--green); outline: none; }
+.back-button:disabled { cursor: default; opacity: 0.42; }
+.back-button-icon { font-size: 18px; line-height: 1; }
 .lang-switch { min-width: 44px; min-height: 38px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: 0.03em; }
 .lang-switch:hover, .lang-switch:focus-visible { border-color: var(--green); background: var(--green-soft); outline: none; }
 .search-field { position: relative; width: min(300px, 30vw); }
@@ -691,6 +695,8 @@ body.modal-open { overflow: hidden; }
   .v2-main { width: 100%; max-width: 100%; margin-left: 0; }
   .v2-topbar { height: 64px; padding: 0 14px; }
   .v2-mobile-logo { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--green-bright); color: #173c07; font: 750 12px/1 var(--sans); letter-spacing: -0.08em; }
+  .back-button { width: 40px; min-height: 40px; padding: 0; border: 0; border-radius: 6px; background: transparent; font-size: 22px; }
+  .back-button-label { display: none; }
   .search-field { width: min(210px, 54vw); }
   .lang-switch { min-width: 40px; padding-inline: 8px; }
   .v2-content { padding: 22px 14px 96px; }
@@ -770,7 +776,7 @@ body.modal-open { overflow: hidden; }
   .v2-topbar-brand { display: none; }
   .v2-crumb { display: none; }
   .v2-topbar { justify-content: flex-end; }
-  .search-field { width: calc(100vw - 82px); }
+  .search-field { width: calc(100vw - 138px); }
   .cal-day { width: min(38px, 100%); height: auto; min-height: 0; font-size: 11px; }
   .card { padding: 16px; }
   .quick-links { grid-template-columns: 1fr 1fr; }
