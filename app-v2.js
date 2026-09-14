@@ -2,7 +2,7 @@
   "use strict";
 
   const STORE = "serene-personal-workspace-v1";
-  const APP_VERSION = "v1.2";
+  const APP_VERSION = "v1.2.1";
   const LANGUAGE_STORE = "kinetic-life-os:language";
   let currentLanguage = localStorage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
   const pageScrollPositions = new Map();
@@ -1933,7 +1933,7 @@
             <div class="project-title"><div class="project-title-top"><button class="project-symbol" type="button" data-action="cycle-project-symbol" data-id="${project.id}" aria-label="切换项目图标" title="切换项目图标">${projectIconMarkup(project)}</button><span class="tag neutral project-area-tag">${esc(project.area || "其他")}</span></div><textarea class="project-title-input" data-project-title="${project.id}" maxlength="120" rows="2" aria-label="项目标题">${esc(project.title)}</textarea></div>
             <div class="project-status-control">
               <select class="select" data-project-status="${project.id}" aria-label="${esc(project.title)}的状态">
-                ${["未开始", "待选择", "进行中", "收尾中", "等待回复", "长期维护", "暂缓", "已完成"].map((status) => `<option ${status === project.status ? "selected" : ""}>${status}</option>`).join("")}
+                ${["未开始", "待选择", "进行中", "收尾中", "等待回复", "长期维护", "暂缓", "已完成"].map((status) => `<option value="${esc(status)}" ${status === project.status ? "selected" : ""}>${status}</option>`).join("")}
               </select>
             </div>
           </div>
