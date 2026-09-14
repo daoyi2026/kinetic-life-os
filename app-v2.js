@@ -2,7 +2,7 @@
   "use strict";
 
   const STORE = "serene-personal-workspace-v1";
-  const APP_VERSION = "v1.1";
+  const APP_VERSION = "v1.2";
   const LANGUAGE_STORE = "kinetic-life-os:language";
   let currentLanguage = localStorage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
   const pageScrollPositions = new Map();
@@ -47,6 +47,14 @@
     "生活总览": "Life overview",
     "近期重点": "Current focus",
     "当前阶段的行动、目的与下一步": "Current actions, purpose, and next steps",
+    "灵感": "Inspiration",
+    "记录灵感": "Log inspiration",
+    "重点": "Focus",
+    "今日灵感": "Today's inspiration",
+    "与日常提醒同步，可记录今天捕捉到的片段": "Synced with daily reminders; capture today's fragments",
+    "记录今天捕捉到的灵感、片段或想继续观察的方向": "Capture an idea, fragment, or direction to keep exploring today",
+    "保存今日灵感": "Save today's inspiration",
+    "今日灵感已保存": "Today's inspiration saved",
     "现在": "Now",
     "接下来": "Next",
     "随后": "Later",
@@ -107,6 +115,30 @@
     "记录体重、饮水、饮食与每日状态，重点观察连续变化。": "Track weight, hydration, nutrition, and daily wellbeing.",
     "体重趋势": "Weight trend",
     "按日期形成折线趋势": "Trend by date",
+    "情绪趋势": "Mood trend",
+    "饮水趋势": "Hydration trend",
+    "饮食热量": "Calorie trend",
+    "过去180天的情绪记录": "Mood records from the past 180 days",
+    "过去180天的每日饮水量": "Daily hydration from the past 180 days",
+    "过去365天的情绪记录": "Mood records from the past 365 days",
+    "过去365天的每日饮水量": "Daily hydration from the past 365 days",
+    "过去365天情绪记录": "Mood records from the past 365 days",
+    "过去365天饮水记录": "Hydration records from the past 365 days",
+    "按日期形成热量折线": "Calories by date",
+    "记录心情后会在这里显示": "Log mood to see it here",
+    "记录饮水量后会在这里显示": "Log hydration to see it here",
+    "记录热量后会在这里形成折线": "Log calories to build this line",
+    "过去180天日均摄入热量": "Average daily calories · past 180 days",
+    "过去90天日均摄入热量": "Average daily calories · past 90 days",
+    "过去60天日均摄入热量": "Average daily calories · past 60 days",
+    "过去30天日均摄入热量": "Average daily calories · past 30 days",
+    "过去15天日均摄入热量": "Average daily calories · past 15 days",
+    "无热量记录": "No calorie records",
+    "基于已记录天数": "Based on recorded days",
+    "无记录": "No record",
+    "切换健康趋势": "Switch health trend",
+    "上一个趋势面板": "Previous trend panel",
+    "下一个趋势面板": "Next trend panel",
     "今日体重（kg）": "Today's weight (kg)",
     "今日状态": "Today's status",
     "心情": "Mood",
@@ -401,8 +433,8 @@
             <div class="compact-banner"><h2>生活总览</h2></div>
             <section class="section grid home-top">
               <div class="home-left-stack">
-                <article class="card">
-                  <div class="card-head"><div><h3>近期重点</h3><small>当前阶段的行动、目的与下一步</small></div><button class="edit-btn" data-action="toggle-priority-edit">编辑</button></div>
+                <article class="card home-priority-card" id="homePriorityCard">
+                  <div class="card-head"><div><h3 id="homePriorityTitle">近期重点</h3><small id="homePrioritySubtitle">当前阶段的行动、目的与下一步</small></div><div class="card-head-actions"><button class="text-btn" id="homePriorityToggle" data-action="toggle-home-inspiration">记录灵感</button><button class="edit-btn" data-action="toggle-priority-edit">编辑</button></div></div>
                   <div id="homePriorities"></div>
                 </article>
                 <article class="card calendar-card compact-home-calendar">
@@ -455,14 +487,9 @@
           <section class="v2-screen" data-screen="health">
             <div class="page-heading"><h2>健康记录</h2><p>记录体重、饮水、饮食与每日状态，重点观察连续变化。</p></div>
             <section class="section grid health-layout">
-              <article class="card">
-                <div class="card-head"><div><h3>体重趋势</h3><small>按日期形成折线趋势</small></div></div>
-                <div class="line-chart-wrap" id="weightChart"></div>
-                <form class="form-row" id="weightForm">
-                  <label class="sr-only" for="weightInput">今日体重，单位千克</label>
-                  <input class="input" id="weightInput" type="number" step="0.1" min="0" inputmode="decimal" placeholder="今日体重（kg）" required />
-                  <button class="btn green" type="submit">记录</button>
-                </form>
+              <article class="card health-trend-card">
+                <div class="card-head"><div><h3 id="healthTrendTitle">体重趋势</h3><small id="healthTrendSubtitle">按日期形成折线趋势</small></div><div class="trend-switcher" role="group" aria-label="切换健康趋势"><button class="trend-arrow" type="button" data-action="health-trend-prev" aria-label="上一个趋势面板">‹</button><button class="trend-arrow" type="button" data-action="health-trend-next" aria-label="下一个趋势面板">›</button></div></div>
+                <div id="healthTrendPanel"></div>
               </article>
               <article class="card">
                 <div class="card-head"><div><h3>今日状态</h3><small id="healthDateLabel"></small></div></div>
@@ -528,10 +555,10 @@
                 <form class="form-row" id="reminderForm" style="margin-top:14px"><label class="sr-only" for="reminderInput">添加待办</label><input class="input" id="reminderInput" maxlength="120" placeholder="添加当天待办" required /><button class="btn green" type="submit">添加</button></form>
               </article>
               <article class="card">
-                <div class="card-head"><div><h3>当天记录</h3><small id="notesDateLabel"></small></div></div>
-                <label class="sr-only" for="dayNotesInput">当天记录</label>
-                <textarea class="textarea" id="dayNotesInput" placeholder="今天推进了什么？明天需要继续什么？"></textarea>
-                <button class="btn secondary" data-action="save-day-notes" style="margin-top:10px">保存记录</button>
+                <div class="card-head"><div><h3>今日灵感</h3><small id="inspirationDateLabel"></small></div></div>
+                <label class="sr-only" for="dayInspirationInput">今日灵感</label>
+                <textarea class="textarea inspiration-textarea" id="dayInspirationInput" data-inspiration-input="reminders" placeholder="记录今天捕捉到的灵感、片段或想继续观察的方向"></textarea>
+                <button class="btn secondary" data-action="save-inspiration" data-inspiration-source="reminders" style="margin-top:10px">保存今日灵感</button>
               </article>
             </section>
             <section class="section grid important-layout">
@@ -577,7 +604,7 @@
               </div>
               <div class="calendar-bottom-grid">
                 <article class="card day-dashboard" id="calendarProjectLogPanel"></article>
-                <article class="card day-dashboard" id="calendarEventPanel"></article>
+                <article class="card day-dashboard calendar-inspiration-panel" id="calendarInspirationPanel"></article>
               </div>
               <article class="card day-dashboard calendar-completed-panel" id="calendarCompletedPanel"></article>
             </section>
@@ -859,6 +886,7 @@
   const emptyDay = () => ({
     tasks: [],
     notes: "",
+    inspiration: "",
     mood: "",
     energy: "",
     calories: "",
@@ -972,6 +1000,7 @@
     addDemoDay(-10, {
       tasks: [demoTask("demo-task-01", "整理三篇心理学论文", true, "研究"), demoTask("demo-task-02", "冥想 10 分钟", true, "疗愈"), demoTask("demo-task-03", "备份胶片相册", false, "摄影")],
       notes: "完成心理学与疗愈资料初筛，留下三条可以继续观察的线索。",
+      inspiration: "疗愈产品的第一步不是增加功能，而是给人一段可以安静下来的时间。",
       mood: "平稳",
       energy: "正常",
       calories: "1780",
@@ -981,6 +1010,7 @@
     addDemoDay(-9, {
       tasks: [demoTask("demo-task-04", "完成用户访谈提纲", true, "研究"), demoTask("demo-task-05", "读书 30 分钟", true, "学习"), demoTask("demo-task-06", "给朋友发聚会邀请", false, "朋友")],
       notes: "把产品研究问题归档到三个主题下，和朋友约好下次一起看展。",
+      inspiration: "朋友之间的陪伴感，也许可以成为产品研究里很重要的真实场景。",
       mood: "很好",
       energy: "充足",
       calories: "1860",
@@ -990,6 +1020,7 @@
     addDemoDay(-8, {
       tasks: [demoTask("demo-task-07", "记录一个疗愈产品灵感", true, "产品"), demoTask("demo-task-08", "画一张数字艺术草图", false, "创作")],
       notes: "疗愈产品的使用场景已经成形，明天补充心理安全感和反馈机制。",
+      inspiration: "把一个疗愈场景画成数字草图，先保留模糊的感觉，不急着定义。",
       mood: "平稳",
       energy: "正常",
       calories: "1810",
@@ -999,6 +1030,7 @@
     addDemoDay(-7, {
       tasks: [demoTask("demo-task-09", "分析访谈笔记", true, "研究"), demoTask("demo-task-10", "练习 Ukulele 20 分钟", true, "音乐"), demoTask("demo-task-11", "整理工作台", false, "生活")],
       notes: "访谈笔记出现了关于陪伴感的共同需求，练琴让晚上慢了下来。",
+      inspiration: "Ukulele 的节奏提醒我：好的体验不一定复杂，但要允许人慢慢进入。",
       mood: "很好",
       energy: "充足",
       calories: "1900",
@@ -1008,6 +1040,7 @@
     addDemoDay(-6, {
       tasks: [demoTask("demo-task-12", "整理产品研究框架", true, "产品"), demoTask("demo-task-13", "读古诗五首", false, "阅读")],
       notes: "研究框架和目标人群已确定，留出时间读几首古诗，让语言重新变得有呼吸。",
+      inspiration: "古诗的留白和界面的留白，都在提醒人把注意力放回当下。",
       mood: "平稳",
       energy: "正常",
       calories: "1760",
@@ -1017,6 +1050,7 @@
     addDemoDay(-5, {
       tasks: [demoTask("demo-task-14", "扫描两张胶片", true, "摄影"), demoTask("demo-task-15", "写作 30 分钟", false, "写作"), demoTask("demo-task-16", "看一组小鸟观察影像", false, "自然")],
       notes: "胶片里的光线比预想更安静，写作暂时不追求完整，只保留今天真正想说的部分。",
+      inspiration: "胶片、写作和散步都需要一点等待，等待会让观察更准确。",
       mood: "一般",
       energy: "正常",
       calories: "1830",
@@ -1026,6 +1060,7 @@
     addDemoDay(-4, {
       tasks: [demoTask("demo-task-17", "完成作品集研究页检查", true, "产品"), demoTask("demo-task-18", "冥想 15 分钟", true, "疗愈")],
       notes: "研究页的逻辑已经更清楚，冥想后把两个不必要的功能删掉了。",
+      inspiration: "冥想之后更容易看见哪些内容只是噪音，删掉也是一种设计。",
       mood: "很好",
       energy: "充足",
       calories: "1880",
@@ -1035,6 +1070,7 @@
     addDemoDay(-3, {
       tasks: [demoTask("demo-task-19", "整理星空参考图", true, "数字艺术"), demoTask("demo-task-20", "给公益活动留言", true, "公益"), demoTask("demo-task-21", "阅读 20 分钟", false, "学习")],
       notes: "完成星空和雪豹的视觉参考整理，也找到一个适合周末参加的公益活动。",
+      inspiration: "星星、雪豹和小鸟都在提醒我，喜欢的事物可以组成自己的视觉语言。",
       mood: "平稳",
       energy: "正常",
       calories: "1800",
@@ -1044,6 +1080,7 @@
     addDemoDay(-2, {
       tasks: [demoTask("demo-task-22", "确认旅行路线候选", true, "旅行"), demoTask("demo-task-23", "画一张雪豹速写", false, "绘画")],
       notes: "路线保留两条，先选择可以慢慢走、可以拍胶片的那一条。",
+      inspiration: "旅行不必塞满景点，留一段没有安排的路，可能会遇见真正想记住的画面。",
       mood: "平稳",
       energy: "偏低",
       calories: "1720",
@@ -1053,6 +1090,7 @@
     addDemoDay(-1, {
       tasks: [demoTask("demo-task-24", "完成一轮研究文字校对", true, "研究"), demoTask("demo-task-25", "预约网球场", true, "生活"), demoTask("demo-task-26", "联系一位朋友", false, "朋友")],
       notes: "完成研究文字校对和网球安排，和朋友约好下周一起吃饭。",
+      inspiration: "运动、朋友和写作放在同一天里，生活会比计划表更有弹性。",
       mood: "很好",
       energy: "充足",
       calories: "1870",
@@ -1068,12 +1106,77 @@
         demoTask("demo-task-today-05", "给朋友发送周末邀请", true, "朋友")
       ],
       notes: "完成用户研究框架和朋友邀请，明天继续补齐访谈问题与数字艺术草图。",
+      inspiration: "今天看到一束很像胶片颗粒的光，想把它和星空、呼吸感一起做成一个小作品。",
       mood: "平稳",
       energy: "充足",
       calories: "1850",
       food: "燕麦、时蔬、豆制品与水果",
       water: 6
     });
+
+    const demoInspirations = [
+      "把今天看到的光线记下来，先保留感觉，不急着解释。",
+      "疗愈产品要留出安静的空白，不必每一步都有反馈。",
+      "旅行和摄影都需要慢一点，观察本身就是收获。",
+      "一段古诗和一张胶片，可能会成为同一个视觉线索。"
+    ];
+    const pickDemoAges = (count, seed) => {
+      const ages = Array.from({ length: 365 }, (_, age) => age);
+      let value = seed;
+      for (let index = ages.length - 1; index > 0; index -= 1) {
+        value = (value * 1664525 + 1013904223) % 4294967296;
+        const swapIndex = Math.floor((value / 4294967296) * (index + 1));
+        [ages[index], ages[swapIndex]] = [ages[swapIndex], ages[index]];
+      }
+      return new Set(ages.slice(0, count));
+    };
+    const demoMoodAges = pickDemoAges(250, 20260914);
+    const demoWaterAges = pickDemoAges(250, 20261003);
+    const demoMoodForAge = (age) => {
+      let value = (Math.imul(age + 17, 2654435761) + 2246822519) >>> 0;
+      value ^= value >>> 15;
+      value = Math.imul(value, 2246822519) >>> 0;
+      const roll = value % 100;
+      if (roll < 36) return "很好";
+      if (roll < 64) return "平稳";
+      if (roll < 86) return "一般";
+      return "低落";
+    };
+    const demoRecordAges = new Set();
+    let demoSeed = 20260914;
+    let consecutiveDemoRecords = 0;
+    for (let age = 109; age >= 0; age -= 1) {
+      demoSeed = (demoSeed * 1664525 + 1013904223) % 4294967296;
+      const randomValue = demoSeed / 4294967296;
+      const shouldRecord = consecutiveDemoRecords < 3 && (age === 0 || randomValue > 0.42);
+      if (shouldRecord) {
+        demoRecordAges.add(age);
+        consecutiveDemoRecords += 1;
+      } else {
+        consecutiveDemoRecords = 0;
+      }
+    }
+    for (let age = 364; age >= 0; age -= 1) {
+      const key = addDays(today, -age);
+      const day = days[key] || emptyDay();
+      if (demoMoodAges.has(age)) {
+        if (!day.mood) day.mood = demoMoodForAge(age);
+      } else {
+        day.mood = "";
+      }
+      if (demoWaterAges.has(age)) {
+        if (!day.water) day.water = 1 + ((age * 2) % 8);
+      } else {
+        day.water = 0;
+      }
+      if (age <= 109 && demoRecordAges.has(age)) {
+        if (!day.calories) day.calories = String(1650 + ((age * 37) % 420));
+      } else {
+        day.calories = "";
+      }
+      if (age <= 109 && !day.inspiration && age % 9 === 0) day.inspiration = demoInspirations[age % demoInspirations.length];
+      days[key] = day;
+    }
 
     Object.entries(fitnessDays).forEach(([key, fitnessDay]) => {
       if (days[key]) return;
@@ -1387,7 +1490,7 @@
     if (typeof day.water !== "number") day.water = Number(day.water) || 0;
     if (typeof day.fitness !== "boolean") day.fitness = false;
     if (!day.workoutPlan || typeof day.workoutPlan !== "object" || !Array.isArray(day.workoutPlan.items)) day.workoutPlan = null;
-    ["notes", "mood", "energy", "calories", "food"].forEach((field) => {
+    ["notes", "inspiration", "mood", "energy", "calories", "food"].forEach((field) => {
       if (day[field] == null) day[field] = "";
     });
     return day;
@@ -1406,6 +1509,9 @@
   let editingRoutines = false;
   let editingSupplementaryTraining = false;
   let completedProjectFilter = "全部";
+  const HEALTH_TREND_PANELS = ["weight", "mood", "water", "calories"];
+  let healthTrendPanel = "weight";
+  let viewingHomeInspiration = false;
 
   function ensureDay(key) {
     if (!state.days[key]) state.days[key] = emptyDay();
@@ -1563,7 +1669,7 @@
   function hasDayInformation(key) {
     const day = state.days[key];
     if (!day) return eventsOn(key).length > 0 || projectLogsOn(key).length > 0 || Boolean(weightOn(key));
-    return day.tasks.length > 0 || Boolean(day.notes || day.mood || day.energy || day.calories || day.food || day.water || day.fitness || day.workoutPlan) ||
+    return day.tasks.length > 0 || Boolean(day.notes || day.inspiration || day.mood || day.energy || day.calories || day.food || day.water || day.fitness || day.workoutPlan) ||
       Object.values(day.routines).some(Boolean) || eventsOn(key).length > 0 || projectLogsOn(key).length > 0 || Boolean(weightOn(key));
   }
 
@@ -1692,9 +1798,39 @@
           </div>
         `).join("")}</div>`;
 
-    document.getElementById("homePriorities").innerHTML = editingPriorities
-      ? `<div class="editable-list">${state.priorities.map((item) => `<div class="field"><span>${esc(item.label)}</span><input class="inline-input" data-priority-text="${item.id}" value="${esc(item.text)}" /><textarea class="textarea compact-textarea" data-priority-detail="${item.id}" placeholder="补充目的、背景或下一步">${esc(item.detail || "")}</textarea></div>`).join("")}</div>`
-      : `<div class="priority-view">${state.priorities.map((item) => `<div class="priority-item"><small>${esc(item.label)}</small><span>${esc(item.text)}</span><p>${esc(item.detail || "")}</p></div>`).join("")}</div>`;
+    const priorityCard = document.getElementById("homePriorityCard");
+    const priorityTitle = document.getElementById("homePriorityTitle");
+    const prioritySubtitle = document.getElementById("homePrioritySubtitle");
+    const priorityToggle = document.getElementById("homePriorityToggle");
+    const priorityEdit = document.querySelector('[data-action="toggle-priority-edit"]');
+    priorityCard?.classList.toggle("is-inspiration", viewingHomeInspiration);
+    if (viewingHomeInspiration) {
+      const inspiration = ensureDay(todayKey()).inspiration || "";
+      if (priorityTitle) priorityTitle.textContent = uiText("今日灵感", "Today's inspiration");
+      if (prioritySubtitle) prioritySubtitle.textContent = uiText("与日常提醒同步，可记录今天捕捉到的片段", "Synced with daily reminders; capture today's fragments");
+      if (priorityToggle) {
+        priorityToggle.textContent = uiText("重点", "Focus");
+        priorityToggle.setAttribute("aria-label", uiText("返回近期重点", "Return to current focus"));
+      }
+      if (priorityEdit) priorityEdit.hidden = true;
+      document.getElementById("homePriorities").innerHTML = `
+        <div class="home-inspiration-view">
+          <small class="home-inspiration-date">${esc(dayText(todayKey()))}</small>
+          <textarea class="textarea inspiration-textarea" data-inspiration-input="home" placeholder="${esc(uiText("记录今天捕捉到的灵感、片段或想继续观察的方向", "Capture an idea, fragment, or direction to keep exploring today"))}">${esc(inspiration)}</textarea>
+          <button class="btn secondary" data-action="save-inspiration" data-inspiration-source="home">${uiText("保存今日灵感", "Save today's inspiration")}</button>
+        </div>`;
+    } else {
+      if (priorityTitle) priorityTitle.textContent = uiText("近期重点", "Current focus");
+      if (prioritySubtitle) prioritySubtitle.textContent = uiText("当前阶段的行动、目的与下一步", "Current actions, purpose, and next steps");
+      if (priorityToggle) {
+        priorityToggle.textContent = uiText("记录灵感", "Log inspiration");
+        priorityToggle.setAttribute("aria-label", uiText("查看今日灵感", "View today's inspiration"));
+      }
+      if (priorityEdit) priorityEdit.hidden = false;
+      document.getElementById("homePriorities").innerHTML = editingPriorities
+        ? `<div class="editable-list">${state.priorities.map((item) => `<div class="field"><span>${esc(item.label)}</span><input class="inline-input" data-priority-text="${item.id}" value="${esc(item.text)}" /><textarea class="textarea compact-textarea" data-priority-detail="${item.id}" placeholder="补充目的、背景或下一步">${esc(item.detail || "")}</textarea></div>`).join("")}</div>`
+        : `<div class="priority-view">${state.priorities.map((item) => `<div class="priority-item"><small>${esc(item.label)}</small><span>${esc(item.text)}</span><p>${esc(item.detail || "")}</p></div>`).join("")}</div>`;
+    }
 
     // Keep the overview aligned with the same day's reminder data. The overview
     // intentionally hides completed items, while the reminder page keeps them
@@ -1833,7 +1969,7 @@
       : `最近 ${data.length} 次记录从 ${first} kg 到 ${last} kg，变化 ${change > 0 ? "+" : ""}${change} kg。`;
   }
 
-  function renderWeightChart(targetId, limit = 12) {
+  function renderWeightChart(targetId, limit = 15) {
     const target = document.getElementById(targetId);
     if (!target) return;
     const data = [...state.weightHistory]
@@ -1882,6 +2018,111 @@
     `;
   }
 
+  function healthTrendDayKeys(limit = 365) {
+    return Array.from({ length: limit }, (_, index) => addDays(todayKey(), -(limit - 1 - index)));
+  }
+
+  function renderMoodTrend() {
+    const keys = healthTrendDayKeys();
+    const moodClass = { "很好": "mood-great", "平稳": "mood-steady", "一般": "mood-okay", "低落": "mood-low" };
+    const cells = keys.map((key) => {
+      const mood = ensureDay(key).mood || "";
+      const label = `${dayText(key)} · ${mood ? uiText(mood, { "很好": "Great", "平稳": "Steady", "一般": "Okay", "低落": "Low" }[mood] || mood) : uiText("无记录", "No record")}`;
+      return `<span class="trend-cell mood-cell ${moodClass[mood] || ""}" title="${esc(label)}" aria-label="${esc(label)}"></span>`;
+    }).join("");
+    return `<div class="trend-grid mood-trend-grid" role="img" aria-label="${esc(uiText("过去365天情绪记录", "Mood records from the past 365 days"))}">${cells}</div>
+      <div class="trend-range"><span>${esc(dayText(keys[0]))}</span><span>${esc(dayText(keys[keys.length - 1]))}</span></div>
+      <div class="trend-legend"><span class="trend-legend-item"><i class="trend-legend-dot mood-great"></i>${uiText("很好", "Great")}</span><span class="trend-legend-item"><i class="trend-legend-dot mood-steady"></i>${uiText("平稳", "Steady")}</span><span class="trend-legend-item"><i class="trend-legend-dot mood-okay"></i>${uiText("一般", "Okay")}</span><span class="trend-legend-item"><i class="trend-legend-dot mood-low"></i>${uiText("低落", "Low")}</span></div>`;
+  }
+
+  function renderWaterTrend() {
+    const keys = healthTrendDayKeys();
+    const cells = keys.map((key) => {
+      const water = Number(ensureDay(key).water) || 0;
+      const level = Math.max(0, Math.min(8, Math.round(water)));
+      const bucket = level ? Math.ceil(level / 2) : 0;
+      const label = `${dayText(key)} · ${level ? `${level} ${uiText("杯", "cups")}` : uiText("无记录", "No record")}`;
+      return `<span class="trend-cell water-cell ${bucket ? `water-level-${bucket}` : ""}" title="${esc(label)}" aria-label="${esc(label)}"></span>`;
+    }).join("");
+    return `<div class="trend-grid water-trend-grid" role="img" aria-label="${esc(uiText("过去365天饮水记录", "Hydration records from the past 365 days"))}">${cells}</div>
+      <div class="trend-range"><span>${esc(dayText(keys[0]))}</span><span>${esc(dayText(keys[keys.length - 1]))}</span></div>
+      <div class="trend-legend water-legend"><span class="trend-legend-item"><i class="trend-legend-dot water-level-1"></i>1–2 ${uiText("杯", "cups")}</span><span class="trend-legend-item"><i class="trend-legend-dot water-level-2"></i>3–4 ${uiText("杯", "cups")}</span><span class="trend-legend-item"><i class="trend-legend-dot water-level-3"></i>5–6 ${uiText("杯", "cups")}</span><span class="trend-legend-item"><i class="trend-legend-dot water-level-4"></i>7–8 ${uiText("杯", "cups")}</span></div>`;
+  }
+
+  function calorieRecordsForWindow(dayLimit) {
+    const firstKey = addDays(todayKey(), -(dayLimit - 1));
+    const lastKey = todayKey();
+    return Object.entries(state.days)
+      .filter(([key, day]) => isDateKey(key) && key >= firstKey && key <= lastKey && Number(day?.calories) > 0)
+      .map(([date, day]) => ({ date, calories: Number(day.calories) }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  function calorieAverageMarkup(dayLimit) {
+    const records = calorieRecordsForWindow(dayLimit);
+    const average = records.length ? Math.round(records.reduce((sum, entry) => sum + entry.calories, 0) / records.length) : null;
+    const label = uiText(`${dayLimit}天日均`, `${dayLimit}-day average`);
+    const value = average == null ? uiText("无记录", "No record") : `${average} kcal`;
+    return `<div class="calorie-average-item"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
+  }
+
+  function renderCaloriesTrend() {
+    const data = Object.entries(state.days)
+      .filter(([key, day]) => isDateKey(key) && Number(day?.calories) > 0)
+      .map(([date, day]) => ({ date, calories: Number(day.calories) }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-15);
+    const averageSummary = `<div class="calorie-average-grid">${[180, 90, 60, 30, 15].map(calorieAverageMarkup).join("")}</div>`;
+    if (!data.length) return `<div class="empty-state">${uiText("记录热量后会在这里形成折线。", "Log calories to build this line.")}</div>${averageSummary}`;
+    const width = 640;
+    const height = 220;
+    const left = 38;
+    const right = 18;
+    const top = 24;
+    const bottom = 38;
+    const values = data.map((entry) => entry.calories);
+    let min = Math.min(...values);
+    let max = Math.max(...values);
+    if (min === max) { min -= 100; max += 100; }
+    const padding = Math.max(80, (max - min) * 0.15);
+    min -= padding;
+    max += padding;
+    const x = (index) => data.length === 1 ? width / 2 : left + (index / (data.length - 1)) * (width - left - right);
+    const y = (value) => top + ((max - value) / (max - min)) * (height - top - bottom);
+    const points = data.map((entry, index) => `${x(index)},${y(entry.calories)}`).join(" ");
+    const gridLines = [0, 1, 2, 3].map((index) => {
+      const yy = top + (index / 3) * (height - top - bottom);
+      return `<line class="chart-grid" x1="${left}" y1="${yy}" x2="${width - right}" y2="${yy}"/>`;
+    }).join("");
+    const labelStep = Math.max(1, Math.ceil((data.length - 1) / 5));
+    const pointNodes = data.map((entry, index) => {
+      const showLabel = index === 0 || index === data.length - 1 || index % labelStep === 0;
+      return `<g tabindex="0" aria-label="${esc(entry.date)}, ${entry.calories} kcal"><circle class="chart-point calorie-point" cx="${x(index)}" cy="${y(entry.calories)}" r="${data.length > 24 ? 3.5 : 5}"><title>${esc(entry.date)} · ${entry.calories} kcal</title></circle>${showLabel ? `<text class="chart-label" x="${x(index)}" y="${height - 12}" text-anchor="middle">${esc(entry.date.slice(5))}</text>` : ""}</g>`;
+    }).join("");
+    const summary = currentLanguage === "en" ? `Latest ${data.length} calorie records.` : `最近 ${data.length} 次热量记录。`;
+    return `<svg class="line-chart calorie-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(uiText("饮食热量折线图", "Calorie trend chart"))}">${gridLines}${data.length > 1 ? `<polyline class="chart-line calorie-line" points="${points}"/>` : ""}${pointNodes}</svg><p class="chart-summary">${esc(summary)}</p>${averageSummary}`;
+  }
+
+  function renderHealthTrendPanel() {
+    const target = document.getElementById("healthTrendPanel");
+    if (!target) return;
+    const configs = {
+      weight: ["体重趋势", "按日期形成折线趋势"],
+      mood: ["情绪趋势", "过去365天的情绪记录"],
+      water: ["饮水趋势", "过去365天的每日饮水量"],
+      calories: ["饮食热量", "按日期形成热量折线"]
+    };
+    const [title, subtitle] = configs[healthTrendPanel] || configs.weight;
+    document.getElementById("healthTrendTitle").textContent = uiText(title, { "体重趋势": "Weight trend", "情绪趋势": "Mood trend", "饮水趋势": "Hydration trend", "饮食热量": "Calorie trend" }[title]);
+    document.getElementById("healthTrendSubtitle").textContent = uiText(subtitle, { "按日期形成折线趋势": "Trend by date", "过去365天的情绪记录": "Mood records from the past 365 days", "过去365天的每日饮水量": "Daily hydration from the past 365 days", "按日期形成热量折线": "Calories by date" }[subtitle]);
+    if (healthTrendPanel === "weight") {
+      target.innerHTML = `<div class="line-chart-wrap" id="weightChart"></div><form class="form-row" id="weightForm"><label class="sr-only" for="weightInput">今日体重，单位千克</label><input class="input" id="weightInput" type="number" step="0.1" min="0" inputmode="decimal" placeholder="今日体重（kg）" required /><button class="btn green" type="submit">记录</button></form>`;
+      renderWeightChart("weightChart");
+      return;
+    }
+    target.innerHTML = healthTrendPanel === "mood" ? renderMoodTrend() : healthTrendPanel === "water" ? renderWaterTrend() : renderCaloriesTrend();
+  }
+
   function renderHealth() {
     const day = ensureDay(todayKey());
     document.getElementById("healthDateLabel").textContent = dayText(todayKey());
@@ -1892,7 +2133,7 @@
     const water = Math.max(0, Math.min(8, Number(day.water) || 0));
     document.getElementById("waterLabel").textContent = `${water} / 8 杯`;
     document.getElementById("waterMeter").innerHTML = Array.from({ length: 8 }, (_, index) => `<span class="water-cup ${index < water ? "full" : ""}" aria-hidden="true"></span>`).join("");
-    renderWeightChart("weightChart");
+    renderHealthTrendPanel();
   }
 
   function planFor(key) {
@@ -2103,8 +2344,8 @@
     document.getElementById("reminderDateTitle").textContent = dayText(selectedDate);
     document.getElementById("reminderProgress").textContent = currentLanguage === "en" ? `${stats.done} / ${stats.total} complete` : `${stats.done} / ${stats.total} 项完成`;
     document.getElementById("reminderList").innerHTML = taskRows(selectedDate, "reminders");
-    document.getElementById("notesDateLabel").textContent = dayText(selectedDate);
-    document.getElementById("dayNotesInput").value = ensureDay(selectedDate).notes;
+    document.getElementById("inspirationDateLabel").textContent = dayText(selectedDate);
+    document.getElementById("dayInspirationInput").value = ensureDay(selectedDate).inspiration;
   }
 
   function renderMilestones() {
@@ -2199,9 +2440,10 @@
       ${logs.length ? `<div class="calendar-project-log-list">${logs.map((log) => `<div class="history-item"><time>${esc(log.project)}</time><span>${esc(log.text)}</span><span></span></div>`).join("")}</div>` : '<div class="empty-state">当天没有项目推进记录。</div>'}
     `;
 
-    document.getElementById("calendarEventPanel").innerHTML = `
-      <div class="card-head"><div><h3>${uiText("重要日期", "Important dates")}</h3><small>${esc(dayText(selectedDate))} · ${uiText("需要提前准备或按时跟进", "Prepare ahead or follow up on time")}</small></div><span class="tag neutral">${events.length} ${itemUnit}</span></div>
-      ${events.length ? events.map((event) => `<div class="event-row"><div class="event-date"><span><small>${uiText("当天", "Today")}</small>${fromKey(event.date).getDate()}</span></div><div><strong>${esc(event.title)}</strong><p>${esc(event.copy || "")}</p></div></div>`).join("") : `<div class="empty-state">${uiText("当天没有重要日期。", "No important dates for this day.")}</div>`}
+    document.getElementById("calendarInspirationPanel").innerHTML = `
+      <div class="card-head"><div><h3>${uiText("今日灵感", "Today's inspiration")}</h3><small>${esc(dayText(selectedDate))} · ${uiText("与日常提醒同步", "Synced with daily reminders")}</small></div></div>
+      <textarea class="textarea inspiration-textarea" data-inspiration-input="calendar" placeholder="${esc(uiText("记录今天捕捉到的灵感、片段或想继续观察的方向", "Capture an idea, fragment, or direction to keep exploring today"))}">${esc(day.inspiration)}</textarea>
+      <button class="btn secondary" data-action="save-inspiration" data-inspiration-source="calendar" style="margin-top:10px">${uiText("保存今日灵感", "Save today's inspiration")}</button>
     `;
 
     const completed = completedItems();
@@ -2382,6 +2624,19 @@
       editingPriorities = !editingPriorities;
       actionButton.textContent = editingPriorities ? "完成" : "编辑";
       renderHome();
+    }
+    if (action === "toggle-home-inspiration") {
+      viewingHomeInspiration = !viewingHomeInspiration;
+      editingPriorities = false;
+      renderHome();
+      return;
+    }
+    if (action === "health-trend-prev" || action === "health-trend-next") {
+      const currentIndex = HEALTH_TREND_PANELS.indexOf(healthTrendPanel);
+      const direction = action === "health-trend-prev" ? -1 : 1;
+      healthTrendPanel = HEALTH_TREND_PANELS[(currentIndex + direction + HEALTH_TREND_PANELS.length) % HEALTH_TREND_PANELS.length];
+      renderHealthTrendPanel();
+      return;
     }
     if (action === "home-prev-month" || action === "prev-month") {
       monthCursor.setMonth(monthCursor.getMonth() - 1);
@@ -2644,12 +2899,17 @@
       renderHome();
       notify("饮食记录已保存");
     }
-    if (action === "save-day-notes") {
-      ensureDay(selectedDate).notes = document.getElementById("dayNotesInput").value;
+    if (action === "save-inspiration") {
+      const source = actionButton.dataset.inspirationSource || "reminders";
+      const input = document.querySelector(`[data-inspiration-input="${source}"]`);
+      if (!input) return;
+      ensureDay(source === "home" ? todayKey() : selectedDate).inspiration = input.value;
       save();
       renderHome();
+      renderReminders();
       renderCalendar();
-      notify("当天记录已保存");
+      notify("今日灵感已保存");
+      return;
     }
     if (action === "save-calendar-notes") {
       const day = ensureDay(selectedDate);
