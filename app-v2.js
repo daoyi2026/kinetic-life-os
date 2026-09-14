@@ -963,17 +963,17 @@
     };
 
     addDemoDay(-10, {
-      tasks: [demoTask("demo-task-01", "整理课程调研素材", true, "工作"), demoTask("demo-task-02", "阅读 20 分钟", false, "学习")],
-      notes: "完成资料初筛，留下三条可继续验证的线索。",
+      tasks: [demoTask("demo-task-01", "整理三篇心理学论文", true, "研究"), demoTask("demo-task-02", "冥想 10 分钟", true, "疗愈"), demoTask("demo-task-03", "备份胶片相册", false, "摄影")],
+      notes: "完成心理学与疗愈资料初筛，留下三条可以继续观察的线索。",
       mood: "平稳",
       energy: "正常",
       calories: "1780",
-      food: "燕麦、鸡蛋、烤蔬菜",
+      food: "燕麦、鸡蛋、烤蔬菜和水果",
       water: 6
     });
     addDemoDay(-9, {
-      tasks: [demoTask("demo-task-03", "整理项目目录", true, "工作"), demoTask("demo-task-04", "散步 25 分钟", true, "生活"), demoTask("demo-task-05", "记录一个灵感", false, "创作")],
-      notes: "把零散资料归档到三个主题下。",
+      tasks: [demoTask("demo-task-04", "完成用户访谈提纲", true, "研究"), demoTask("demo-task-05", "读书 30 分钟", true, "学习"), demoTask("demo-task-06", "给朋友发聚会邀请", false, "朋友")],
+      notes: "把产品研究问题归档到三个主题下，和朋友约好下次一起看展。",
       mood: "很好",
       energy: "充足",
       calories: "1860",
@@ -981,8 +981,8 @@
       water: 7
     });
     addDemoDay(-8, {
-      tasks: [demoTask("demo-task-06", "完成课程提案目录", true, "工作"), demoTask("demo-task-07", "整理两张参考图", false, "创作")],
-      notes: "提案目录已经成形，明天补充示例。",
+      tasks: [demoTask("demo-task-07", "记录一个疗愈产品灵感", true, "产品"), demoTask("demo-task-08", "画一张数字艺术草图", false, "创作")],
+      notes: "疗愈产品的使用场景已经成形，明天补充心理安全感和反馈机制。",
       mood: "平稳",
       energy: "正常",
       calories: "1810",
@@ -990,8 +990,8 @@
       water: 5
     });
     addDemoDay(-7, {
-      tasks: [demoTask("demo-task-08", "完成一页展示稿", true, "工作"), demoTask("demo-task-09", "给自己留出安静阅读时间", true, "学习"), demoTask("demo-task-10", "整理桌面 10 分钟", false, "生活")],
-      notes: "完成展示稿骨架，保留了下一轮修改空间。",
+      tasks: [demoTask("demo-task-09", "分析访谈笔记", true, "研究"), demoTask("demo-task-10", "练习 Ukulele 20 分钟", true, "音乐"), demoTask("demo-task-11", "整理工作台", false, "生活")],
+      notes: "访谈笔记出现了关于陪伴感的共同需求，练琴让晚上慢了下来。",
       mood: "很好",
       energy: "充足",
       calories: "1900",
@@ -999,8 +999,8 @@
       water: 8
     });
     addDemoDay(-6, {
-      tasks: [demoTask("demo-task-11", "确认提案标题", true, "工作"), demoTask("demo-task-12", "完成一次短复盘", false, "生活")],
-      notes: "标题和目标人群已确定，下一步是校对文字。",
+      tasks: [demoTask("demo-task-12", "整理产品研究框架", true, "产品"), demoTask("demo-task-13", "读古诗五首", false, "阅读")],
+      notes: "研究框架和目标人群已确定，留出时间读几首古诗，让语言重新变得有呼吸。",
       mood: "平稳",
       energy: "正常",
       calories: "1760",
@@ -1008,8 +1008,8 @@
       water: 6
     });
     addDemoDay(-5, {
-      tasks: [demoTask("demo-task-13", "更新作品集首页文案", true, "工作"), demoTask("demo-task-14", "学习 30 分钟", false, "学习"), demoTask("demo-task-15", "记录当天最重要的一件事", false, "生活")],
-      notes: "首页文案从功能描述改成了更清晰的使用场景。",
+      tasks: [demoTask("demo-task-14", "扫描两张胶片", true, "摄影"), demoTask("demo-task-15", "写作 30 分钟", false, "写作"), demoTask("demo-task-16", "看一组小鸟观察影像", false, "自然")],
+      notes: "胶片里的光线比预想更安静，写作暂时不追求完整，只保留今天真正想说的部分。",
       mood: "一般",
       energy: "正常",
       calories: "1830",
@@ -1017,8 +1017,8 @@
       water: 5
     });
     addDemoDay(-4, {
-      tasks: [demoTask("demo-task-16", "完成作品集移动端检查", true, "工作"), demoTask("demo-task-17", "散步 20 分钟", true, "生活")],
-      notes: "移动端检查完成，发现的两个间距问题已记下。",
+      tasks: [demoTask("demo-task-17", "完成作品集研究页检查", true, "产品"), demoTask("demo-task-18", "冥想 15 分钟", true, "疗愈")],
+      notes: "研究页的逻辑已经更清楚，冥想后把两个不必要的功能删掉了。",
       mood: "很好",
       energy: "充足",
       calories: "1880",
@@ -1026,8 +1026,8 @@
       water: 7
     });
     addDemoDay(-3, {
-      tasks: [demoTask("demo-task-18", "整理阅读卡片", true, "学习"), demoTask("demo-task-19", "写下明日三件事", true, "生活"), demoTask("demo-task-20", "清理下载文件夹", false, "工作")],
-      notes: "阅读卡片完成第一轮合并，保留五张待补充卡片。",
+      tasks: [demoTask("demo-task-19", "整理星空参考图", true, "数字艺术"), demoTask("demo-task-20", "给公益活动留言", true, "公益"), demoTask("demo-task-21", "阅读 20 分钟", false, "学习")],
+      notes: "完成星空和雪豹的视觉参考整理，也找到一个适合周末参加的公益活动。",
       mood: "平稳",
       energy: "正常",
       calories: "1800",
@@ -1035,8 +1035,8 @@
       water: 6
     });
     addDemoDay(-2, {
-      tasks: [demoTask("demo-task-21", "确认周末路线候选", true, "生活"), demoTask("demo-task-22", "补齐课程示例", false, "工作")],
-      notes: "路线保留两条，课程示例还需要再压缩一次。",
+      tasks: [demoTask("demo-task-22", "确认旅行路线候选", true, "旅行"), demoTask("demo-task-23", "画一张雪豹速写", false, "绘画")],
+      notes: "路线保留两条，先选择可以慢慢走、可以拍胶片的那一条。",
       mood: "平稳",
       energy: "偏低",
       calories: "1720",
@@ -1044,8 +1044,8 @@
       water: 4
     });
     addDemoDay(-1, {
-      tasks: [demoTask("demo-task-23", "完成一轮文字校对", true, "工作"), demoTask("demo-task-24", "整理明日会议材料", true, "工作"), demoTask("demo-task-25", "放松阅读 15 分钟", false, "生活")],
-      notes: "完成文字校对和会议材料整理，今天的重点已收尾。",
+      tasks: [demoTask("demo-task-24", "完成一轮研究文字校对", true, "研究"), demoTask("demo-task-25", "预约网球场", true, "生活"), demoTask("demo-task-26", "联系一位朋友", false, "朋友")],
+      notes: "完成研究文字校对和网球安排，和朋友约好下周一起吃饭。",
       mood: "很好",
       energy: "充足",
       calories: "1870",
@@ -1054,13 +1054,13 @@
     });
     addDemoDay(0, {
       tasks: [
-        demoTask("demo-task-today-01", "完成课程提案开场页", true, "工作"),
-        demoTask("demo-task-today-02", "整理两条阅读笔记", false, "学习"),
-        demoTask("demo-task-today-03", "发送一次项目进度同步", true, "工作"),
-        demoTask("demo-task-today-04", "晚间散步 20 分钟", false, "生活"),
-        demoTask("demo-task-today-05", "记录当天复盘", false, "生活")
+        demoTask("demo-task-today-01", "完成用户研究框架", true, "研究"),
+        demoTask("demo-task-today-02", "阅读心理学章节", false, "学习"),
+        demoTask("demo-task-today-03", "上传一张胶片照片", false, "摄影"),
+        demoTask("demo-task-today-04", "晚间冥想 15 分钟", false, "疗愈"),
+        demoTask("demo-task-today-05", "给朋友发送周末邀请", true, "朋友")
       ],
-      notes: "完成课程提案开场页和项目进度同步，明天继续补齐讲义结构。",
+      notes: "完成用户研究框架和朋友邀请，明天继续补齐访谈问题与数字艺术草图。",
       mood: "平稳",
       energy: "充足",
       calories: "1850",
@@ -1080,77 +1080,114 @@
     const projectDate = (offset) => addDays(today, offset);
     const projects = [
       {
-        id: "demo-project-course",
-        title: "城市观察课程提案",
-        description: "围绕城市观察设计一套可讨论的课程提案，包含结构、案例和练习安排。",
+        id: "demo-project-healing",
+        title: "心理学与疗愈产品研究",
+        description: "从心理学阅读、用户观察和日常练习出发，研究更温和、更可持续的疗愈产品体验。",
         symbol: "◎",
-        area: "学习与创作",
+        area: "产品与研究",
         status: "进行中",
         progress: 55,
-        next: "完成课程结构与第一版讲义。",
+        next: "完成访谈提纲，整理三位潜在使用者的真实需求。",
         createdAt: projectDate(-8),
         updatedAt: today,
         completed: false,
         logs: [
-          demoLog("demo-log-course-1", projectDate(-7), "完成资料梳理并确定三个主题。"),
-          demoLog("demo-log-course-2", projectDate(-3), "确定课程结构和练习顺序。"),
-          demoLog("demo-log-course-3", today, "完成开场页，开始补充讲义。")
+          demoLog("demo-log-healing-1", projectDate(-7), "完成心理学与疗愈书目的初步梳理。"),
+          demoLog("demo-log-healing-2", projectDate(-3), "整理出三个值得继续观察的使用场景。"),
+          demoLog("demo-log-healing-3", today, "完成研究框架，开始补充访谈问题。")
         ]
       },
       {
-        id: "demo-project-portfolio",
-        title: "作品集首页改版",
-        description: "重新整理作品集首页的信息层级，让作品入口、项目背景和移动端阅读路径更清晰。",
+        id: "demo-project-product",
+        title: "产品设计研究作品集",
+        description: "记录从问题定义、心理学洞察到原型验证的完整过程，让设计判断可以被理解和复用。",
         symbol: "↗",
-        area: "产品与空间",
+        area: "产品与研究",
         status: "收尾中",
-        progress: 80,
-        next: "补齐移动端排版并完成一次自测。",
+        progress: 75,
+        next: "补齐研究过程页，并完成一次移动端阅读检查。",
         createdAt: projectDate(-18),
         updatedAt: projectDate(-4),
         completed: false,
         logs: [
-          demoLog("demo-log-portfolio-1", projectDate(-15), "重排首页信息层级。"),
-          demoLog("demo-log-portfolio-2", projectDate(-9), "完成桌面端第一版。"),
-          demoLog("demo-log-portfolio-3", projectDate(-4), "完成移动端检查并记录两项微调。")
+          demoLog("demo-log-product-1", projectDate(-15), "重新整理研究案例的信息层级。"),
+          demoLog("demo-log-product-2", projectDate(-9), "完成作品集桌面端第一版。"),
+          demoLog("demo-log-product-3", projectDate(-4), "完成移动端检查并记录两项微调。")
         ]
       },
       {
-        id: "demo-project-route",
-        title: "周末城市探索",
-        description: "保留一条轻量、可执行的周末路线，记录交通、停留时间和沿途值得回看的地点。",
+        id: "demo-project-film",
+        title: "胶片摄影与城市观察",
+        description: "用胶片记录街道、光线和人与城市的关系，也为旅行保留一份慢速的视觉档案。",
         symbol: "⌂",
-        area: "生活方式",
+        area: "摄影与旅行",
         status: "待选择",
-        progress: 10,
-        next: "从候选路线中确定一条轻量方案。",
+        progress: 30,
+        next: "确定一个街区主题，完成一次轻量外拍。",
         createdAt: projectDate(-5),
         updatedAt: projectDate(-2),
         completed: false,
-        logs: [demoLog("demo-log-route-1", projectDate(-2), "整理两条候选路线和预计时间。")]
+        logs: [
+          demoLog("demo-log-film-1", projectDate(-5), "整理喜欢的胶片色调和街道观察主题。"),
+          demoLog("demo-log-film-2", projectDate(-2), "选出两个适合周末慢走的街区。")
+        ]
       },
       {
-        id: "demo-project-reading",
-        title: "阅读资料整理",
-        description: "把分散的阅读卡片整理成稳定的主题结构，合并重复内容并留下可复用的摘要。",
+        id: "demo-project-writing",
+        title: "写作与古诗练习",
+        description: "在小说、随笔和古诗阅读之间保持稳定的表达练习，让写作成为理解生活和整理情绪的方式。",
         symbol: "✎",
         area: "学习与创作",
         status: "长期维护",
         progress: 35,
-        next: "每周整理一批卡片，保持主题标签稳定。",
+        next: "完成一段短写作，并摘录五句喜欢的古诗。",
         createdAt: projectDate(-28),
         updatedAt: projectDate(-3),
         completed: false,
         logs: [
-          demoLog("demo-log-reading-1", projectDate(-20), "建立主题标签。"),
-          demoLog("demo-log-reading-2", projectDate(-11), "合并重复卡片。"),
-          demoLog("demo-log-reading-3", projectDate(-3), "完成第一轮卡片清理。")
+          demoLog("demo-log-writing-1", projectDate(-20), "建立写作、古诗和阅读的主题标签。"),
+          demoLog("demo-log-writing-2", projectDate(-11), "合并重复卡片，留下可复用的句子。"),
+          demoLog("demo-log-writing-3", projectDate(-3), "完成第一轮素材清理。")
         ]
       },
       {
-        id: "demo-project-newsletter",
-        title: "月度通讯试刊",
-        description: "完成一份月度通讯试刊，从选题、版式到反馈归档，验证稳定输出的基本流程。",
+        id: "demo-project-digital",
+        title: "数字艺术与星空档案",
+        description: "把宇宙、星星、雪豹和小鸟等喜欢的意象整理成一组数字艺术练习，慢慢形成自己的视觉语言。",
+        symbol: "✦",
+        area: "数字艺术",
+        status: "进行中",
+        progress: 25,
+        next: "完成一张以星空和小鸟为主题的数字草图。",
+        createdAt: projectDate(-16),
+        updatedAt: projectDate(-3),
+        completed: false,
+        logs: [
+          demoLog("demo-log-digital-1", projectDate(-12), "收集星空、雪豹和小鸟的视觉参考。"),
+          demoLog("demo-log-digital-2", projectDate(-3), "完成第一张数字艺术构图草稿。")
+        ]
+      },
+      {
+        id: "demo-project-life",
+        title: "公益、朋友与短途旅行",
+        description: "把公益活动、朋友见面和旅行安排成可以真正发生的生活计划，不让兴趣只停留在收藏夹里。",
+        symbol: "♡",
+        area: "生活方式",
+        status: "进行中",
+        progress: 20,
+        next: "确认一次公益活动，并邀请朋友一起参加。",
+        createdAt: projectDate(-10),
+        updatedAt: projectDate(-1),
+        completed: false,
+        logs: [
+          demoLog("demo-log-life-1", projectDate(-8), "整理感兴趣的公益活动和旅行目的地。"),
+          demoLog("demo-log-life-2", projectDate(-1), "和朋友讨论周末网球与短途旅行安排。")
+        ]
+      },
+      {
+        id: "demo-project-ukulele",
+        title: "Ukulele 练习小节奏",
+        description: "完成一组简单和弦练习，让音乐成为日常生活里轻松、可持续的陪伴。",
         symbol: "✉",
         area: "学习与创作",
         status: "已完成",
@@ -1161,16 +1198,16 @@
         completedAt: projectDate(-12),
         completed: true,
         logs: [
-          demoLog("demo-log-newsletter-1", projectDate(-20), "完成选题和版式草稿。"),
-          demoLog("demo-log-newsletter-2", projectDate(-12), "完成试刊并归档反馈。")
+          demoLog("demo-log-ukulele-1", projectDate(-20), "完成基础和弦和节奏练习。"),
+          demoLog("demo-log-ukulele-2", projectDate(-12), "录下第一段完整的小节奏。")
         ]
       },
       {
-        id: "demo-project-workflow",
-        title: "桌面工作流整理",
-        description: "整理桌面、文件夹和快捷入口，减少寻找资料的阻力，建立更稳定的日常工作环境。",
+        id: "demo-project-nature",
+        title: "雪豹与小鸟观察卡片",
+        description: "把自然观察、动物影像和喜欢的片段整理成一组轻量卡片，保留对世界的好奇心。",
         symbol: "□",
-        area: "效率与成长",
+        area: "自然与观察",
         status: "已完成",
         progress: 100,
         next: "",
@@ -1179,8 +1216,8 @@
         completedAt: projectDate(-4),
         completed: true,
         logs: [
-          demoLog("demo-log-workflow-1", projectDate(-17), "清理旧入口并保留常用模板。"),
-          demoLog("demo-log-workflow-2", projectDate(-4), "完成桌面、文件夹和快捷入口整理。")
+          demoLog("demo-log-nature-1", projectDate(-17), "整理雪豹、小鸟和自然影像的观察主题。"),
+          demoLog("demo-log-nature-2", projectDate(-4), "完成第一组观察卡片并归档。")
         ]
       }
     ];
@@ -1189,37 +1226,38 @@
       ...base,
       version: 5,
       goals: [
-        { id: "demo-goal-course", title: "完成春季课程策划", area: "学习与创作", progress: 35 },
-        { id: "demo-goal-reading", title: "建立稳定的阅读输出节奏", area: "学习与创作", progress: 60 },
-        { id: "demo-goal-portfolio", title: "维护作品集首页", area: "产品与空间", progress: 45 },
-        { id: "demo-goal-explore", title: "安排一次城市短途探索", area: "生活方式", progress: 20 },
-        { id: "demo-goal-review", title: "形成每周复盘习惯", area: "效率与成长", progress: 70 }
+        { id: "demo-goal-product", title: "建立产品设计与研究作品集", area: "产品与研究", progress: 55 },
+        { id: "demo-goal-healing", title: "把心理学与疗愈转化为可体验的产品", area: "心理学与疗愈", progress: 35 },
+        { id: "demo-goal-health", title: "从 60 kg 开始建立稳定的身体节奏", area: "健康与体态", progress: 45 },
+        { id: "demo-goal-creative", title: "维持摄影、写作与数字艺术的长期输出", area: "创作与学习", progress: 40 },
+        { id: "demo-goal-life", title: "让公益、旅行和朋友成为生活的一部分", area: "生活方式", progress: 30 }
       ],
       priorities: [
-        { id: "demo-priority-now", label: "现在", text: "完成课程提案开场页", detail: "先做出可讨论的版本，再根据反馈补齐细节。" },
-        { id: "demo-priority-next", label: "接下来", text: "整理阅读笔记并分享", detail: "从已有卡片中选出两条，写成简短的主题摘要。" },
-        { id: "demo-priority-later", label: "随后", text: "更新作品集信息架构", detail: "完成移动端检查后，再统一入口和页面层级。" }
+        { id: "demo-priority-now", label: "现在", text: "完成疗愈产品用户研究框架", detail: "先写清楚对象、问题和观察方式，再开始安排访谈。" },
+        { id: "demo-priority-next", label: "接下来", text: "整理心理学与疗愈阅读卡片", detail: "从已有书目中选出两条，写成可复用的主题摘要。" },
+        { id: "demo-priority-later", label: "随后", text: "策划一次公益活动与周末旅行", detail: "邀请朋友一起参与，保留轻量、真实、可以完成的方案。" }
       ],
       projects,
       routineItems: normalizeRoutineItems(raw?.routineItems),
       milestones: [
-        { id: "demo-milestone-1", title: "准备课程提案框架", note: "整理目标、结构和示例，先形成可以讨论的草稿。", done: false, createdAt: projectDate(-10), completedAt: "" },
-        { id: "demo-milestone-2", title: "完成作品集首页改版", note: "确认首页层级、移动端排版和入口说明。", done: false, createdAt: projectDate(-9), completedAt: "" },
-        { id: "demo-milestone-3", title: "整理季度阅读主题", note: "从现有卡片中合并重复主题并保留可复用摘要。", done: true, createdAt: projectDate(-14), completedAt: projectDate(-6) },
-        { id: "demo-milestone-4", title: "确定周末城市路线", note: "保留一条轻量路线，记录交通和预计停留时间。", done: false, createdAt: projectDate(-5), completedAt: "" },
-        { id: "demo-milestone-5", title: "完成资料库标签清理", note: "统一标签命名，避免同义标签重复出现。", done: false, createdAt: projectDate(-7), completedAt: "" }
+        { id: "demo-milestone-1", title: "完成心理学阅读卡片整理", note: "从现有书目中选出可以支持产品研究的主题摘要。", done: false, createdAt: projectDate(-10), completedAt: "" },
+        { id: "demo-milestone-2", title: "访谈三位潜在使用者", note: "围绕疗愈、陪伴感和日常使用场景记录真实反馈。", done: false, createdAt: projectDate(-9), completedAt: "" },
+        { id: "demo-milestone-3", title: "完成第一组 Ukulele 练习", note: "保留轻松的练习节奏，不追求一次学会整首歌。", done: true, createdAt: projectDate(-14), completedAt: projectDate(-6) },
+        { id: "demo-milestone-4", title: "整理胶片摄影主题", note: "确定一个街区和一组可以慢慢观察的画面。", done: false, createdAt: projectDate(-5), completedAt: "" },
+        { id: "demo-milestone-5", title: "报名一次公益活动", note: "邀请朋友一起参加，让关心的事情真正发生。", done: false, createdAt: projectDate(-7), completedAt: "" }
       ],
       events: [
-        { id: "demo-event-1", date: today, title: "课程提案内部评审", copy: "整理开场页和待确认问题。" },
-        { id: "demo-event-2", date: projectDate(3), title: "作品集移动端自测", copy: "检查首页间距、入口和长文本换行。" },
-        { id: "demo-event-3", date: projectDate(8), title: "阅读主题小结", copy: "从本周卡片中选出两条形成摘要。" }
+        { id: "demo-event-1", date: today, title: "疗愈产品研究讨论", copy: "整理用户研究框架和待确认问题。" },
+        { id: "demo-event-2", date: projectDate(3), title: "周末网球与朋友见面", copy: "记录身体感受，也留出轻松聊天的时间。" },
+        { id: "demo-event-3", date: projectDate(8), title: "公益活动报名截止", copy: "确认参加方式，并邀请朋友一起行动。" },
+        { id: "demo-event-4", date: projectDate(12), title: "胶片摄影小旅行", copy: "带上相机，拍一组街道、天空和沿途的小鸟。" }
       ],
       days,
       workoutPlanChanges: Array.isArray(raw?.workoutPlanChanges) ? raw.workoutPlanChanges : base.workoutPlanChanges,
       supplementaryTraining: normalizeSupplementaryTraining(raw?.supplementaryTraining),
       weightHistory: [-28, -24, -20, -16, -12, -9, -6, -3, 0].map((offset, index) => ({
         date: addDays(today, offset),
-        weight: [68.4, 68.0, 67.8, 67.5, 67.2, 67.0, 66.8, 66.7, 66.6][index]
+        weight: [60.0, 59.8, 59.6, 59.3, 59.1, 58.9, 58.6, 58.4, 58.2][index]
       })),
       reminders: [],
       focusSeconds: 1500,
