@@ -339,6 +339,13 @@ html[lang="en"] .date-nav-btn[data-action="fitness-calendar-today"] { min-width:
 .summary-item { padding: 12px; border-radius: 14px; background: var(--surface-soft); }
 .summary-item small { display: block; color: var(--muted); font-size: 10px; }
 .summary-item strong { display: block; margin-top: 3px; font-size: 14px; }
+.editable-summary-item { min-width: 0; }
+.summary-control { width: 100%; min-width: 0; margin-top: 3px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font: 700 14px/1.2 var(--sans); }
+.summary-control:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+.summary-control::placeholder { color: var(--muted); opacity: 1; font-weight: 600; }
+.summary-control-row { display: flex; align-items: baseline; gap: 4px; min-width: 0; margin-top: 3px; }
+.summary-control-row .summary-control { flex: 1 1 auto; margin-top: 0; }
+.summary-control-row span { flex: 0 0 auto; color: var(--ink); font-size: 14px; font-weight: 700; }
 .day-section { padding-top: 17px; border-top: 1px solid var(--line); }
 .day-section:first-of-type { padding-top: 0; border-top: 0; }
 .subhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }

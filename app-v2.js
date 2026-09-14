@@ -149,7 +149,8 @@
     "每天完成运动计划": "Workout plan completed every day",
     "本周计划进度": "This week's plan progress",
     "连续完成天数": "Consecutive days",
-    "按计划训练日连续计算": "Counted across scheduled workout days",
+    "按训练计划完成记录连续计算": "Counted from workout-plan completion records",
+    "当天健康记录已更新": "Daily health record updated",
     "训练已完成": "Workout completed",
     "计划训练日": "Scheduled workout day",
     "添加项目": "Add routine",
@@ -1974,7 +1975,7 @@
         <div class="fitness-summary-stat"><span>${uiText("已完成运动日", "Completed workout days")}</span><strong>${completed} ${uiText("天", "days")}</strong><small>${uiText("本周训练记录", "This week's workout records")}</small></div>
         <div class="fitness-summary-stat"><span>${uiText("完美周", "Perfect weeks")}</span><strong>${perfectWeeks} ${uiText("周", "weeks")}</strong><small>${uiText("每天完成运动计划", "Workout plan completed every day")}</small></div>
         <div class="fitness-summary-stat"><span>${uiText("本周计划进度", "This week's plan progress")}</span><strong>${weekProgress}%</strong><small>${completed} / ${trainingDays.length} ${uiText("个训练日", "training days")}</small></div>
-        <div class="fitness-summary-stat"><span>${uiText("连续完成天数", "Consecutive days")}</span><strong>${streak} ${uiText("天", "days")}</strong><small>${uiText("按计划训练日连续计算", "Counted across scheduled workout days")}</small></div>
+        <div class="fitness-summary-stat"><span>${uiText("连续完成天数", "Consecutive days")}</span><strong>${streak} ${uiText("天", "days")}</strong><small>${uiText("按训练计划完成记录连续计算", "Counted from workout-plan completion records")}</small></div>
       </div>
     `;
     renderFitnessCalendar();
@@ -2024,9 +2025,10 @@
     ).length;
   }
 
-  function trainingStreak() {
-    let cursor = fromKey(todayKey());
-    if (TRAINING_WEEKDAYS.includes(cursor.getDay()) && !state.days[todayKey()]?.fitness) return 0;
+  function trainingStreak(startKey = selectedFitnessDate) {
+    let cursor = fromKey(startKey);
+    const cursorKey = keyOf(cursor);
+    if (TRAINING_WEEKDAYS.includes(cursor.getDay()) && !state.days[cursorKey]?.fitness) return 0;
     while (!TRAINING_WEEKDAYS.includes(cursor.getDay())) cursor.setDate(cursor.getDate() - 1);
     let count = 0;
     while (TRAINING_WEEKDAYS.includes(cursor.getDay())) {
@@ -2093,6 +2095,27 @@
     const unrecorded = uiText("未记录", "Not recorded");
     const cupUnit = uiText("杯", "cups");
     const itemUnit = uiText("项", "items");
+    const moodOptions = [
+      ["", unrecorded],
+      ["很好", uiText("很好", "Great")],
+      ["平稳", uiText("平稳", "Steady")],
+      ["一般", uiText("一般", "Okay")],
+      ["低落", uiText("低落", "Low")]
+    ];
+    const energyOptions = [
+      ["", unrecorded],
+      ["充足", uiText("充足", "Energized")],
+      ["正常", uiText("正常", "Normal")],
+      ["偏低", uiText("偏低", "Low")],
+      ["疲惫", uiText("疲惫", "Tired")]
+    ];
+    const healthSelect = (field, label, options, value) => `
+      <select class="summary-control" data-calendar-health="${field}" aria-label="${esc(label)}">
+        ${options.map(([optionValue, optionLabel]) => `<option value="${esc(optionValue)}" ${optionValue === value ? "selected" : ""}>${esc(optionLabel)}</option>`).join("")}
+      </select>
+    `;
+    const waterValue = Math.max(0, Math.min(8, Number(day.water) || 0));
+    const weightValue = weight ? String(weight.weight) : "";
     document.getElementById("calendarWorkoutPanel").innerHTML = `
       <div class="card-head"><div><h3>${uiText("运动安排", "Workout plan")}</h3><small>${esc(dayText(selectedDate))} · ${esc(planFor(selectedDate).title)}</small></div></div>
       ${workoutMarkup(selectedDate, "calendar")}
@@ -2110,10 +2133,10 @@
       <div class="card-head"><div><h3>${uiText("生活健康", "Life & health")}</h3><small class="calendar-summary-copy">${esc(dashboardSummary(selectedDate))}</small></div></div>
       <section class="day-section health-summary-section">
         <div class="day-summary calendar-health-summary">
-          <div class="summary-item"><small>${uiText("心情", "Mood")}</small><strong>${esc(day.mood || unrecorded)}</strong></div>
-          <div class="summary-item"><small>${uiText("精力", "Energy")}</small><strong>${esc(day.energy || unrecorded)}</strong></div>
-          <div class="summary-item"><small>${uiText("饮水", "Hydration")}</small><strong>${Number(day.water) || 0} ${cupUnit}</strong></div>
-          <div class="summary-item"><small>${uiText("体重", "Weight")}</small><strong>${weight ? `${weight.weight} kg` : unrecorded}</strong></div>
+          <div class="summary-item editable-summary-item"><small>${uiText("心情", "Mood")}</small>${healthSelect("mood", uiText("编辑心情", "Edit mood"), moodOptions, day.mood)}</div>
+          <div class="summary-item editable-summary-item"><small>${uiText("精力", "Energy")}</small>${healthSelect("energy", uiText("编辑精力", "Edit energy"), energyOptions, day.energy)}</div>
+          <div class="summary-item editable-summary-item"><small>${uiText("饮水", "Hydration")}</small><div class="summary-control-row"><input class="summary-control summary-number" type="number" min="0" max="8" step="1" inputmode="numeric" data-calendar-health="water" value="${waterValue}" aria-label="${esc(uiText("编辑饮水杯数", "Edit hydration cups"))}" /><span>${cupUnit}</span></div></div>
+          <div class="summary-item editable-summary-item"><small>${uiText("体重", "Weight")}</small><div class="summary-control-row"><input class="summary-control summary-number" type="number" min="0" step="0.1" inputmode="decimal" data-calendar-health="weight" value="${esc(weightValue)}" placeholder="${esc(unrecorded)}" aria-label="${esc(uiText("编辑体重", "Edit weight"))}" /><span>kg</span></div></div>
         </div>
       </section>
 
@@ -2570,6 +2593,31 @@
 
   document.addEventListener("change", (event) => {
     const target = event.target;
+    if (target.matches("[data-calendar-health]")) {
+      const day = ensureDay(selectedDate);
+      const field = target.dataset.calendarHealth;
+      if (field === "mood" || field === "energy") {
+        day[field] = target.value;
+      }
+      if (field === "water") {
+        day.water = Math.max(0, Math.min(8, Number(target.value) || 0));
+      }
+      if (field === "weight") {
+        state.weightHistory = state.weightHistory.filter((entry) => entry.date !== selectedDate);
+        const numeric = Number(target.value);
+        if (target.value !== "" && Number.isFinite(numeric) && numeric > 0) {
+          state.weightHistory.push({ date: selectedDate, weight: Math.round(numeric * 10) / 10 });
+          state.weightHistory.sort((a, b) => a.date.localeCompare(b.date));
+          state.weightHistory = state.weightHistory.slice(-90);
+        }
+      }
+      save();
+      renderHome();
+      renderHealth();
+      renderCalendar();
+      notify("当天健康记录已更新");
+      return;
+    }
     if (target.matches("[data-task-toggle]")) {
       const task = ensureDay(target.dataset.taskDate).tasks.find((item) => item.id === target.dataset.taskToggle);
       if (task) task.done = target.checked;
