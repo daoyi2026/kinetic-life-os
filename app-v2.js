@@ -2,7 +2,7 @@
   "use strict";
 
   const STORE = "serene-personal-workspace-v1";
-  const APP_VERSION = "v1.2.1";
+  const APP_VERSION = "v1.3.2";
   const LANGUAGE_STORE = "kinetic-life-os:language";
   let currentLanguage = localStorage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
   const pageScrollPositions = new Map();
@@ -12,10 +12,48 @@
   const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const MONTHS_SHORT_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const PROJECT_STATUSES = [
+    ["未开始", "Not started"],
+    ["待选择", "To decide"],
+    ["进行中", "In progress"],
+    ["收尾中", "Wrapping up"],
+    ["等待回复", "Awaiting reply"],
+    ["长期维护", "Long-term"],
+    ["暂缓", "Paused"],
+    ["已完成", "Completed"]
+  ];
+  const PROJECT_STATUS_ALIASES = Object.fromEntries(PROJECT_STATUSES.flatMap(([zh, en]) => [[zh, zh], [en, zh]]));
   const TRANSLATIONS = {
     "跳到主要内容": "Skip to main content",
     "总览": "Overview",
     "工作计划": "Work planning",
+    "本月已完成待办": "Tasks completed this month",
+    "本年已完成项目": "Projects completed this year",
+    "完成概览": "Completion overview",
+    "工作、待办和年度目标的当前状态": "Current status of work, tasks, and annual goals",
+    "由关联项目综合计算": "Calculated from linked projects",
+    "未关联年度目标": "No annual goal",
+    "年度目标": "Annual goal",
+    "年度目标列表": "Annual goals list",
+    "目标名称": "Goal title",
+    "目标进度": "Goal progress",
+    "目标领域": "Goal area",
+    "查看今日灵感": "View today's inspiration",
+    "返回近期重点": "Return to current focus",
+    "修改今日事项": "Edit today's task",
+    "修改补充说明": "Edit additional notes",
+    "删除重要日期": "Delete important date",
+    "重复": "Repeat",
+    "不重复": "Does not repeat",
+    "每周": "Weekly",
+    "每月": "Monthly",
+    "每年": "Yearly",
+    "上一个记录日": "Previous recorded day",
+    "下一个记录日": "Next recorded day",
+    "删除项目全部记录": "Delete all records for this project",
+    "编辑重要日期": "Edit important date",
+    "更新重要日期": "Update important date",
+    "点击日期编辑": "Click the date to edit",
     "健康管理": "Health",
     "健身计划": "Fitness plan",
     "日常提醒": "Daily reminders",
@@ -68,7 +106,6 @@
     "年度目标完成率": "Annual goal completion",
     "平均进度": "Average progress",
     "年度目标": "Annual goals",
-    "位于本月工作进度下方": "Shown below monthly work progress",
     "待办、重要事项与日期": "Tasks, important items, and dates",
     "体重、饮食与饮水": "Weight, nutrition, and hydration",
     "查看当天训练安排": "View today's workout",
@@ -257,6 +294,7 @@
     "关闭": "Close",
     "未开始": "Not started",
     "待选择": "To decide",
+    "进行中": "In progress",
     "收尾中": "Wrapping up",
     "等待回复": "Awaiting reply",
     "长期维护": "Long-term",
@@ -393,7 +431,7 @@
 
   const pages = [
     ["home", "总览", "home"],
-    ["work", "工作计划", "work"],
+    ["work", "项目推进", "work"],
     ["health", "健康管理", "health"],
     ["fitness", "健身计划", "fitness"],
     ["reminders", "日常提醒", "tasks"],
@@ -431,6 +469,16 @@
         <div class="v2-content">
           <section class="v2-screen" data-screen="home">
             <div class="compact-banner"><h2>生活总览</h2></div>
+            <section class="section">
+              <article class="card home-stats-card">
+                <div class="card-head"><div><h3>完成概览</h3><small>工作、待办和年度目标的当前状态</small></div></div>
+                <div class="home-stats-grid" id="homeStats"></div>
+              </article>
+            </section>
+            <section class="section">
+              <div class="section-head"><div><h3>今天要做</h3><p>可直接修改，内容与日常提醒、日历同步。</p></div><button class="btn secondary" data-page="reminders">打开日常提醒</button></div>
+              <div class="grid grid-3" id="homeTasks"></div>
+            </section>
             <section class="section grid home-top">
               <div class="home-left-stack">
                 <article class="card home-priority-card" id="homePriorityCard">
@@ -447,31 +495,9 @@
               </div>
               <article class="card progress-overview-card">
                 <div class="card-head"><div><h3>进度概览</h3><small>工作推进与年度方向</small></div><button class="edit-btn" data-action="toggle-goal-edit">编辑</button></div>
-                <div class="progress-pair">
-                  <div class="progress-ring-block">
-                    <div class="muted">本月工作完成率</div>
-                    <div class="donut compact-donut" id="monthRing" style="--p:0%"><div class="donut-inner"><strong id="monthProgress">0%</strong><span>工作事项</span></div></div>
-                  </div>
-                  <div class="progress-ring-block">
-                    <div class="muted">年度目标完成率</div>
-                    <div class="donut compact-donut" id="overallRing" style="--p:0%"><div class="donut-inner"><strong id="overallProgress">0%</strong><span>平均进度</span></div></div>
-                  </div>
-                </div>
-                <div class="goal-divider"><strong>年度目标</strong><span>位于本月工作进度下方</span></div>
+                <div class="goal-divider"><strong>年度目标</strong></div>
                 <div id="homeGoals" tabindex="0" aria-label="年度目标列表"></div>
               </article>
-            </section>
-
-            <section class="section grid quick-links">
-              <button class="card quick-link" data-page="reminders">${icon("tasks")}<strong>日常提醒</strong><small>待办、重要事项与日期</small></button>
-              <button class="card quick-link" data-page="health">${icon("health")}<strong>健康</strong><small>体重、饮食与饮水</small></button>
-              <button class="card quick-link" data-page="fitness">${icon("fitness")}<strong>健身</strong><small>查看当天训练安排</small></button>
-              <button class="card quick-link" data-page="work">${icon("work")}<strong>项目</strong><small>推进记录与历史</small></button>
-            </section>
-
-            <section class="section">
-              <div class="section-head"><div><h3>今天要做</h3><p>可直接修改，内容与日常提醒、日历同步。</p></div><button class="btn secondary" data-page="reminders">打开日常提醒</button></div>
-              <div class="grid grid-3" id="homeTasks"></div>
             </section>
           </section>
 
@@ -563,7 +589,7 @@
             </section>
             <section class="section grid important-layout">
               <article class="card">
-                <div class="card-head"><div><h3>长期待办清单</h3><small>不限定某一天的重要事项</small></div><span class="tag" id="masterTodoProgress">0 / 0</span></div>
+                <div class="card-head"><div><h3>长期待办清单</h3><small>不限定某一天的重要事项</small></div><div class="card-head-actions"><span class="tag neutral" id="masterTodoProgress" aria-live="polite"></span><button class="edit-btn" data-action="toggle-master-todo-edit">编辑</button></div></div>
                 <div class="master-todo" id="masterTodoList"></div>
                 <form class="form-grid" id="masterTodoForm" style="margin-top:16px">
                   <div class="field"><label for="masterTodoTitle">事项</label><input class="input" id="masterTodoTitle" maxlength="100" placeholder="添加一项待办" required /></div>
@@ -577,8 +603,9 @@
                 <form class="form-grid" id="eventForm" hidden style="margin-top:16px">
                   <div class="field"><label for="eventDateInput">日期</label><input class="input" id="eventDateInput" type="date" required /></div>
                   <div class="field"><label for="eventTitleInput">事项名称</label><input class="input" id="eventTitleInput" maxlength="80" required /></div>
+                  <div class="field"><label for="eventRepeatInput">重复</label><select class="select" id="eventRepeatInput"><option value="none">不重复</option><option value="weekly">每周</option><option value="monthly">每月</option><option value="yearly">每年</option></select></div>
                   <div class="field wide"><label for="eventCopyInput">补充说明</label><textarea class="textarea" id="eventCopyInput" maxlength="200"></textarea></div>
-                  <div class="wide form-row"><button class="btn green" type="submit">保存日期</button><button class="btn secondary" type="button" data-action="toggle-event-form">取消</button></div>
+                  <div class="wide form-row"><button class="btn green" id="eventFormSubmit" type="submit">保存日期</button><button class="btn secondary" type="button" data-action="toggle-event-form">取消</button></div>
                 </form>
               </article>
             </section>
@@ -657,6 +684,8 @@
     if (moreHistoryMatch) return value.replace(trimmed, `Show more history (${moreHistoryMatch[1]})`);
     const deleteProjectMatch = trimmed.match(/^删除项目\s+(.+)$/);
     if (deleteProjectMatch) return value.replace(trimmed, `Delete project ${deleteProjectMatch[1]}`);
+    const deleteGoalMatch = trimmed.match(/^删除年度目标\s+(.+)$/);
+    if (deleteGoalMatch) return value.replace(trimmed, `Delete annual goal ${deleteGoalMatch[1]}`);
     const patterns = [
       [/^(\d+)%\s*完成$/, "$1% complete"],
       [/^(\d+)\s*\/\s*(\d+)\s*项完成$/, "$1 / $2 complete"],
@@ -1332,6 +1361,15 @@
       }
     ];
 
+    const demoGoalLinks = {
+      "demo-project-healing": "demo-goal-healing",
+      "demo-project-product": "demo-goal-product",
+      "demo-project-writing": "demo-goal-creative",
+      "demo-project-digital": "demo-goal-creative",
+      "demo-project-life": "demo-goal-life"
+    };
+    projects.forEach((project) => { project.goalId = demoGoalLinks[project.id] || ""; });
+
     return {
       ...base,
       version: 5,
@@ -1393,7 +1431,7 @@
         priorities: Array.isArray(input.priorities) ? input.priorities : base.priorities,
         projects: Array.isArray(input.projects) ? input.projects : base.projects,
         milestones: Array.isArray(input.milestones) ? input.milestones : base.milestones,
-        events: Array.isArray(input.events) ? input.events : [],
+        events: Array.isArray(input.events) ? input.events.map((event) => ({ ...event, repeat: ["weekly", "monthly", "yearly"].includes(event?.repeat) ? event.repeat : "none" })) : [],
         days: input.days && typeof input.days === "object" ? input.days : {},
         workoutPlanChanges: Array.isArray(input.workoutPlanChanges) ? input.workoutPlanChanges : [],
         supplementaryTraining: normalizeSupplementaryTraining(input.supplementaryTraining),
@@ -1434,6 +1472,7 @@
       });
       merged.workoutPlanChanges = [...workoutChanges.values()].sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
       merged.projects.forEach((project) => {
+        project.status = PROJECT_STATUS_ALIASES[project.status] || "未开始";
         project.logs = Array.isArray(project.logs) ? project.logs : [];
         project.description = String(project.description || project.next || "项目描述待补充。").trim();
         project.next = String(project.next || "").trim();
@@ -1452,6 +1491,7 @@
         project.createdAt = isDateKey(project.createdAt) ? project.createdAt : "";
         project.completedAt = isDateKey(project.completedAt) ? project.completedAt : "";
         project.completed = project.completed === true || project.status === "已完成";
+        project.goalId = merged.goals.some((goal) => goal.id === project.goalId) ? String(project.goalId) : "";
       });
       merged.milestones.forEach((item) => {
         item.createdAt = isDateKey(item.createdAt) ? item.createdAt : "";
@@ -1505,6 +1545,8 @@
   fitnessMonthCursor.setDate(1);
   let editingGoals = false;
   let editingPriorities = false;
+  let editingMasterTodos = false;
+  let editingEventId = null;
   let editingWorkoutDate = null;
   let editingRoutines = false;
   let editingSupplementaryTraining = false;
@@ -1593,9 +1635,39 @@
     return { done, total: tasks.length, rate: tasks.length ? Math.round((done / tasks.length) * 100) : 0 };
   }
 
+  function linkedProjectsForGoal(goal) {
+    return state.projects.filter((project) => project.goalId === goal.id);
+  }
+
+  function goalProgress(goal) {
+    const linked = linkedProjectsForGoal(goal);
+    if (!linked.length) return Math.max(0, Math.min(100, Number(goal.progress) || 0));
+    return Math.round(linked.reduce((sum, project) => sum + Math.max(0, Math.min(100, Number(project.progress) || 0)), 0) / linked.length);
+  }
+
   function overallProgress() {
     if (!state.goals.length) return 0;
-    return Math.round(state.goals.reduce((sum, goal) => sum + Math.max(0, Math.min(100, Number(goal.progress) || 0)), 0) / state.goals.length);
+    return Math.round(state.goals.reduce((sum, goal) => sum + goalProgress(goal), 0) / state.goals.length);
+  }
+
+  function monthlyTaskStats(date = todayKey()) {
+    const prefix = `${date.slice(0, 7)}-`;
+    let allDone = 0;
+    let workDone = 0;
+    let workTotal = 0;
+    Object.entries(state.days).filter(([key]) => key.startsWith(prefix)).forEach(([, day]) => {
+      const tasks = day.tasks || [];
+      allDone += tasks.filter((task) => task.done).length;
+      const workTasks = tasks.filter((task) => ["work", "工作"].includes(task.area));
+      workDone += workTasks.filter((task) => task.done).length;
+      workTotal += workTasks.length;
+    });
+    return { allDone, workDone, workTotal, workRate: workTotal ? Math.round((workDone / workTotal) * 100) : 0 };
+  }
+
+  function completedProjectsThisYear(date = todayKey()) {
+    const year = date.slice(0, 4);
+    return state.projects.filter((project) => isCompletedProject(project) && String(project.completedAt || project.updatedAt || "").startsWith(year)).length;
   }
 
   function projectLogsOn(key) {
@@ -1662,8 +1734,23 @@
     return [...state.weightHistory].reverse().find((entry) => entry.date === key);
   }
 
+  function eventOccursOn(event, key) {
+    if (!isDateKey(event.date) || !isDateKey(key) || key < event.date) return false;
+    if (event.date === key || event.repeat === "none" || !event.repeat) return event.date === key;
+    const base = fromKey(event.date);
+    const target = fromKey(key);
+    if (event.repeat === "weekly") return base.getDay() === target.getDay();
+    if (event.repeat === "monthly") return base.getDate() === target.getDate();
+    if (event.repeat === "yearly") return base.getMonth() === target.getMonth() && base.getDate() === target.getDate();
+    return false;
+  }
+
+  function eventRepeatLabel(repeat) {
+    return ({ weekly: uiText("每周", "Weekly"), monthly: uiText("每月", "Monthly"), yearly: uiText("每年", "Yearly") })[repeat] || uiText("不重复", "Does not repeat");
+  }
+
   function eventsOn(key) {
-    return state.events.filter((event) => event.date === key);
+    return state.events.filter((event) => eventOccursOn(event, key));
   }
 
   function hasDayInformation(key) {
@@ -1763,38 +1850,36 @@
 
   function renderHome() {
     const score = overallProgress();
-    document.getElementById("overallProgress").textContent = `${score}%`;
-    document.getElementById("overallRing").style.setProperty("--p", `${score}%`);
+    const monthStats = monthlyTaskStats();
+    const homeStats = document.getElementById("homeStats");
+    if (homeStats) {
+      homeStats.innerHTML = [
+        [uiText("本月工作完成率", "Monthly work completion"), `${monthStats.workRate}%`, uiText("工作事项", "Work items")],
+        [uiText("年度目标完成率", "Annual goal completion"), `${score}%`, uiText("关联项目实时计算", "Linked projects update this live")],
+        [uiText("本月已完成待办", "Tasks completed this month"), `${monthStats.allDone}`, uiText("已完成待办", "Completed tasks")],
+        [uiText("本年已完成项目", "Projects completed this year"), `${completedProjectsThisYear()}`, uiText("已归档项目", "Archived projects")]
+      ].map(([label, value, note]) => `<div class="home-stat"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></div>`).join("");
+    }
 
-    const now = new Date();
-    const monthPrefix = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-`;
-    let monthDone = 0;
-    let monthTotal = 0;
-    Object.entries(state.days).filter(([key]) => key.startsWith(monthPrefix)).forEach(([, day]) => {
-      const tasks = (day.tasks || []).filter((task) => ["work", "工作"].includes(task.area));
-      monthDone += tasks.filter((task) => task.done).length;
-      monthTotal += tasks.length;
-    });
-    const monthRate = monthTotal ? Math.round((monthDone / monthTotal) * 100) : 0;
-    document.getElementById("monthProgress").textContent = `${monthRate}%`;
-    document.getElementById("monthRing").style.setProperty("--p", `${monthRate}%`);
-
-    document.getElementById("homeGoals").innerHTML = editingGoals
+    const homeGoals = document.getElementById("homeGoals");
+    homeGoals.setAttribute("aria-label", uiText("年度目标列表", "Annual goals list"));
+    homeGoals.innerHTML = editingGoals
       ? `<div class="editable-list">${state.goals.map((goal) => `
           <div class="editable-row">
             <div class="goal-edit-grid">
               <label class="field"><span class="sr-only">目标名称</span><input class="inline-input" data-goal-title="${goal.id}" value="${esc(goal.title)}" /></label>
-              <label class="field"><span class="sr-only">目标进度</span><input class="inline-input" data-goal-progress="${goal.id}" type="number" min="0" max="100" value="${Number(goal.progress) || 0}" /></label>
+              <label class="goal-progress-control"><span class="sr-only">目标进度</span><input class="goal-progress-input" data-goal-progress="${goal.id}" type="range" min="0" max="100" value="${goalProgress(goal)}" ${linkedProjectsForGoal(goal).length ? "disabled" : ""} /><output data-goal-progress-value="${goal.id}">${goalProgress(goal)}%</output></label>
               <button class="mini-btn danger" data-action="delete-goal" data-id="${goal.id}" aria-label="删除年度目标 ${esc(goal.title)}">×</button>
             </div>
             <label class="field"><span class="sr-only">目标领域</span><input class="inline-input" data-goal-area="${goal.id}" value="${esc(goal.area || "")}" /></label>
+            ${linkedProjectsForGoal(goal).length ? `<small class="goal-linked-note">${uiText("由关联项目综合计算", "Calculated from linked projects")}</small>` : ""}
           </div>
         `).join("")}
         <button class="btn secondary goal-add-btn" data-action="add-goal">＋ 添加年度目标</button></div>`
       : `<div class="editable-list">${state.goals.map((goal) => `
           <div class="editable-row">
-            <div class="editable-row-top"><div><strong>${esc(goal.title)}</strong><br><small>${esc(goal.area || "")}</small></div><b>${Number(goal.progress) || 0}%</b></div>
-            <div class="progress-track"><span style="width:${Math.max(0, Math.min(100, Number(goal.progress) || 0))}%"></span></div>
+            <div class="editable-row-top"><div><strong>${esc(goal.title)}</strong><br><small>${esc(goal.area || "")}</small></div><b>${goalProgress(goal)}%</b></div>
+            <div class="progress-track"><span style="width:${goalProgress(goal)}%"></span></div>
           </div>
         `).join("")}</div>`;
 
@@ -1837,7 +1922,7 @@
     // visible so they can be reviewed or unchecked.
     const todayTasks = ensureDay(todayKey()).tasks.filter((task) => !task.done);
     document.getElementById("homeTasks").innerHTML = todayTasks.length
-      ? todayTasks.map((task) => `<article class="card home-task"><div class="home-task-head"><span class="tag">${esc(task.area || "生活")}</span><label><input class="check" type="checkbox" data-task-toggle="${task.id}" data-task-date="${todayKey()}" aria-label="完成 ${esc(task.text)}" /> 完成</label></div><input class="inline-input home-task-input" data-task-text="${task.id}" data-task-date="${todayKey()}" value="${esc(task.text)}" aria-label="修改今日事项" /></article>`).join("")
+      ? todayTasks.map((task) => `<article class="card home-task"><div class="home-task-row"><input class="check" type="checkbox" data-task-toggle="${task.id}" data-task-date="${todayKey()}" aria-label="完成 ${esc(task.text)}" /><input class="inline-input home-task-input" data-task-text="${task.id}" data-task-date="${todayKey()}" value="${esc(task.text)}" aria-label="修改今日事项" /></div></article>`).join("")
       : '<div class="empty-state">今天没有未完成事项。</div>';
     renderCalendars();
   }
@@ -1852,8 +1937,31 @@
     return [...(project.logs || [])].reverse().find((log) => log.date === date) || null;
   }
 
+  function projectRecordDates(project) {
+    const dates = new Set(
+      (project.logs || []).map((log) => log.date).filter(isDateKey)
+    );
+    Object.entries(project.daily || {}).forEach(([date, record]) => {
+      if (isDateKey(date) && record && (record.description || record.next || record.logId)) dates.add(date);
+    });
+    return [...dates].sort();
+  }
+
   function projectRecordDate(project) {
-    return isDateKey(project.reviewDate) ? project.reviewDate : selectedDate;
+    if (isDateKey(project.reviewDate)) return project.reviewDate;
+    const dates = projectRecordDates(project);
+    return dates.includes(selectedDate) ? selectedDate : (dates[dates.length - 1] || selectedDate);
+  }
+
+  function shiftProjectRecordDate(project, direction) {
+    const dates = projectRecordDates(project);
+    if (!dates.length) return false;
+    const current = projectRecordDate(project);
+    const index = dates.indexOf(current);
+    const nextIndex = index < 0 ? (direction < 0 ? dates.length - 1 : 0) : index + direction;
+    if (nextIndex < 0 || nextIndex >= dates.length) return false;
+    project.reviewDate = dates[nextIndex];
+    return true;
   }
 
   function projectDayRecord(project, date = selectedDate) {
@@ -1899,7 +2007,9 @@
   }
 
   function confirmProjectCompletion(project, reason) {
-    return confirm(`项目「${project.title}」${reason}，确认已完成吗？确认后会归档到日历看板的“已完成项目”。`);
+    return confirm(currentLanguage === "en"
+      ? `Project “${project.title}” ${reason}. Mark it as completed? It will be archived under Completed projects.`
+      : `项目「${project.title}」${reason}，确认已完成吗？确认后会归档到日历看板的“已完成项目”。`);
   }
 
   function markProjectCompleted(project) {
@@ -1933,21 +2043,28 @@
             <div class="project-title"><div class="project-title-top"><button class="project-symbol" type="button" data-action="cycle-project-symbol" data-id="${project.id}" aria-label="切换项目图标" title="切换项目图标">${projectIconMarkup(project)}</button><span class="tag neutral project-area-tag">${esc(project.area || "其他")}</span></div><textarea class="project-title-input" data-project-title="${project.id}" maxlength="120" rows="2" aria-label="项目标题">${esc(project.title)}</textarea></div>
             <div class="project-status-control">
               <select class="select" data-project-status="${project.id}" aria-label="${esc(project.title)}的状态">
-                ${["未开始", "待选择", "进行中", "收尾中", "等待回复", "长期维护", "暂缓", "已完成"].map((status) => `<option value="${esc(status)}" ${status === project.status ? "selected" : ""}>${status}</option>`).join("")}
+                ${PROJECT_STATUSES.map(([status, label]) => `<option value="${esc(status)}" ${status === project.status ? "selected" : ""}>${esc(uiText(status, label))}</option>`).join("")}
               </select>
             </div>
           </div>
           <div class="project-progress"><label><span>当前进度</span><b>${Number(project.progress) || 0}%</b></label><input type="range" min="0" max="100" value="${Number(project.progress) || 0}" data-project-progress="${project.id}" aria-label="${esc(project.title)}的进度" /></div>
           <div class="form-grid project-fields project-meta-fields">
             <label class="field"><span>所属领域</span><input class="input" data-project-area="${project.id}" value="${esc(project.area || "")}" /></label>
-            <label class="field"><span>回顾日期</span><input class="input" type="date" data-project-review="${project.id}" value="${esc(project.reviewDate || "")}" /></label>
+            <label class="field"><span>年度目标</span><select class="select" data-project-goal="${project.id}"><option value="">未关联年度目标</option>${state.goals.map((goal) => `<option value="${esc(goal.id)}" ${goal.id === project.goalId ? "selected" : ""}>${esc(goal.title)}</option>`).join("")}</select></label>
           </div>
           <form class="project-day-form" data-project-update="${project.id}" data-project-update-date="${recordDate}">
             <div class="form-grid project-fields project-day-fields">
               <label class="field wide"><span>项目描述</span><textarea class="textarea" data-project-description="${project.id}" maxlength="260" placeholder="说明项目要解决的问题、目标和范围">${esc(dayRecord.description)}</textarea></label>
               <label class="field wide"><span>下一步行动</span><textarea class="textarea" data-project-next="${project.id}" maxlength="260" placeholder="填写这个日期的下一步行动">${esc(dayRecord.next)}</textarea></label>
             </div>
-            <div class="project-update-actions"><small><span>记录日期</span> · <time>${esc(dayText(recordDate))}</time></small><button class="btn secondary" type="submit">更新记录</button></div>
+            <div class="project-update-actions">
+              <div class="project-review-bottom">
+                <button class="mini-btn project-date-nav" type="button" data-action="project-prev-record" data-id="${project.id}" aria-label="上一个记录日" title="上一个记录日" ${projectRecordDates(project).indexOf(recordDate) <= 0 ? "disabled" : ""}>‹</button>
+                <label class="field project-review-field"><span class="sr-only">回顾日期</span><input class="input project-review-input" type="date" data-project-review="${project.id}" value="${esc(recordDate)}" aria-label="回顾日期" /></label>
+                <button class="mini-btn project-date-nav" type="button" data-action="project-next-record" data-id="${project.id}" aria-label="下一个记录日" title="下一个记录日" ${(() => { const dates = projectRecordDates(project); const index = dates.indexOf(recordDate); return !dates.length || index < 0 || index >= dates.length - 1 ? "disabled" : ""; })()}>›</button>
+              </div>
+              <button class="btn secondary" type="submit">更新记录</button>
+            </div>
           </form>
           <details class="history" open>
             <summary>历史记录（${logs.length}）</summary>
@@ -2351,13 +2468,15 @@
   function renderMilestones() {
     const done = state.milestones.filter((item) => item.done).length;
     const pending = state.milestones.filter((item) => !item.done);
-    document.getElementById("masterTodoProgress").textContent = `${done} / ${state.milestones.length}`;
+    document.getElementById("masterTodoProgress").textContent = currentLanguage === "en"
+      ? `${done} / ${state.milestones.length} done`
+      : `已完成 ${done} / 共 ${state.milestones.length}`;
     document.getElementById("masterTodoList").innerHTML = pending.length ? pending.map((item) => `
       <div class="master-todo-row">
         <input class="check" type="checkbox" data-master-done="${item.id}" ${item.done ? "checked" : ""} aria-label="切换待办完成状态" />
         <div class="fields">
-          <div class="master-todo-title-line"><span class="tag neutral">长期待办</span><input class="inline-input" data-master-title="${item.id}" value="${esc(item.title)}" aria-label="修改待办内容" /></div>
-          <input class="inline-input" data-master-note="${item.id}" value="${esc(item.note || "")}" placeholder="补充说明" aria-label="修改补充说明" />
+          <div class="master-todo-title-line">${editingMasterTodos ? `<input class="inline-input" data-master-title="${item.id}" value="${esc(item.title)}" aria-label="修改待办内容" />` : `<strong>${esc(item.title)}</strong>`}</div>
+          ${editingMasterTodos ? `<input class="inline-input" data-master-note="${item.id}" value="${esc(item.note || "")}" placeholder="补充说明" aria-label="修改补充说明" />` : (item.note ? `<p class="master-todo-note">${esc(item.note)}</p>` : "")}
         </div>
         <button class="mini-btn danger" data-action="delete-master-todo" data-id="${item.id}" aria-label="删除待办">×</button>
       </div>
@@ -2365,7 +2484,8 @@
 
     document.getElementById("eventList").innerHTML = state.events.length ? [...state.events].sort((a, b) => a.date.localeCompare(b.date)).map((event) => {
       const date = fromKey(event.date);
-      return `<div class="event-row"><div class="event-date"><span><small>${date.getMonth() + 1}月</small>${date.getDate()}</span></div><div><strong>${esc(event.title)}</strong><p>${esc(event.copy || "")}</p></div><button class="mini-btn danger" data-action="delete-event" data-id="${event.id}" aria-label="删除重要日期">×</button></div>`;
+      const monthLabel = currentLanguage === "en" ? MONTHS_SHORT_EN[date.getMonth()] : `${date.getMonth() + 1}月`;
+      return `<div class="event-row" data-action="edit-event" data-id="${event.id}" role="button" tabindex="0" title="${esc(uiText("点击日期编辑", "Click the date to edit"))}"><div class="event-date"><span><small>${monthLabel}</small>${date.getDate()}</span></div><div><strong>${esc(event.title)}</strong><p>${esc(event.copy || "")}</p><small class="event-repeat">${eventRepeatLabel(event.repeat)}</small></div><button class="mini-btn danger" data-action="delete-event" data-id="${event.id}" aria-label="删除重要日期">×</button></div>`;
     }).join("") : '<div class="empty-state">还没有重要日期。</div>';
   }
 
@@ -2594,6 +2714,16 @@
       closeProjectHistory();
       return;
     }
+    if (action === "project-prev-record" || action === "project-next-record") {
+      const project = state.projects.find((item) => item.id === id);
+      if (!project) return;
+      const moved = shiftProjectRecordDate(project, action === "project-prev-record" ? -1 : 1);
+      if (moved) {
+        save();
+        renderProjects();
+      }
+      return;
+    }
 
     if (action === "toggle-goal-edit") {
       editingGoals = !editingGoals;
@@ -2616,6 +2746,9 @@
       const goal = state.goals.find((item) => item.id === id);
       if (!goal || !window.confirm(`删除年度目标“${goal.title}”吗？`)) return;
       state.goals = state.goals.filter((item) => item.id !== id);
+      state.projects.forEach((project) => {
+        if (project.goalId === id) project.goalId = "";
+      });
       save();
       renderHome();
       return;
@@ -2858,13 +2991,37 @@
       renderCalendar();
       renderHome();
     }
+    if (action === "toggle-master-todo-edit") {
+      editingMasterTodos = !editingMasterTodos;
+      actionButton.textContent = editingMasterTodos ? "完成" : "编辑";
+      renderMilestones();
+    }
     if (action === "toggle-event-form") {
       const form = document.getElementById("eventForm");
       form.hidden = !form.hidden;
       if (!form.hidden) {
+        editingEventId = null;
+        form.reset();
         document.getElementById("eventDateInput").value = selectedDate;
+        document.getElementById("eventFormSubmit").textContent = uiText("保存日期", "Save date");
         document.getElementById("eventTitleInput").focus();
+      } else {
+        editingEventId = null;
       }
+    }
+    if (action === "edit-event") {
+      const eventItem = state.events.find((item) => item.id === id);
+      const form = document.getElementById("eventForm");
+      if (!eventItem || !form) return;
+      editingEventId = id;
+      form.hidden = false;
+      document.getElementById("eventDateInput").value = eventItem.date || selectedDate;
+      document.getElementById("eventTitleInput").value = eventItem.title || "";
+      document.getElementById("eventRepeatInput").value = eventItem.repeat || "none";
+      document.getElementById("eventCopyInput").value = eventItem.copy || "";
+      document.getElementById("eventFormSubmit").textContent = uiText("更新重要日期", "Update important date");
+      document.getElementById("eventTitleInput").focus();
+      return;
     }
     if (action === "delete-event") {
       if (!confirm("删除这个重要日期吗？")) return;
@@ -2942,6 +3099,27 @@
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeProjectHistory();
+    const eventRow = event.target.closest?.('.event-row[data-action="edit-event"]');
+    if (eventRow && (event.key === "Enter" || event.key === " ") && !event.target.closest("button")) {
+      event.preventDefault();
+      eventRow.click();
+    }
+  });
+
+  document.addEventListener("contextmenu", (event) => {
+    const nameButton = event.target.closest('.completed-project-name[data-history-type="工作项目"]');
+    if (!nameButton) return;
+    event.preventDefault();
+    const project = state.projects.find((item) => item.id === nameButton.dataset.historyId);
+    const confirmation = currentLanguage === "en"
+      ? `Delete all records for "${project?.title || "this project"}"? This cannot be undone.`
+      : `删除项目「${project?.title || "此项目"}」的全部记录吗？此操作无法撤销。`;
+    if (!project || !confirm(confirmation)) return;
+    state.projects = state.projects.filter((item) => item.id !== project.id);
+    save();
+    renderHome();
+    renderCalendar();
+    notify(uiText("项目及其全部记录已删除", "Project and all its records deleted"));
   });
 
   document.addEventListener("change", (event) => {
@@ -3000,9 +3178,9 @@
     if (target.matches("[data-project-status]")) {
       const project = state.projects.find((item) => item.id === target.dataset.projectStatus);
       if (project && project.status !== target.value) {
-        const nextStatus = target.value;
+        const nextStatus = PROJECT_STATUS_ALIASES[target.value] || "未开始";
         if (nextStatus === "已完成" && !isCompletedProject(project)) {
-          if (!confirmProjectCompletion(project, "的状态已改为“已完成”")) {
+          if (!confirmProjectCompletion(project, currentLanguage === "en" ? "is now marked Completed" : "的状态已改为“已完成”")) {
             renderProjects();
             return;
           }
@@ -3048,6 +3226,13 @@
       save();
       renderProjects();
     }
+    if (target.matches("[data-project-goal]")) {
+      const project = state.projects.find((item) => item.id === target.dataset.projectGoal);
+      if (project) project.goalId = target.value;
+      save();
+      renderProjects();
+      renderHome();
+    }
     if (target.matches("[data-project-area]")) {
       renderProjects();
       renderHome();
@@ -3073,9 +3258,13 @@
         if (target.dataset.goalProgress) goal.progress = Math.max(0, Math.min(100, Number(target.value) || 0));
         if (target.dataset.goalArea) goal.area = target.value;
         save();
-        const score = overallProgress();
-        document.getElementById("overallProgress").textContent = `${score}%`;
-        document.getElementById("overallRing").style.setProperty("--p", `${score}%`);
+        if (target.dataset.goalProgress) {
+          const score = overallProgress();
+          const stat = document.querySelector(".home-stat:nth-child(2) strong");
+          if (stat) stat.textContent = `${score}%`;
+          const value = document.querySelector(`[data-goal-progress-value="${id}"]`);
+          if (value) value.textContent = `${goal.progress}%`;
+        }
       }
     }
     if (target.matches("[data-priority-text], [data-priority-detail]")) {
@@ -3243,9 +3432,23 @@
       const date = document.getElementById("eventDateInput").value;
       const title = document.getElementById("eventTitleInput").value.trim();
       const copy = document.getElementById("eventCopyInput").value.trim();
-      if (date && title) state.events.push({ id: uid("event"), date, title, copy });
+      const repeat = document.getElementById("eventRepeatInput").value;
+      const normalizedRepeat = ["weekly", "monthly", "yearly"].includes(repeat) ? repeat : "none";
+      if (date && title) {
+        const existing = state.events.find((item) => item.id === editingEventId);
+        if (existing) {
+          existing.date = date;
+          existing.title = title;
+          existing.copy = copy;
+          existing.repeat = normalizedRepeat;
+        } else {
+          state.events.push({ id: uid("event"), date, title, copy, repeat: normalizedRepeat });
+        }
+      }
+      editingEventId = null;
       form.reset();
       form.hidden = true;
+      document.getElementById("eventFormSubmit").textContent = uiText("保存日期", "Save date");
       save();
       renderMilestones();
       renderCalendar();
