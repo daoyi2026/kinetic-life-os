@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg?v=2" />
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icon-smile-180.png" />
   <meta name="robots" content="noindex,nofollow,noarchive,nosnippet" />
   <meta name="referrer" content="no-referrer" />
@@ -263,7 +264,7 @@
     document.getElementById('focusSeconds')?.remove();renderFocus();renderAll();const initial=PAGE_NAMES[location.hash.slice(1)]?location.hash.slice(1):'home';switchPage(initial,false);
   })();
   </script>
-    <script src="app-v2.js?v=85" defer></script>
+    <script src="app-v2.js?v=86" defer></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
@@ -273,7 +274,7 @@
           refreshing = true;
           window.location.reload();
         });
-        navigator.serviceWorker.register("./service-worker.js?v=48", { scope: "./", updateViaCache: "none" })
+        navigator.serviceWorker.register("./service-worker.js?v=49", { scope: "./", updateViaCache: "none" })
           .then((registration) => registration.update().catch(() => {}))
           .catch(() => {});
       });

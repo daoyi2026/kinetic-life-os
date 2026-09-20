@@ -2,6 +2,7 @@
   "use strict";
 
   const STORE = "serene-personal-workspace-v1";
+  const RESET_MARKER = `${STORE}:cleared`;
   const APP_VERSION = "v1.4.2";
   const LANGUAGE_STORE = "kinetic-life-os:language";
   let currentLanguage = localStorage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
@@ -1142,6 +1143,28 @@
     return state;
   }
 
+  function clearedState(base) {
+    return {
+      ...base,
+      goals: [],
+      priorities: [],
+      projects: [],
+      milestones: [],
+      events: [],
+      days: {},
+      workoutPlanChanges: [],
+      weightHistory: [],
+      reminders: [],
+      focusSeconds: 1500,
+      routineItems: normalizeRoutineItems(),
+      supplementaryTraining: cloneSupplementaryTraining(),
+      breezeGuide: createDefaultBreezeGuide(),
+      migratedToV2: true,
+      nonPersonalDemoDataApplied: true,
+      demoLanguageRecordsApplied: true
+    };
+  }
+
   function preserveFitnessDays(baseDays, rawDays) {
     const preserved = {};
     const source = rawDays && typeof rawDays === "object" ? rawDays : {};
@@ -1601,6 +1624,7 @@
   function loadState() {
     const base = defaultState();
     try {
+      if (localStorage.getItem(RESET_MARKER) === "true") return clearedState(base);
       const raw = JSON.parse(localStorage.getItem(STORE) || "null");
       if (!raw || typeof raw !== "object") return buildDemoState(base, null);
       const resettingNonFitnessData = Number(raw.version) < 5 || raw.nonPersonalDemoDataApplied !== true;
@@ -1872,6 +1896,7 @@
   }
 
   function save() {
+    localStorage.removeItem(RESET_MARKER);
     localStorage.setItem(STORE, JSON.stringify(state));
   }
 
@@ -3702,6 +3727,7 @@
     if (action === "reset") {
       if (!confirm("确定清除当前设备的全部工作台记录吗？此操作无法撤销。")) return;
       localStorage.removeItem(STORE);
+      localStorage.setItem(RESET_MARKER, "true");
       location.reload();
     }
   });
