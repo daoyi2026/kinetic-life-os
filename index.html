@@ -147,7 +147,7 @@
     }
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
   </style>
-    <link rel="stylesheet" href="app-v2.css?v=87" />
+    <link rel="stylesheet" href="app-v2.css?v=88" />
 </head>
 <body>
   <a class="skip-link" href="#mainContent">跳到主要内容</a>
@@ -274,7 +274,7 @@
           refreshing = true;
           window.location.reload();
         });
-        navigator.serviceWorker.register("./service-worker.js?v=50", { scope: "./", updateViaCache: "none" })
+        navigator.serviceWorker.register("./service-worker.js?v=51", { scope: "./", updateViaCache: "none" })
           .then((registration) => registration.update().catch(() => {}))
           .catch(() => {});
       });
