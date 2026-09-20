@@ -136,6 +136,16 @@ svg { display: block; }
   font: 600 clamp(34px, 4vw, 50px)/1.08 var(--serif);
   letter-spacing: -0.045em;
 }
+.compact-banner .home-breeze-title {
+  display: grid;
+  gap: 6px;
+  color: var(--green);
+  font: 600 25px/1.2 var(--serif);
+  letter-spacing: -0.025em;
+}
+.home-breeze-title span { display: block; }
+.home-breeze-title #homeBreezePeriod,
+.home-breeze-title #homeBreezeCopy { color: var(--green); }
 .north-star-card { overflow: hidden; border-color: rgba(54, 113, 22, 0.24); background: linear-gradient(135deg, #fff 0%, #f0f7ea 100%); }
 .breeze-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .breeze-title-line { display: flex; align-items: baseline; min-width: 0; gap: 9px; }
