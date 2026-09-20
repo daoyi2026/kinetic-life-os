@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Kinetic Life OS logo">
-  <circle cx="256" cy="256" r="256" fill="#9fe870"/>
-  <g fill="none" stroke="#1f5b1c" stroke-width="42" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="256" cy="256" r="256" fill="#9be568"/>
+  <g fill="none" stroke="#173c07" stroke-width="42" stroke-linecap="round" stroke-linejoin="round">
     <path d="M80 160l72 56-72 56M432 160l-72 56 72 56M200 312c24 48 88 48 112 0"/>
   </g>
 </svg>

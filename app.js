@@ -2,6 +2,7 @@
   "use strict";
 
   const STORE = "kinetic-life-os:data:v1";
+  const RESET_MARKER = `${STORE}:cleared`;
   const pad = (value) => String(value).padStart(2, "0");
   const keyOf = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   const fromKey = (key) => {
@@ -1199,6 +1200,7 @@
     if (action === "reset") {
       if (!confirm("确定清除当前设备的全部工作台记录吗？此操作无法撤销。")) return;
       localStorage.removeItem(STORE);
+      localStorage.setItem(RESET_MARKER, "true");
       location.reload();
     }
   });
