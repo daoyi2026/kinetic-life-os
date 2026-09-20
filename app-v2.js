@@ -561,7 +561,7 @@
 
         <div class="v2-content">
           <section class="v2-screen" data-screen="home">
-            <div class="compact-banner"><h2 id="homeOverviewTitle">生活总览</h2></div>
+            <div class="compact-banner"><h2 id="homeOverviewTitle" class="home-breeze-title"><span id="homeBreezePeriod"></span><span id="homeBreezeCopy"></span></h2></div>
             <section class="section">
               <article class="card home-stats-card">
                 <div class="card-head"><div><h3>完成概览</h3><small>工作、待办和年度目标的当前状态</small></div></div>
@@ -1780,6 +1780,8 @@
   let healthTrendPanel = "weight";
   let viewingHomeInspiration = false;
   let breezeEntryIndex = 0;
+  let homeBreezeEntryIndex = 0;
+  let homeBreezeRotationTimer = null;
   let breezeEditorId = null;
   let breezeHistoryOpen = false;
 
@@ -1814,20 +1816,37 @@
   }
 
   function breezeQuoteText(entry, period = currentBreezePeriod()) {
-    const periodText = uiText(period.zh, period.en);
     const text = breezeEntryText(entry);
-    if (!text) return uiText(`${period.zh}：留下一句给自己的话`, `${period.en}: leave a line for yourself`);
-    if (text.startsWith(period.zh) || text.startsWith(period.en)) return text;
-    return `${periodText}：${text}`;
+    return text || uiText("留下一句给自己的话", "Leave a line for yourself");
   }
 
   function syncHomeBreezeTitle() {
     const homeOverviewTitle = document.getElementById("homeOverviewTitle");
-    if (!homeOverviewTitle) return;
+    const periodNode = document.getElementById("homeBreezePeriod");
+    const copyNode = document.getElementById("homeBreezeCopy");
+    if (!homeOverviewTitle || !periodNode || !copyNode) return;
     const period = currentBreezePeriod();
     const entries = currentBreezeEntries();
-    const index = Math.min(breezeEntryIndex, Math.max(0, entries.length - 1));
-    homeOverviewTitle.textContent = breezeQuoteText(entries[index], period);
+    homeBreezeEntryIndex = Math.min(homeBreezeEntryIndex, Math.max(0, entries.length - 1));
+    periodNode.textContent = `${uiText(period.zh, period.en)}!`;
+    copyNode.textContent = breezeQuoteText(entries[homeBreezeEntryIndex], period);
+  }
+
+  function rotateHomeBreezeTitle() {
+    const entries = currentBreezeEntries();
+    if (entries.length > 1) {
+      let nextIndex = Math.floor(Math.random() * entries.length);
+      if (nextIndex === homeBreezeEntryIndex) nextIndex = (nextIndex + 1) % entries.length;
+      homeBreezeEntryIndex = nextIndex;
+    } else {
+      homeBreezeEntryIndex = 0;
+    }
+    syncHomeBreezeTitle();
+  }
+
+  function scheduleHomeBreezeRotation() {
+    if (homeBreezeRotationTimer) window.clearInterval(homeBreezeRotationTimer);
+    homeBreezeRotationTimer = window.setInterval(rotateHomeBreezeTitle, 60 * 60 * 1000);
   }
 
   function renderBreezeGuide(animate = false) {
@@ -1843,7 +1862,7 @@
     if (breezeEntryIndex >= entries.length) breezeEntryIndex = Math.max(0, entries.length - 1);
     const entry = entries[breezeEntryIndex];
     periodLabel.textContent = `${breezeEntryIndex + 1}/${entries.length}`;
-    quote.textContent = breezeQuoteText(entry, period);
+    quote.textContent = breezeEntryText(entry) || uiText("留下一句给自己的话", "Leave a line for yourself");
     if (animate) {
       panel.classList.remove("is-switching");
       requestAnimationFrame(() => {
@@ -4192,4 +4211,5 @@
   history.replaceState({ ...(history.state || {}), kineticRoute: initialPage, kineticDepth: 0 }, "", `#${initialPage}`);
   switchPage(initialPage, false);
   applyLanguage();
+  scheduleHomeBreezeRotation();
 })();
