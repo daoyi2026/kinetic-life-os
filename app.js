@@ -50,6 +50,10 @@
     return `<svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true">${paths[name] || paths.home}</svg>`;
   }
 
+  function smileyLogoMarkup() {
+    return '<svg class="logo-face" viewBox="0 0 64 64" aria-hidden="true"><path d="M10 20l9 7-9 7M54 20l-9 7 9 7M25 39c3 6 11 6 14 0"/></svg>';
+  }
+
   const pages = [
     ["home", "总览", "home"],
     ["work", "工作计划", "work"],
@@ -65,7 +69,7 @@
     <a class="skip-link" href="#v2Main">跳到主要内容</a>
     <div class="v2-shell">
       <aside class="v2-sidebar">
-        <div class="v2-brand"><span class="v2-logo" aria-hidden="true">&gt;_</span><div><strong>个人工作台</strong><span>LIFE OS · 本地版</span></div></div>
+        <div class="v2-brand"><span class="v2-logo" aria-hidden="true">${smileyLogoMarkup()}</span><div><strong>个人工作台</strong><span>LIFE OS · 本地版</span></div></div>
         <nav class="v2-nav" aria-label="主导航">
           ${pages.map(([id, label, iconName]) => `<a href="#${id}" data-page="${id}">${icon(iconName)}<span>${label}</span></a>`).join("")}
         </nav>
@@ -75,7 +79,7 @@
 
       <main class="v2-main" id="v2Main">
         <header class="v2-topbar">
-          <div class="v2-topbar-brand"><span class="v2-mobile-logo" aria-hidden="true">&gt;_</span><div class="v2-crumb" id="pageCrumb">总览</div></div>
+          <div class="v2-topbar-brand"><span class="v2-mobile-logo" aria-hidden="true">${smileyLogoMarkup()}</span><div class="v2-crumb" id="pageCrumb">总览</div></div>
           <div class="v2-top-actions">
             <label class="search-field">
               <span class="sr-only">搜索项目</span>

@@ -2,7 +2,7 @@
   "use strict";
 
   const STORE = "serene-personal-workspace-v1";
-  const APP_VERSION = "v1.3.2";
+  const APP_VERSION = "v1.4.2";
   const LANGUAGE_STORE = "kinetic-life-os:language";
   let currentLanguage = localStorage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
   const pageScrollPositions = new Map();
@@ -14,7 +14,6 @@
   const MONTHS_SHORT_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const PROJECT_STATUSES = [
     ["未开始", "Not started"],
-    ["待选择", "To decide"],
     ["进行中", "In progress"],
     ["收尾中", "Wrapping up"],
     ["等待回复", "Awaiting reply"],
@@ -22,7 +21,11 @@
     ["暂缓", "Paused"],
     ["已完成", "Completed"]
   ];
-  const PROJECT_STATUS_ALIASES = Object.fromEntries(PROJECT_STATUSES.flatMap(([zh, en]) => [[zh, zh], [en, zh]]));
+  const PROJECT_STATUS_ALIASES = {
+    ...Object.fromEntries(PROJECT_STATUSES.flatMap(([zh, en]) => [[zh, zh], [en, zh]])),
+    "待选择": "未开始",
+    "To decide": "未开始"
+  };
   const TRANSLATIONS = {
     "跳到主要内容": "Skip to main content",
     "总览": "Overview",
@@ -58,6 +61,13 @@
     "健身计划": "Fitness plan",
     "日常提醒": "Daily reminders",
     "日历看板": "Dashboard",
+    "行则将至": "Footprints",
+    "微风指南": "Breeze guide",
+    "新增微风指南": "Add breeze guide",
+    "微风指南，可用鼠标滚轮切换": "Breeze guide; use the mouse wheel to switch entries",
+    "微风指南内容": "Breeze guide entry",
+    "写下一句想留给自己的话": "Write a line to keep with you",
+    "灵感轨迹": "Inspiration trail",
     "设置与备份": "Settings & backup",
     "主导航": "Main navigation",
     "移动端导航": "Mobile navigation",
@@ -79,6 +89,7 @@
     "今": "Today",
     "前一天": "Previous day",
     "后一天": "Next day",
+    "顺延到明天": "Move to tomorrow",
     "切换语言": "Switch language",
     "返回": "Back",
     "返回上一页": "Go back",
@@ -119,6 +130,19 @@
     "与下方项目状态和进度实时同步": "Synced with project status and progress below",
     "正在推进": "In progress",
     "状态、进度和下一步会自动保存。": "Status, progress, and next action are saved automatically.",
+    "状态": "Status",
+    "领域": "Area",
+    "筛选": "Filter",
+    "全部状态": "All statuses",
+    "全部领域": "All areas",
+    "按状态筛选项目": "Filter projects by status",
+    "按领域筛选项目": "Filter projects by area",
+    "把每天留下的灵感、行动和变化，慢慢看成一条自己的轨迹。": "See the inspirations, actions, and changes you leave each day as your own trail.",
+    "道虽迩，不行不至；事虽小，不为不成。": "Even the shortest path requires a step; even the simplest task requires action.",
+    "灵感记录": "Inspiration record",
+    "关闭": "Close",
+    "筛选": "Filter",
+    "全部状态与领域": "All statuses and areas",
     "＋ 新项目": "＋ New project",
     "当前进度": "Current progress",
     "所属领域": "Area",
@@ -378,11 +402,73 @@
     return `${date.getMonth() + 1}月${date.getDate()}日 周${"日一二三四五六"[date.getDay()]}`;
   };
   const uiText = (zh, en) => currentLanguage === "en" ? en : zh;
+  const ENGLISH_DEMO_INSPIRATIONS = [
+    "A quiet interface needs room to breathe.",
+    "The best ideas arrive after the plan leaves some space.",
+    "A small step can turn a distant direction into a real path.",
+    "Good experiences let people enter slowly and stay curious.",
+    "Keep the useful signal; let the noise fall away.",
+    "A walk, a page, and a friend can reshape the whole day."
+  ];
+  function localizedInspiration(day) {
+    return String(day?.inspiration || "").trim();
+  }
+  function inspirationInitial(value) {
+    const text = String(value || "").trim();
+    return text.match(/[\u3400-\u9fff]/)?.[0] || text.match(/[A-Za-z]/)?.[0]?.toUpperCase() || Array.from(text)[0] || "";
+  }
   const addDays = (key, amount) => {
     const date = fromKey(key);
     date.setDate(date.getDate() + amount);
     return keyOf(date);
   };
+  const BREEZE_PERIODS = [
+    { id: "morning", zh: "早上好", en: "Good morning", start: 5, end: 11 },
+    { id: "noon", zh: "中午好", en: "Good noon", start: 11, end: 14 },
+    { id: "afternoon", zh: "下午好", en: "Good afternoon", start: 14, end: 18 },
+    { id: "evening", zh: "晚上好", en: "Good evening", start: 18, end: 23 },
+    { id: "late", zh: "夜深了", en: "It is late", start: 23, end: 29 }
+  ];
+  const BREEZE_SEEDS = [
+    ["morning", "去表达，去输出", "Express, then share"],
+    ["noon", "留一点空白，再继续推进", "Leave a little space, then keep moving"],
+    ["afternoon", "把好奇心做成作品", "Turn curiosity into work"],
+    ["evening", "温柔地做难而重要的事", "Do the difficult, meaningful things gently"],
+    ["late", "先休息，明天再继续", "Rest first, continue tomorrow"]
+  ];
+  function createDefaultBreezeGuide() {
+    return {
+      entries: BREEZE_SEEDS.map(([period, zh, en], index) => ({
+        id: `breeze-seed-${index + 1}`,
+        period,
+        zh,
+        en,
+        createdAt: todayKey(),
+        updatedAt: todayKey()
+      }))
+    };
+  }
+  function normalizeBreezeGuide(value, fallback = createDefaultBreezeGuide()) {
+    const source = Array.isArray(value?.entries) ? value.entries : [];
+    const entries = source.map((entry, index) => {
+      const period = BREEZE_PERIODS.some((item) => item.id === entry?.period) ? entry.period : "morning";
+      const zh = String(entry?.zh || entry?.text || "").trim();
+      const en = String(entry?.en || entry?.text || zh).trim();
+      return {
+        id: String(entry?.id || `breeze-${index + 1}`),
+        period,
+        zh,
+        en,
+        createdAt: isDateKey(entry?.createdAt) ? entry.createdAt : todayKey(),
+        updatedAt: isDateKey(entry?.updatedAt) ? entry.updatedAt : todayKey()
+      };
+    }).filter((entry) => entry.zh || entry.en);
+    return { entries: entries.length ? entries : fallback.entries.map((entry) => ({ ...entry })) };
+  }
+  function breezePeriodForNow() {
+    const hour = new Date().getHours();
+    return BREEZE_PERIODS.find((period) => hour >= period.start && hour < period.end) || BREEZE_PERIODS[4];
+  }
   const weekKeys = (anchor = new Date()) => {
     const monday = new Date(anchor);
     monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
@@ -423,10 +509,15 @@
       fitness: '<path d="M3 12h4l2-6 4 12 2-6h6"/>',
       tasks: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12 3 3 5-6"/>',
       event: '<path d="M5 21V4"/><path d="M5 5h11l-2 4 2 4H5"/>',
+      footprints: '<circle cx="7" cy="7" r="2"/><circle cx="16" cy="9" r="2"/><circle cx="8" cy="16" r="2"/><circle cx="17" cy="18" r="2"/>',
       settings: '<path d="M4 7h10"/><path d="M18 7h2"/><circle cx="16" cy="7" r="2"/><path d="M4 17h2"/><path d="M10 17h10"/><circle cx="8" cy="17" r="2"/>',
       search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>'
     };
     return `<svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true">${paths[name] || paths.home}</svg>`;
+  }
+
+  function smileyLogoMarkup() {
+    return '<svg class="logo-face" viewBox="0 0 64 64" aria-hidden="true"><path d="M10 20l9 7-9 7M54 20l-9 7 9 7M25 39c3 6 11 6 14 0"/></svg>';
   }
 
   const pages = [
@@ -436,6 +527,7 @@
     ["fitness", "健身计划", "fitness"],
     ["reminders", "日常提醒", "tasks"],
     ["calendar", "日历看板", "event"],
+    ["footprints", "行则将至", "footprints"],
     ["settings", "设置与备份", "settings"]
   ];
   const pageNames = Object.fromEntries(pages.map(([id, label]) => [id, label]));
@@ -444,7 +536,7 @@
     <a class="skip-link" href="#v2Main">跳到主要内容</a>
     <div class="v2-shell">
       <aside class="v2-sidebar">
-        <div class="v2-brand"><span class="v2-logo" aria-hidden="true">&gt;_</span><div><strong>个人工作台</strong><span>${uiText("LIFE OS · 本地版", "LIFE OS · Local edition")}</span></div></div>
+        <div class="v2-brand"><span class="v2-logo" aria-hidden="true">${smileyLogoMarkup()}</span><div><strong>个人工作台</strong><span>${uiText("LIFE OS · 本地版", "LIFE OS · Local edition")}</span></div></div>
         <nav class="v2-nav" aria-label="主导航">
           ${pages.map(([id, label, iconName]) => `<a href="#${id}" data-page="${id}">${icon(iconName)}<span>${label}</span></a>`).join("")}
         </nav>
@@ -454,7 +546,7 @@
 
       <main class="v2-main" id="v2Main">
         <header class="v2-topbar">
-          <div class="v2-topbar-brand"><span class="v2-mobile-logo" aria-hidden="true">&gt;_</span><div class="v2-crumb" id="pageCrumb">总览</div></div>
+          <div class="v2-topbar-brand"><span class="v2-mobile-logo" aria-hidden="true">${smileyLogoMarkup()}</span><div class="v2-crumb" id="pageCrumb">总览</div></div>
           <div class="v2-top-actions">
             <button class="back-button" id="backButton" type="button" data-action="go-back" aria-label="返回上一页" title="返回上一页" disabled><span class="back-button-icon" aria-hidden="true">←</span><span class="back-button-label">返回</span></button>
             <button class="lang-switch" id="languageToggle" type="button" aria-label="切换语言">EN</button>
@@ -468,7 +560,7 @@
 
         <div class="v2-content">
           <section class="v2-screen" data-screen="home">
-            <div class="compact-banner"><h2>生活总览</h2></div>
+            <div class="compact-banner"><h2 id="homeOverviewTitle">生活总览</h2></div>
             <section class="section">
               <article class="card home-stats-card">
                 <div class="card-head"><div><h3>完成概览</h3><small>工作、待办和年度目标的当前状态</small></div></div>
@@ -502,10 +594,10 @@
           </section>
 
           <section class="v2-screen" data-screen="work">
-            <div class="page-heading"><h2>项目推进</h2><p>管理工作与长期项目，记录每一次推进，并随时回看完整历史。</p></div>
-            <section class="section"><article class="card"><div class="card-head"><div><h3>项目总进度</h3><small>与下方项目状态和进度实时同步</small></div></div><div class="project-overview" id="projectOverview"></div></article></section>
+            <div class="page-heading"><h2>项目推进</h2><p>${uiText("管理工作与长期项目，记录每一次推进，并随时回看完整历史。", "Manage work and long-term projects, record every update, and review the full history.")}</p></div>
+            <section class="section"><article class="card"><div class="card-head"><div><h3>项目总进度</h3><small>${uiText("与下方项目状态和进度实时同步", "Synced with project status and progress below")}</small></div></div><div class="project-overview" id="projectOverview"></div></article></section>
             <section class="section">
-              <div class="section-head"><div><h3>正在推进</h3><p>状态、进度和下一步会自动保存。</p></div><button class="btn green" data-action="add-project">＋ 新项目</button></div>
+              <div class="section-head project-section-head"><div><h3>正在推进</h3><p>状态、进度和下一步会自动保存。</p></div><div class="project-section-actions"><label class="project-filter"><span>状态</span><select class="select" id="projectStatusFilter" aria-label="按状态筛选项目"><option value="all">全部状态</option></select></label><label class="project-filter"><span>领域</span><select class="select" id="projectAreaFilter" aria-label="按领域筛选项目"><option value="all">全部领域</option></select></label><button class="btn green" data-action="add-project">＋ 新项目</button></div></div>
               <div class="project-list" id="projectList"></div>
             </section>
           </section>
@@ -574,6 +666,7 @@
 
           <section class="v2-screen" data-screen="reminders">
             <div class="page-heading"><h2>日常提醒</h2><p>统一管理每日待办、长期事项和需要按日期跟进的工作与生活事件。</p></div>
+            <section class="section north-star-section"><article class="card north-star-card" id="northStarPanel"><div class="breeze-head"><div class="breeze-title-line"><h3 class="breeze-title">${uiText("微风指南", "Breeze guide")}</h3><small id="breezePeriodLabel"></small></div><div class="breeze-actions"><button class="icon-btn breeze-add-btn" type="button" data-action="breeze-add" aria-label="${uiText("新增微风指南", "Add breeze guide")}" title="${uiText("新增微风指南", "Add breeze guide")}">＋</button><button class="text-btn" type="button" data-action="breeze-toggle-history" id="breezeHistoryToggle">展开</button></div></div><div class="breeze-viewport" id="breezeViewport" tabindex="0" aria-label="${uiText("微风指南，可用鼠标滚轮切换", "Breeze guide; use the mouse wheel to switch entries")}"><h3 id="northStarQuote"></h3></div><div class="breeze-editor" id="breezeEditor" hidden></div><div class="breeze-history" id="breezeHistory" hidden></div></article></section>
             <section class="section grid grid-2">
               <article class="card">
                 <div class="date-strip"><button class="date-nav-btn" data-action="reminder-prev-day" aria-label="前一天">‹</button><div class="date-strip-label"><strong id="reminderDateTitle"></strong><small id="reminderProgress"></small></div><button class="date-nav-btn" data-action="reminder-next-day" aria-label="后一天">›</button></div>
@@ -633,6 +726,14 @@
                 <article class="card day-dashboard" id="calendarProjectLogPanel"></article>
                 <article class="card day-dashboard calendar-inspiration-panel" id="calendarInspirationPanel"></article>
               </div>
+            </section>
+          </section>
+
+          <section class="v2-screen" data-screen="footprints">
+            <div class="page-heading"><h2 data-i18n-key="行则将至">行则将至</h2><p data-i18n-key="道虽迩，不行不至；事虽小，不为不成。">${uiText("道虽迩，不行不至；事虽小，不为不成。", "Even the shortest path requires a step; even the simplest task requires action.")}</p></div>
+            <section class="section footprints-stack">
+              <article class="card footprints-card" id="footprintsPanel"></article>
+              <article class="card footprints-metrics-card" id="footprintsMetricsPanel"></article>
               <article class="card day-dashboard calendar-completed-panel" id="calendarCompletedPanel"></article>
             </section>
           </section>
@@ -650,7 +751,7 @@
       </main>
     </div>
     <nav class="mobile-nav-v2" aria-label="移动端导航">
-      ${pages.slice(0, 4).concat([pages[5]]).map(([id, label, iconName]) => `<a href="#${id}" data-page="${id}">${icon(iconName)}<span>${label.replace("计划", "")}</span></a>`).join("")}
+      ${pages.slice(0, 4).concat([pages[5], pages[6]]).map(([id, label, iconName]) => `<a href="#${id}" data-page="${id}">${icon(iconName)}<span>${label.replace("计划", "")}</span></a>`).join("")}
     </nav>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="modal-backdrop" id="projectHistoryModal" hidden>
@@ -660,6 +761,15 @@
           <button class="icon-button" type="button" data-action="close-project-history" aria-label="关闭">×</button>
         </div>
         <div class="modal-history-scroll" id="projectHistoryList"></div>
+      </section>
+    </div>
+    <div class="modal-backdrop" id="inspirationModal" hidden>
+      <section class="modal-card inspiration-modal-card" role="dialog" aria-modal="true" aria-labelledby="inspirationModalTitle">
+        <div class="modal-card-head">
+          <div><div class="eyebrow">今日灵感</div><h2 id="inspirationModalTitle">灵感记录</h2><p class="modal-date" id="inspirationModalDate"></p></div>
+          <button class="icon-button" type="button" data-action="close-inspiration-modal" aria-label="关闭">×</button>
+        </div>
+        <div class="inspiration-modal-text" id="inspirationModalText"></div>
       </section>
     </div>
   `;
@@ -729,6 +839,12 @@
     if (languageToggle) {
       languageToggle.textContent = currentLanguage === "en" ? "中文" : "EN";
     }
+    const breezeTitle = document.querySelector(".breeze-title");
+    if (breezeTitle) breezeTitle.textContent = uiText("微风指南", "Breeze guide");
+    document.querySelectorAll("[data-i18n-key]").forEach((element) => {
+      const key = element.dataset.i18nKey;
+      if (TRANSLATIONS[key]) element.textContent = uiText(key, TRANSLATIONS[key]);
+    });
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const textNodes = [];
     let node;
@@ -736,6 +852,7 @@
     textNodes.forEach((textNode) => {
       const parent = textNode.parentElement;
       if (!parent || ["SCRIPT", "STYLE", "TEXTAREA"].includes(parent.tagName)) return;
+      if (parent.closest("[data-no-translate]")) return;
       if (!languageTextSources.has(textNode)) languageTextSources.set(textNode, textNode.nodeValue);
       textNode.nodeValue = translateText(languageTextSources.get(textNode));
     });
@@ -845,6 +962,52 @@
     }
   };
 
+  const WORKOUT_TEXT_EN = {
+    "热身 6–8 分钟": "Warm-up · 6–8 minutes",
+    "绕肩、肩胛活动、胸椎旋转与手腕活动": "Shoulder circles, scapular mobility, thoracic rotation, and wrist mobility",
+    "站姿哑铃肩推": "Standing dumbbell shoulder press",
+    "站姿哑铃侧平举": "Standing dumbbell lateral raise",
+    "站姿单臂哑铃划船": "Standing single-arm dumbbell row",
+    "站姿俯身反向飞鸟": "Standing bent-over reverse fly",
+    "站姿哑铃弯举": "Standing dumbbell curl",
+    "保加利亚分腿蹲": "Bulgarian split squat",
+    "站姿靠墙滑手": "Standing wall slides",
+    "拉伸 5–8 分钟": "Stretch · 5–8 minutes",
+    "胸肌、背阔肌与前臂": "Chest, lats, and forearms",
+    "低冲击有氧": "Low-impact cardio",
+    "肩背与胸椎灵活": "Shoulder, back, and thoracic mobility",
+    "手腕与小关节": "Wrist and small-joint mobility",
+    "髋、踝活动与徒手深蹲": "Hip and ankle mobility with bodyweight squats",
+    "哑铃深蹲": "Dumbbell squat",
+    "臀桥": "Glute bridge",
+    "哑铃罗马尼亚硬拉": "Dumbbell Romanian deadlift",
+    "扶墙辅助静态分腿蹲": "Wall-assisted static split squat",
+    "平板支撑": "Plank",
+    "死虫式": "Dead bug",
+    "髋屈肌、臀部与大腿后侧": "Hip flexors, glutes, and hamstrings",
+    "走步、绕肩、胸椎旋转与髋铰链": "Walking, shoulder circles, thoracic rotation, and hip hinges",
+    "单臂哑铃划船": "Single-arm dumbbell row",
+    "俯身反向飞鸟": "Bent-over reverse fly",
+    "单腿臀桥": "Single-leg glute bridge",
+    "超人式": "Superman",
+    "站姿单侧提重行走 / 原地抬膝": "Single-sided carry / standing knee raises",
+    "背阔肌、胸、臀部与后链": "Lats, chest, glutes, and posterior chain",
+    "身体维护或轻松走动": "Body maintenance or an easy walk",
+    "轻松走动": "Easy walk",
+    "轻松活动": "Easy movement",
+    "按当天状态安排 15–30 分钟": "15–30 minutes based on how you feel",
+    "日常维护": "Daily maintenance",
+    "完成早晚练习即可": "Complete the morning and evening routines",
+    "散步或按状态完成日常维护": "Walk or follow your usual maintenance routine",
+    "充分恢复，不安排正式训练": "Full recovery; no formal workout",
+    "骨盆与髋踝控制": "Pelvic and hip-ankle control",
+    "肩背稳定": "Shoulder and back stability",
+    "肩背、手腕、髋踝与身体控制": "Shoulders, wrists, hips, ankles, and body control",
+    "背部稳定、臀部与后链 · 不超过 60 分钟": "Back stability, glutes, and posterior chain · under 60 minutes",
+    "肩背与手臂 · 全站立 · 不超过 60 分钟": "Shoulders, back, and arms · standing only · under 60 minutes",
+    "臀腿、骨盆控制与核心 · 不超过 60 分钟": "Glutes, legs, pelvic control, and core · under 60 minutes"
+  };
+
   const supplementaryTraining = [
     {
       title: "稳定性及灵活性",
@@ -916,6 +1079,7 @@
     tasks: [],
     notes: "",
     inspiration: "",
+    inspirationEn: "",
     mood: "",
     energy: "",
     calories: "",
@@ -949,7 +1113,7 @@
         { id: "p-room", title: "个人房间与网站", description: "把个人空间、作品入口和持续记录整合成一个可以逐步扩展的数字基地。", symbol: "⌂", area: "产品与空间", status: "进行中", progress: 15, next: "先完成一个可用初版，再根据实际使用补充内容。", logs: [], createdAt, completed: false },
         { id: "p-novel", title: "年代文小说", description: "保持低压力、可持续的写作节奏，逐步完善故事设定和章节内容。", symbol: "✎", area: "创作与学习", status: "长期维护", progress: 5, next: "安排本周一次写作时段，先完成一个小片段。", logs: [], createdAt, completed: false },
         { id: "p-media", title: "个人自媒体输出", description: "围绕真实兴趣持续产出完整主题，先保持稳定，再逐步形成自己的表达方式。", symbol: "◎", area: "创作与学习", status: "长期维护", progress: 5, next: "完成一个不完美但完整的主题输出。", logs: [], createdAt, completed: false },
-        { id: "p-healing", title: "疗愈网页：森林 / 极光二选一", description: "探索一个节奏舒缓的沉浸式网页，用简单的视觉和声音帮助进入放松状态。", symbol: "◌", area: "产品与空间", status: "待选择", progress: 0, next: "先确定一个主题，再研究循环视频。", logs: [], createdAt, completed: false }
+        { id: "p-healing", title: "疗愈网页：森林 / 极光二选一", description: "探索一个节奏舒缓的沉浸式网页，用简单的视觉和声音帮助进入放松状态。", symbol: "◌", area: "产品与空间", status: "未开始", progress: 0, next: "先确定一个主题，再研究循环视频。", logs: [], createdAt, completed: false }
       ],
       milestones: [
         { id: "m1", title: "研究方向说明第一版", note: "先写清楚问题、对象和方法，不追求最终稿。", done: false, createdAt },
@@ -963,6 +1127,7 @@
       weightHistory: [],
       routineItems: normalizeRoutineItems(),
       supplementaryTraining: cloneSupplementaryTraining(),
+      breezeGuide: createDefaultBreezeGuide(),
       reminders: [],
       focusSeconds: 1500,
       migratedToV2: true
@@ -1005,6 +1170,23 @@
 
   function demoLog(id, date, text) {
     return { id, date, text };
+  }
+
+  function addDemoEnglishInspirationRecords(days, today = todayKey()) {
+    const candidates = [];
+    for (let offset = 0; offset <= 109; offset += 1) {
+      const key = addDays(today, -offset);
+      const day = days[key] || emptyDay();
+      normalizeDay(day);
+      days[key] = day;
+      if (!String(day.inspiration || "").trim()) candidates.push(key);
+    }
+    ENGLISH_DEMO_INSPIRATIONS.forEach((text, index) => {
+      const key = candidates[index];
+      if (!key) return;
+      days[key].inspiration = text;
+      days[key].inspirationEn = "";
+    });
   }
 
   function buildDemoState(base, raw) {
@@ -1206,6 +1388,7 @@
       if (age <= 109 && !day.inspiration && age % 9 === 0) day.inspiration = demoInspirations[age % demoInspirations.length];
       days[key] = day;
     }
+    addDemoEnglishInspirationRecords(days, today);
 
     Object.entries(fitnessDays).forEach(([key, fitnessDay]) => {
       if (days[key]) return;
@@ -1260,7 +1443,7 @@
         description: "用胶片记录街道、光线和人与城市的关系，也为旅行保留一份慢速的视觉档案。",
         symbol: "⌂",
         area: "摄影与旅行",
-        status: "待选择",
+        status: "未开始",
         progress: 30,
         next: "确定一个街区主题，完成一次轻量外拍。",
         createdAt: projectDate(-5),
@@ -1410,7 +1593,8 @@
       reminders: [],
       focusSeconds: 1500,
       migratedToV2: true,
-      nonPersonalDemoDataApplied: true
+      nonPersonalDemoDataApplied: true,
+      demoLanguageRecordsApplied: true
     };
   }
 
@@ -1436,8 +1620,10 @@
         workoutPlanChanges: Array.isArray(input.workoutPlanChanges) ? input.workoutPlanChanges : [],
         supplementaryTraining: normalizeSupplementaryTraining(input.supplementaryTraining),
         weightHistory: Array.isArray(input.weightHistory) ? input.weightHistory : [],
-        routineItems: normalizeRoutineItems(input.routineItems)
+        routineItems: normalizeRoutineItems(input.routineItems),
+        breezeGuide: normalizeBreezeGuide(input.breezeGuide, base.breezeGuide)
       };
+      let appliedDemoLanguageRecords = false;
       const workoutChanges = new Map();
       merged.workoutPlanChanges.forEach((change) => {
         if (!change || !/^\d{4}-\d{2}-\d{2}$/.test(change.effectiveFrom || "") || !Number.isInteger(Number(change.weekday)) || !change.plan || !Array.isArray(change.plan.items)) return;
@@ -1470,6 +1656,11 @@
           day.workoutPlan = null;
         }
       });
+      if (merged.nonPersonalDemoDataApplied === true && merged.demoLanguageRecordsApplied !== true) {
+        addDemoEnglishInspirationRecords(merged.days);
+        merged.demoLanguageRecordsApplied = true;
+        appliedDemoLanguageRecords = true;
+      }
       merged.workoutPlanChanges = [...workoutChanges.values()].sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
       merged.projects.forEach((project) => {
         project.status = PROJECT_STATUS_ALIASES[project.status] || "未开始";
@@ -1513,7 +1704,7 @@
         merged.days[todayKey()] = day;
       }
       merged.migratedToV2 = true;
-      if (resettingNonFitnessData) localStorage.setItem(STORE, JSON.stringify(merged));
+      if (resettingNonFitnessData || appliedDemoLanguageRecords) localStorage.setItem(STORE, JSON.stringify(merged));
       return merged;
     } catch {
       return base;
@@ -1530,9 +1721,12 @@
     if (typeof day.water !== "number") day.water = Number(day.water) || 0;
     if (typeof day.fitness !== "boolean") day.fitness = false;
     if (!day.workoutPlan || typeof day.workoutPlan !== "object" || !Array.isArray(day.workoutPlan.items)) day.workoutPlan = null;
-    ["notes", "inspiration", "mood", "energy", "calories", "food"].forEach((field) => {
+    ["notes", "inspiration", "inspirationEn", "mood", "energy", "calories", "food"].forEach((field) => {
       if (day[field] == null) day[field] = "";
     });
+    if (!String(day.inspiration || "").trim() && String(day.inspirationEn || "").trim()) {
+      day.inspiration = day.inspirationEn;
+    }
     return day;
   }
 
@@ -1548,12 +1742,22 @@
   let editingMasterTodos = false;
   let editingEventId = null;
   let editingWorkoutDate = null;
+  let workoutDraft = null;
   let editingRoutines = false;
   let editingSupplementaryTraining = false;
   let completedProjectFilter = "全部";
+  let projectStatusFilter = "all";
+  let projectAreaFilter = "all";
+  let footprintsYearFilter = "all";
+  let footprintsMonthFilter = "all";
+  let footprintsZoom = 3;
+  let footprintsExpanded = false;
   const HEALTH_TREND_PANELS = ["weight", "mood", "water", "calories"];
   let healthTrendPanel = "weight";
   let viewingHomeInspiration = false;
+  let breezeEntryIndex = 0;
+  let breezeEditorId = null;
+  let breezeHistoryOpen = false;
 
   function ensureDay(key) {
     if (!state.days[key]) state.days[key] = emptyDay();
@@ -1568,6 +1772,103 @@
   function currentSupplementaryTraining() {
     if (!Array.isArray(state.supplementaryTraining) || !state.supplementaryTraining.length) state.supplementaryTraining = normalizeSupplementaryTraining();
     return state.supplementaryTraining;
+  }
+
+  function currentBreezePeriod() {
+    return breezePeriodForNow();
+  }
+
+  function currentBreezeEntries() {
+    const period = currentBreezePeriod().id;
+    const entries = Array.isArray(state.breezeGuide?.entries) ? state.breezeGuide.entries.filter((entry) => entry.period === period) : [];
+    return entries.length ? entries : normalizeBreezeGuide().entries.filter((entry) => entry.period === period);
+  }
+
+  function breezeEntryText(entry) {
+    if (!entry) return "";
+    return String(currentLanguage === "en" ? (entry.en || entry.zh) : (entry.zh || entry.en) || "").trim();
+  }
+
+  function breezeQuoteText(entry, period = currentBreezePeriod()) {
+    const periodText = uiText(period.zh, period.en);
+    const text = breezeEntryText(entry);
+    if (!text) return uiText(`${period.zh}：留下一句给自己的话`, `${period.en}: leave a line for yourself`);
+    if (text.startsWith(period.zh) || text.startsWith(period.en)) return text;
+    return `${periodText}：${text}`;
+  }
+
+  function syncHomeBreezeTitle() {
+    const homeOverviewTitle = document.getElementById("homeOverviewTitle");
+    if (!homeOverviewTitle) return;
+    const period = currentBreezePeriod();
+    const entries = currentBreezeEntries();
+    const index = Math.min(breezeEntryIndex, Math.max(0, entries.length - 1));
+    homeOverviewTitle.textContent = breezeQuoteText(entries[index], period);
+  }
+
+  function renderBreezeGuide(animate = false) {
+    const panel = document.getElementById("northStarPanel");
+    const quote = document.getElementById("northStarQuote");
+    const periodLabel = document.getElementById("breezePeriodLabel");
+    const editor = document.getElementById("breezeEditor");
+    const history = document.getElementById("breezeHistory");
+    const historyToggle = document.getElementById("breezeHistoryToggle");
+    if (!panel || !quote || !periodLabel || !editor || !history || !historyToggle) return;
+    const period = currentBreezePeriod();
+    const entries = currentBreezeEntries();
+    if (breezeEntryIndex >= entries.length) breezeEntryIndex = Math.max(0, entries.length - 1);
+    const entry = entries[breezeEntryIndex];
+    periodLabel.textContent = `${breezeEntryIndex + 1}/${entries.length}`;
+    quote.textContent = breezeQuoteText(entry, period);
+    if (animate) {
+      panel.classList.remove("is-switching");
+      requestAnimationFrame(() => {
+        panel.classList.add("is-switching");
+        window.setTimeout(() => panel.classList.remove("is-switching"), 760);
+      });
+    }
+    editor.hidden = breezeEditorId === null;
+    if (!editor.hidden) {
+      const editing = breezeEditorId !== "new" ? state.breezeGuide.entries.find((item) => item.id === breezeEditorId) : null;
+      const value = editing ? (currentLanguage === "en" ? editing.en || editing.zh : editing.zh || editing.en) : "";
+      editor.innerHTML = `<label class="sr-only" for="breezeEditorInput">${uiText("微风指南内容", "Breeze guide entry")}</label><textarea class="textarea" id="breezeEditorInput" maxlength="160" placeholder="${uiText("写下一句想留给自己的话", "Write a line to keep with you")}">${esc(value)}</textarea><div class="breeze-editor-actions"><button class="btn green" type="button" data-action="breeze-save">${uiText("保存", "Save")}</button><button class="btn secondary" type="button" data-action="breeze-cancel">${uiText("取消", "Cancel")}</button></div>`;
+    }
+    history.hidden = !breezeHistoryOpen;
+    historyToggle.textContent = breezeHistoryOpen ? uiText("收起", "Collapse") : uiText("展开", "Expand");
+    if (breezeHistoryOpen) {
+      history.innerHTML = entries.length ? entries.map((item, index) => `<div class="breeze-history-row ${index === breezeEntryIndex ? "is-current" : ""}"><div class="breeze-history-copy"><small>${esc(item.updatedAt || item.createdAt || "")}</small><p>${esc(breezeEntryText(item))}</p></div><div class="breeze-history-actions"><button class="text-btn" type="button" data-action="breeze-edit" data-breeze-id="${esc(item.id)}">${uiText("修改", "Edit")}</button><button class="text-btn danger-text-btn" type="button" data-action="breeze-delete" data-breeze-id="${esc(item.id)}">${uiText("删除", "Delete")}</button></div></div>`).join("") : `<div class="empty-state">${uiText("还没有这一时段的记录。", "No entries for this time period yet.")}</div>`;
+    } else {
+      history.innerHTML = "";
+    }
+  }
+
+  function saveBreezeEntry() {
+    const input = document.getElementById("breezeEditorInput");
+    const text = String(input?.value || "").trim();
+    if (!text) {
+      notify(uiText("先写下一句话", "Write something first"));
+      return;
+    }
+    const period = currentBreezePeriod().id;
+    if (!state.breezeGuide || !Array.isArray(state.breezeGuide.entries)) state.breezeGuide = createDefaultBreezeGuide();
+    if (breezeEditorId === "new") {
+      const entry = { id: uid("breeze"), period, zh: text, en: text, createdAt: todayKey(), updatedAt: todayKey() };
+      state.breezeGuide.entries.push(entry);
+      breezeEntryIndex = currentBreezeEntries().length - 1;
+    } else {
+      const entry = state.breezeGuide.entries.find((item) => item.id === breezeEditorId);
+      if (entry) {
+        entry[currentLanguage === "en" ? "en" : "zh"] = text;
+        if (!entry.zh) entry.zh = text;
+        if (!entry.en) entry.en = text;
+        entry.updatedAt = todayKey();
+      }
+    }
+    breezeEditorId = null;
+    save();
+    renderBreezeGuide();
+    renderHome();
+    notify(uiText("微风指南已保存", "Breeze guide saved"));
   }
 
   function save() {
@@ -1612,6 +1913,28 @@
 
   function closeProjectHistory() {
     const modal = document.getElementById("projectHistoryModal");
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove("modal-open");
+  }
+
+  function openInspirationRecord(date) {
+    const inspiration = localizedInspiration(state.days[date]);
+    const modal = document.getElementById("inspirationModal");
+    const title = document.getElementById("inspirationModalTitle");
+    const dateLabel = document.getElementById("inspirationModalDate");
+    const text = document.getElementById("inspirationModalText");
+    if (!inspiration || !modal || !title || !dateLabel || !text) return;
+    title.textContent = uiText("灵感记录", "Inspiration record");
+    dateLabel.textContent = dayText(date);
+    text.textContent = inspiration;
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+    requestAnimationFrame(() => modal.querySelector("[data-action=close-inspiration-modal]")?.focus());
+  }
+
+  function closeInspirationRecord() {
+    const modal = document.getElementById("inspirationModal");
     if (!modal) return;
     modal.hidden = true;
     document.body.classList.remove("modal-open");
@@ -1756,7 +2079,7 @@
   function hasDayInformation(key) {
     const day = state.days[key];
     if (!day) return eventsOn(key).length > 0 || projectLogsOn(key).length > 0 || Boolean(weightOn(key));
-    return day.tasks.length > 0 || Boolean(day.notes || day.inspiration || day.mood || day.energy || day.calories || day.food || day.water || day.fitness || day.workoutPlan) ||
+    return day.tasks.length > 0 || Boolean(day.notes || day.inspiration || day.inspirationEn || day.mood || day.energy || day.calories || day.food || day.water || day.fitness || day.workoutPlan) ||
       Object.values(day.routines).some(Boolean) || eventsOn(key).length > 0 || projectLogsOn(key).length > 0 || Boolean(weightOn(key));
   }
 
@@ -1833,9 +2156,10 @@
       : (stats.total ? `完成了${stats.done}项待办（共${stats.total}项）` : "今天没有待办事项");
     const plan = planFor(key);
     const weekday = fromKey(key).getDay();
+    const planTitle = localizedPlanTitle(plan.title);
     const workoutPart = TRAINING_WEEKDAYS.includes(weekday)
-      ? (currentLanguage === "en" ? (day.fitness ? `${plan.title} workout plan completed` : `${plan.title} workout plan pending`) : (day.fitness ? `完成了${plan.title}训练计划` : `${plan.title}训练计划待完成`))
-      : (currentLanguage === "en" ? `Today is ${plan.title}` : `今天是${plan.title}`);
+      ? (currentLanguage === "en" ? (day.fitness ? `${planTitle} workout plan completed` : `${planTitle} workout plan pending`) : (day.fitness ? `完成了${plan.title}训练计划` : `${plan.title}训练计划待完成`))
+      : (currentLanguage === "en" ? `Today is ${planTitle}` : `今天是${plan.title}`);
     const routineDone = currentRoutineItems().filter((item) => day.routines[item.id]).length;
     const routinePart = currentLanguage === "en" ? `${routineDone} daily routines completed` : `完成了${routineDone}项日常项目`;
     const extraParts = [];
@@ -1849,6 +2173,8 @@
   }
 
   function renderHome() {
+    const homeOverviewTitle = document.getElementById("homeOverviewTitle");
+    syncHomeBreezeTitle();
     const score = overallProgress();
     const monthStats = monthlyTaskStats();
     const homeStats = document.getElementById("homeStats");
@@ -1890,7 +2216,7 @@
     const priorityEdit = document.querySelector('[data-action="toggle-priority-edit"]');
     priorityCard?.classList.toggle("is-inspiration", viewingHomeInspiration);
     if (viewingHomeInspiration) {
-      const inspiration = ensureDay(todayKey()).inspiration || "";
+      const inspiration = localizedInspiration(ensureDay(todayKey()));
       if (priorityTitle) priorityTitle.textContent = uiText("今日灵感", "Today's inspiration");
       if (prioritySubtitle) prioritySubtitle.textContent = uiText("与日常提醒同步，可记录今天捕捉到的片段", "Synced with daily reminders; capture today's fragments");
       if (priorityToggle) {
@@ -1964,6 +2290,17 @@
     return true;
   }
 
+  function projectAreaOptions(projects) {
+    return [...new Set(projects.map((project) => String(project.area || "其他").trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, "zh-CN"));
+  }
+
+  function projectMatchesFilter(project) {
+    const matchesStatus = projectStatusFilter === "all" || project.status === projectStatusFilter;
+    const matchesArea = projectAreaFilter === "all" || String(project.area || "其他").trim() === projectAreaFilter;
+    return matchesStatus && matchesArea;
+  }
+
   function projectDayRecord(project, date = selectedDate) {
     project.daily = project.daily && typeof project.daily === "object" && !Array.isArray(project.daily) ? project.daily : {};
     const saved = project.daily[date];
@@ -2022,12 +2359,23 @@
   function renderProjects() {
     const query = (document.getElementById("globalSearch").value || "").trim().toLowerCase();
     const activeProjects = state.projects.filter((project) => !isCompletedProject(project));
-    const list = activeProjects.filter((project) => !query || `${project.title}${project.area}${project.description}${project.next}`.toLowerCase().includes(query));
+    const areas = projectAreaOptions(activeProjects);
+    if (projectStatusFilter !== "all" && !PROJECT_STATUSES.some(([status]) => status === projectStatusFilter)) projectStatusFilter = "all";
+    if (projectAreaFilter !== "all" && !areas.includes(projectAreaFilter)) projectAreaFilter = "all";
+    const statusFilter = document.getElementById("projectStatusFilter");
+    if (statusFilter) {
+      statusFilter.innerHTML = `<option value="all">${uiText("全部状态", "All statuses")}</option>${PROJECT_STATUSES.map(([status, label]) => `<option value="${esc(status)}" ${status === projectStatusFilter ? "selected" : ""}>${esc(uiText(status, label))}</option>`).join("")}`;
+    }
+    const areaFilter = document.getElementById("projectAreaFilter");
+    if (areaFilter) {
+      areaFilter.innerHTML = `<option value="all">${uiText("全部领域", "All areas")}</option>${areas.map((area) => `<option value="${esc(area)}" ${area === projectAreaFilter ? "selected" : ""}>${esc(area)}</option>`).join("")}`;
+    }
+    const list = activeProjects.filter((project) => projectMatchesFilter(project) && (!query || `${project.title}${project.area}${project.description}${project.next}`.toLowerCase().includes(query)));
     const overview = document.getElementById("projectOverview");
     if (overview) {
       overview.innerHTML = activeProjects.length ? activeProjects.map((project) => `
         <div class="project-overview-row">
-          <div class="project-overview-meta"><strong>${esc(project.title)}</strong><span>${esc(project.status)} · ${Number(project.progress) || 0}%</span></div>
+            <div class="project-overview-meta"><button class="project-overview-name" type="button" data-action="jump-project" data-id="${esc(project.id)}">${esc(project.title)}</button><span>${esc(uiText(project.status, PROJECT_STATUSES.find(([status]) => status === project.status)?.[1] || project.status))} · ${Number(project.progress) || 0}%</span></div>
           <div class="progress-track" role="progressbar" aria-label="${esc(project.title)}进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Number(project.progress) || 0}"><span style="width:${Number(project.progress) || 0}%"></span></div>
         </div>
       `).join("") : '<div class="empty-state">还没有正在推进的项目。</div>';
@@ -2037,7 +2385,7 @@
       const recordDate = projectRecordDate(project);
       const dayRecord = projectDayRecord(project, recordDate);
       return `
-        <article class="card project-card">
+        <article class="card project-card" id="project-card-${esc(project.id)}">
           <button class="mini-btn danger project-delete-btn" data-action="delete-project" data-id="${project.id}" aria-label="删除项目 ${esc(project.title)}">×</button>
           <div class="project-head">
             <div class="project-title"><div class="project-title-top"><button class="project-symbol" type="button" data-action="cycle-project-symbol" data-id="${project.id}" aria-label="切换项目图标" title="切换项目图标">${projectIconMarkup(project)}</button><span class="tag neutral project-area-tag">${esc(project.area || "其他")}</span></div><textarea class="project-title-input" data-project-title="${project.id}" maxlength="120" rows="2" aria-label="项目标题">${esc(project.title)}</textarea></div>
@@ -2072,7 +2420,7 @@
           </details>
         </article>
       `;
-    }).join("") : query ? '<div class="empty-state">没有找到匹配的未完成项目。</div>' : '<div class="empty-state">目前没有正在推进的项目，已完成项目已归档到日历看板。</div>';
+    }).join("") : (query || projectStatusFilter !== "all" || projectAreaFilter !== "all") ? '<div class="empty-state">没有找到匹配的未完成项目。</div>' : '<div class="empty-state">目前没有正在推进的项目，已完成项目已归档到日历看板。</div>';
   }
 
   function chartSummary(data) {
@@ -2261,7 +2609,66 @@
     return change?.plan || workoutPlans[weekday];
   }
 
+  function localizedPlanTitle(title) {
+    if (currentLanguage !== "en") return title;
+    return {
+      "力量 A": "Strength A",
+      "力量 B": "Strength B",
+      "力量 C": "Strength C",
+      "有氧 A": "Cardio A",
+      "有氧 B": "Cardio B",
+      "恢复日": "Recovery day",
+      "休息日": "Rest day"
+    }[title] || title;
+  }
+
+  function localizedWorkoutText(value) {
+    if (currentLanguage !== "en") return value;
+    return WORKOUT_TEXT_EN[String(value || "").trim()] || value;
+  }
+
+  function workoutSummaryFromItems(items) {
+    const count = items.length;
+    if (!count) return uiText("暂无训练项目", "No exercises yet");
+    let min = 0;
+    let max = 0;
+    items.forEach((item) => {
+      const matches = [...String(item?.[2] || "").matchAll(/(\d+)\s*(?:[–-]\s*(\d+)\s*)?分钟/g)];
+      matches.forEach((match) => {
+        min += Number(match[1]) || 0;
+        max += Number(match[2] || match[1]) || 0;
+      });
+    });
+    if (min > 0) return currentLanguage === "en" ? `${count} exercises · about ${min}–${max} minutes` : `${count} 个项目 · 约 ${min}–${max} 分钟`;
+    return uiText(`${count} 个项目 · 按计划完成`, `${count} exercises · follow the plan`);
+  }
+
+  function workoutDraftFor(key, plan = planFor(key)) {
+    if (!workoutDraft || workoutDraft.key !== key) {
+      workoutDraft = {
+        key,
+        title: String(plan.title || ""),
+        items: plan.items.map((item, index) => [String(item?.[0] ?? index + 1), String(item?.[1] || ""), String(item?.[2] || "")])
+      };
+    }
+    return workoutDraft;
+  }
+
+  function syncWorkoutDraftFromForm(form) {
+    const key = form?.dataset.workoutEditor;
+    if (!key) return null;
+    const draft = workoutDraftFor(key);
+    draft.title = form.elements["workout-title"]?.value.trim() || "";
+    draft.items = [...form.querySelectorAll(".workout-edit-row")].map((row, index) => [
+      row.querySelector("[data-workout-number]")?.value.trim() || row.querySelector(".workout-edit-index")?.textContent.trim() || String(index + 1),
+      row.querySelector("[data-workout-name]")?.value.trim() || "",
+      row.querySelector("[data-workout-detail]")?.value.trim() || ""
+    ]);
+    return draft;
+  }
+
   function workoutEditorMarkup(key, plan) {
+    const draft = workoutDraftFor(key, plan);
     const weekday = fromKey(key).getDay();
     const weekdayLabel = currentLanguage === "en" ? WEEKDAYS_EN[weekday] : `周${"日一二三四五六"[weekday]}`;
     const helper = currentLanguage === "en"
@@ -2270,18 +2677,20 @@
     return `
       <form class="workout-editor" data-workout-editor="${key}">
         <div class="workout-edit-meta">
-          <label class="field"><span>安排名称</span><input class="inline-input" name="workout-title" maxlength="40" value="${esc(plan.title)}" required /></label>
-          <label class="field"><span>简要说明</span><input class="inline-input" name="workout-subtitle" maxlength="80" value="${esc(plan.subtitle)}" /></label>
+          <label class="field"><span>安排名称</span><input class="inline-input" name="workout-title" maxlength="40" value="${esc(draft.title)}" required /></label>
+          <label class="field"><span>简要说明</span><output class="inline-input workout-subtitle-output" data-workout-summary>${esc(workoutSummaryFromItems(draft.items))}</output></label>
         </div>
         <div class="workout-edit-list">
-          ${plan.items.map(([number, title, detail], index) => `
+          ${draft.items.length ? draft.items.map(([number, title, detail], index) => `
             <div class="workout-edit-row">
               <span class="workout-edit-index">${esc(number)}</span>
               <label class="field"><span class="sr-only">运动名称</span><input class="inline-input" data-workout-name="${index}" maxlength="60" value="${esc(title)}" placeholder="运动名称" required /></label>
               <label class="field"><span class="sr-only">运动时间或次数</span><input class="inline-input" data-workout-detail="${index}" maxlength="100" value="${esc(detail)}" placeholder="时间或次数" /></label>
+              <button class="mini-btn danger workout-row-remove" type="button" data-action="delete-workout-item" data-workout-date="${key}" data-workout-index="${index}" aria-label="删除运动项目">×</button>
             </div>
-          `).join("")}
+          `).join("") : '<div class="empty-state">还没有运动项目。</div>'}
         </div>
+        <button class="btn secondary workout-add-item" type="button" data-action="add-workout-item" data-workout-date="${key}">＋ 添加运动项目</button>
         <div class="workout-edit-actions"><button class="btn green" type="submit">保存安排</button><button class="btn secondary" type="button" data-action="cancel-workout-edit">取消</button></div>
         <p class="helper">${esc(helper)}</p>
       </form>
@@ -2295,8 +2704,8 @@
     return `
       <div class="workout-overview${day.fitness ? " is-completed" : ""}">
         ${editing ? workoutEditorMarkup(key, plan) : `
-          <div class="subhead"><div><strong>${esc(plan.title)}</strong><p>${esc(plan.subtitle)}</p></div><div class="workout-actions"><button class="edit-btn" data-action="edit-workout" data-workout-date="${key}">编辑</button><button class="btn ${day.fitness ? "green" : "secondary"}" data-action="toggle-workout" data-workout-date="${key}">${day.fitness ? "已完成" : "完成"}</button></div></div>
-          <div class="workout-items">${plan.items.map(([number, title, detail]) => `<div class="workout-item"><b>${esc(number)}</b><span>${esc(title)}</span><small>${esc(detail)}</small></div>`).join("")}</div>
+          <div class="subhead"><div><strong>${esc(localizedPlanTitle(plan.title))}</strong><p>${esc(workoutSummaryFromItems(plan.items))}</p></div><div class="workout-actions"><button class="edit-btn" data-action="edit-workout" data-workout-date="${key}">${uiText("编辑", "Edit")}</button><button class="btn ${day.fitness ? "green" : "secondary"}" data-action="toggle-workout" data-workout-date="${key}">${day.fitness ? uiText("已完成", "Completed") : uiText("完成", "Done")}</button></div></div>
+          <div class="workout-items">${plan.items.map(([number, title, detail]) => `<div class="workout-item"><b>${esc(number)}</b><span>${esc(localizedWorkoutText(title))}</span><small>${esc(localizedWorkoutText(detail))}</small></div>`).join("")}</div>
         `}
       </div>
     `;
@@ -2383,7 +2792,7 @@
     `;
     renderFitnessCalendar();
     document.getElementById("fitnessDateTitle").textContent = dayText(selectedFitnessDate);
-    document.getElementById("fitnessDateHint").textContent = selectedFitnessDate === todayKey() ? uiText("今天", "Today") : planFor(selectedFitnessDate).title;
+    document.getElementById("fitnessDateHint").textContent = selectedFitnessDate === todayKey() ? uiText("今天", "Today") : localizedPlanTitle(planFor(selectedFitnessDate).title);
     document.getElementById("fitnessDayPlan").innerHTML = workoutMarkup(selectedFitnessDate, "fitness");
     document.getElementById("fitnessRoutines").innerHTML = routineMarkup(selectedFitnessDate);
     const panels = currentSupplementaryTraining();
@@ -2451,6 +2860,7 @@
       <div class="todo-row ${task.done ? "done" : ""}">
         <input class="check" type="checkbox" data-task-toggle="${task.id}" data-task-date="${key}" ${task.done ? "checked" : ""} aria-label="切换待办完成状态" />
         <input class="inline-input" data-task-text="${task.id}" data-task-date="${key}" value="${esc(task.text)}" aria-label="修改待办内容" />
+        ${task.done ? "" : `<button class="mini-btn task-defer-btn" data-action="defer-task" data-id="${task.id}" data-task-date="${key}" aria-label="顺延到明天" title="顺延到明天">→</button>`}
         <button class="mini-btn danger" data-action="delete-task" data-id="${task.id}" data-task-date="${key}" aria-label="删除待办">×</button>
       </div>
     `).join("");
@@ -2462,7 +2872,8 @@
     document.getElementById("reminderProgress").textContent = currentLanguage === "en" ? `${stats.done} / ${stats.total} complete` : `${stats.done} / ${stats.total} 项完成`;
     document.getElementById("reminderList").innerHTML = taskRows(selectedDate, "reminders");
     document.getElementById("inspirationDateLabel").textContent = dayText(selectedDate);
-    document.getElementById("dayInspirationInput").value = ensureDay(selectedDate).inspiration;
+    document.getElementById("dayInspirationInput").value = localizedInspiration(ensureDay(selectedDate));
+    renderBreezeGuide();
   }
 
   function renderMilestones() {
@@ -2487,6 +2898,10 @@
       const monthLabel = currentLanguage === "en" ? MONTHS_SHORT_EN[date.getMonth()] : `${date.getMonth() + 1}月`;
       return `<div class="event-row" data-action="edit-event" data-id="${event.id}" role="button" tabindex="0" title="${esc(uiText("点击日期编辑", "Click the date to edit"))}"><div class="event-date"><span><small>${monthLabel}</small>${date.getDate()}</span></div><div><strong>${esc(event.title)}</strong><p>${esc(event.copy || "")}</p><small class="event-repeat">${eventRepeatLabel(event.repeat)}</small></div><button class="mini-btn danger" data-action="delete-event" data-id="${event.id}" aria-label="删除重要日期">×</button></div>`;
     }).join("") : '<div class="empty-state">还没有重要日期。</div>';
+  }
+
+  function calendarDayNavMarkup() {
+    return `<div class="day-panel-nav" role="group" aria-label="切换日历日期"><button class="mini-btn" type="button" data-action="calendar-prev-day" aria-label="前一天" title="前一天">‹</button><button class="mini-btn" type="button" data-action="calendar-next-day" aria-label="后一天" title="后一天">›</button></div>`;
   }
 
   function renderDayDashboard() {
@@ -2523,11 +2938,11 @@
     const waterValue = Math.max(0, Math.min(8, Number(day.water) || 0));
     const weightValue = weight ? String(weight.weight) : "";
     document.getElementById("calendarWorkoutPanel").innerHTML = `
-      <div class="card-head"><div><h3>${uiText("运动安排", "Workout plan")}</h3><small>${esc(dayText(selectedDate))} · ${esc(planFor(selectedDate).title)}</small></div></div>
+      <div class="card-head"><div><h3>${uiText("运动安排", "Workout plan")}</h3><small>${esc(dayText(selectedDate))} · ${esc(localizedPlanTitle(planFor(selectedDate).title))}</small></div>${calendarDayNavMarkup()}</div>
       ${workoutMarkup(selectedDate, "calendar")}
     `;
     document.getElementById("calendarWorkPanel").innerHTML = `
-      <div class="card-head"><div><h3>${uiText("事务工作", "Work tasks")}</h3><small>${esc(dayText(selectedDate))} · ${esc(dateHint)}</small></div><span class="tag">${currentLanguage === "en" ? `${stats.rate}% complete` : `${stats.rate}% 完成`}</span></div>
+      <div class="card-head"><div><h3>${uiText("事务工作", "Work tasks")}</h3><small>${esc(dayText(selectedDate))} · ${esc(dateHint)}</small></div><div class="day-panel-head-actions"><span class="tag">${currentLanguage === "en" ? `${stats.rate}% complete` : `${stats.rate}% 完成`}</span>${calendarDayNavMarkup()}</div></div>
       <section class="day-section">
         <div class="subhead"><h4>${uiText("待办事项", "Tasks")}</h4><span class="tag neutral">${stats.done} / ${stats.total}</span></div>
         <div class="todo-list">${taskRows(selectedDate, "calendar")}</div>
@@ -2556,13 +2971,13 @@
     `;
 
     document.getElementById("calendarProjectLogPanel").innerHTML = `
-      <div class="card-head"><div><h3>${uiText("项目推进记录", "Project updates")}</h3><small>${esc(dayText(selectedDate))} · ${uiText("当天的项目更新", "Project updates for this day")}</small></div><span class="tag neutral">${logs.length} ${currentLanguage === "en" ? "updates" : "条"}</span></div>
+      <div class="card-head"><div><h3>${uiText("项目推进记录", "Project updates")}</h3><small>${esc(dayText(selectedDate))} · ${uiText("当天的项目更新", "Project updates for this day")}</small></div><div class="day-panel-head-actions"><span class="tag neutral">${logs.length} ${currentLanguage === "en" ? "updates" : "条"}</span>${calendarDayNavMarkup()}</div></div>
       ${logs.length ? `<div class="calendar-project-log-list">${logs.map((log) => `<div class="history-item"><time>${esc(log.project)}</time><span>${esc(log.text)}</span><span></span></div>`).join("")}</div>` : '<div class="empty-state">当天没有项目推进记录。</div>'}
     `;
 
     document.getElementById("calendarInspirationPanel").innerHTML = `
-      <div class="card-head"><div><h3>${uiText("今日灵感", "Today's inspiration")}</h3><small>${esc(dayText(selectedDate))} · ${uiText("与日常提醒同步", "Synced with daily reminders")}</small></div></div>
-      <textarea class="textarea inspiration-textarea" data-inspiration-input="calendar" placeholder="${esc(uiText("记录今天捕捉到的灵感、片段或想继续观察的方向", "Capture an idea, fragment, or direction to keep exploring today"))}">${esc(day.inspiration)}</textarea>
+      <div class="card-head"><div><h3>${uiText("今日灵感", "Today's inspiration")}</h3><small>${esc(dayText(selectedDate))} · ${uiText("与日常提醒同步", "Synced with daily reminders")}</small></div>${calendarDayNavMarkup()}</div>
+      <textarea class="textarea inspiration-textarea" data-inspiration-input="calendar" placeholder="${esc(uiText("记录今天捕捉到的灵感、片段或想继续观察的方向", "Capture an idea, fragment, or direction to keep exploring today"))}">${esc(localizedInspiration(day))}</textarea>
       <button class="btn secondary" data-action="save-inspiration" data-inspiration-source="calendar" style="margin-top:10px">${uiText("保存今日灵感", "Save today's inspiration")}</button>
     `;
 
@@ -2574,13 +2989,85 @@
       : completed.filter((item) => item.tags.includes(completedProjectFilter));
     document.getElementById("calendarCompletedPanel").innerHTML = `
       <div class="card-head completed-project-card-head"><div><h3>已完成项目</h3><small>完成的长期待办和工作项目会归档到这里 · 工作项目显示立项到完成的日期范围</small></div><div class="completed-project-tools"><label class="completed-project-filter"><span>筛选标签</span><select class="select" id="completedProjectFilter">${filterOptions.map((option) => `<option value="${esc(option)}" ${option === completedProjectFilter ? "selected" : ""}>${esc(option)}</option>`).join("")}</select></label><span class="tag neutral">${completedProjectFilter === "全部" ? completed.length : `${filteredCompleted.length} / ${completed.length}`} 项</span></div></div>
-      ${filteredCompleted.length ? `<div class="completed-project-list">${filteredCompleted.map((item) => `<div class="completed-project-row"><div><div class="completed-project-title">${item.tags.map((tag) => `<span class="tag neutral">${esc(tag)}</span>`).join("")}<button class="completed-project-name" type="button" data-action="open-project-history" data-history-id="${esc(item.id)}" data-history-type="${esc(item.type)}" aria-label="${esc(uiText("查看项目历史记录：", "View project history: "))}${esc(item.title)}">${esc(item.title)}</button></div>${completedDescriptionMarkup(item.description)}</div>${item.dateRange ? `<time class="completed-project-range">${esc(item.dateRange)}</time>` : ""}</div>`).join("")}</div>` : `<div class="empty-state">${completed.length ? "该标签下还没有已完成项目。" : "还没有已完成项目。"}</div>`}
+      ${filteredCompleted.length ? `<div class="completed-project-list">${filteredCompleted.map((item) => `<div class="completed-project-row" data-history-id="${esc(item.id)}" data-history-type="${esc(item.type)}"><div><div class="completed-project-title">${item.tags.map((tag) => `<span class="tag neutral">${esc(tag)}</span>`).join("")}<button class="completed-project-name" type="button" data-action="open-project-history" data-history-id="${esc(item.id)}" data-history-type="${esc(item.type)}" aria-label="${esc(uiText("查看项目历史记录：", "View project history: "))}${esc(item.title)}">${esc(item.title)}</button></div>${completedDescriptionMarkup(item.description)}</div>${item.dateRange ? `<time class="completed-project-range">${esc(item.dateRange)}</time>` : ""}</div>`).join("")}</div>` : `<div class="empty-state">${completed.length ? "该标签下还没有已完成项目。" : "还没有已完成项目。"}</div>`}
     `;
+  }
+
+  function footprintDateKeys() {
+    const dates = Object.keys(state.days).filter(isDateKey).sort();
+    const today = todayKey();
+    const start = dates.length && dates[0] < today ? dates[0] : addDays(today, -364);
+    const keys = [];
+    for (let key = start; key <= today; key = addDays(key, 1)) keys.push(key);
+    return keys.length ? keys : [today];
+  }
+
+  function footprintMetricMarkup(label, value, note) {
+    return `<div class="footprint-metric"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></div>`;
+  }
+
+  function renderFootprints() {
+    const target = document.getElementById("footprintsPanel");
+    const metricsTarget = document.getElementById("footprintsMetricsPanel");
+    if (!target || !metricsTarget) return;
+    const keys = footprintDateKeys();
+    const years = [...new Set(keys.map((key) => key.slice(0, 4)))].sort().reverse();
+    const filteredKeys = keys.filter((key) => {
+      const yearMatches = footprintsYearFilter === "all" || key.slice(0, 4) === footprintsYearFilter;
+      const monthMatches = footprintsMonthFilter === "all" || key.slice(5, 7) === footprintsMonthFilter;
+      return yearMatches && monthMatches;
+    });
+    const monthOptions = Array.from({ length: 12 }, (_, index) => pad(index + 1));
+    const selectedYear = years.includes(footprintsYearFilter) ? footprintsYearFilter : "all";
+    const selectedMonth = monthOptions.includes(footprintsMonthFilter) ? footprintsMonthFilter : "all";
+    footprintsYearFilter = selectedYear;
+    footprintsMonthFilter = selectedMonth;
+    const rangeLabel = selectedYear === "all" && selectedMonth === "all"
+      ? uiText("全部历史", "All history")
+      : `${selectedYear === "all" ? uiText("全部年份", "All years") : selectedYear}${selectedMonth === "all" ? "" : currentLanguage === "en" ? ` · ${MONTHS_SHORT_EN[Number(selectedMonth) - 1]}` : ` · ${Number(selectedMonth)}月`}`;
+    const hasInspiration = (key) => Boolean(String(state.days[key]?.inspiration || "").trim() || String(state.days[key]?.inspirationEn || "").trim());
+    const records = filteredKeys
+      .filter(hasInspiration)
+      .map((date) => ({ date, inspiration: localizedInspiration(state.days[date]) }));
+    const cells = filteredKeys.map((key) => {
+      const inspiration = localizedInspiration(state.days[key]);
+      const firstCharacter = inspirationInitial(inspiration);
+      const label = `${dayText(key)} · ${inspiration || uiText("无灵感记录", "No inspiration record")}`;
+      if (!hasInspiration(key)) return `<span class="footprint-cell" title="${esc(label)}" aria-label="${esc(label)}"></span>`;
+      return `<button class="footprint-cell has-inspiration" type="button" data-action="open-inspiration" data-inspiration-date="${key}" title="${esc(label)}" aria-label="${esc(label)}"><span data-no-translate="true">${esc(firstCharacter)}</span></button>`;
+    }).join("");
+    target.classList.toggle("is-expanded", footprintsExpanded);
+    target.innerHTML = `
+      <div class="card-head footprints-head"><div><h3>${uiText("灵感轨迹", "Inspiration trail")}</h3><small>${uiText("把每天留下的灵感看成一条慢慢形成的轨迹。", "A quiet trail made from the ideas you leave behind each day.")}</small></div><div class="footprints-filters"><label><span>${uiText("年份", "Year")}</span><select class="select" id="footprintsYearFilter"><option value="all">${uiText("全部年份", "All years")}</option>${years.map((year) => `<option value="${year}" ${year === selectedYear ? "selected" : ""}>${year}</option>`).join("")}</select></label><label><span>${uiText("月份", "Month")}</span><select class="select" id="footprintsMonthFilter"><option value="all">${uiText("全部月份", "All months")}</option>${monthOptions.map((month) => `<option value="${month}" ${month === selectedMonth ? "selected" : ""}>${currentLanguage === "en" ? MONTHS_SHORT_EN[Number(month) - 1] : `${Number(month)}月`}</option>`).join("")}</select></label></div></div>
+      <div class="footprints-meta"><span>${esc(rangeLabel)}</span><span>${filteredKeys.filter(hasInspiration).length} ${uiText("条灵感", "inspirations")}</span></div>
+      <div class="footprints-grid zoom-${footprintsZoom}" aria-label="${esc(uiText("灵感历史轨迹", "Historical inspiration footprints"))}">${cells}</div>
+      ${footprintsExpanded ? `<div class="footprints-record-list" aria-label="${esc(uiText("当前范围内的灵感记录", "Inspiration records in the current range"))}">${records.length ? records.map(({ date, inspiration }) => `<button class="footprints-record" type="button" data-action="open-inspiration" data-inspiration-date="${date}"><time>${esc(dayText(date))}</time><span>${esc(inspiration)}</span></button>`).join("") : `<div class="empty-state">${uiText("当前范围内还没有灵感记录。", "No inspiration records in this range yet.")}</div>`}</div>` : ""}
+      <div class="footprints-footer"><div class="footprints-hint">${uiText("滚动鼠标滚轮可在两种方格尺寸间切换；点击绿色格子查看当天灵感。", "Scroll to switch between two cell sizes; click a green cell to view that day's inspiration.")}</div><button class="text-btn" type="button" data-action="toggle-footprints-expand">${footprintsExpanded ? uiText("收起记录", "Collapse records") : uiText("展开记录", "Expand records")}</button></div>
+    `;
+
+    const hydrationDays = Object.values(state.days).filter((day) => Number(day?.water) >= 6).length;
+    const weights = [...state.weightHistory].filter((entry) => isDateKey(entry.date) && Number.isFinite(Number(entry.weight))).sort((a, b) => a.date.localeCompare(b.date));
+    const firstWeight = weights[0]?.weight;
+    const latestWeight = weights[weights.length - 1]?.weight;
+    const totalWeightLoss = firstWeight == null || latestWeight == null ? null : Math.max(0, Math.round((Number(firstWeight) - Number(latestWeight)) * 10) / 10);
+    const goodMoodDays = Object.values(state.days).filter((day) => day?.mood === "很好").length;
+    const workoutDays = Object.values(state.days).filter((day) => day?.fitness).length;
+    metricsTarget.innerHTML = `
+      <div class="card-head"><div><h3>${uiText("正在变好的证据", "Signs of progress")}</h3><small>${uiText("从真实记录里看见已经发生的变化。", "Small positive signals from your real records.")}</small></div></div>
+      <div class="footprint-metrics-grid">
+        ${footprintMetricMarkup(uiText("饮水达标日", "Hydration goal days"), `${hydrationDays}${uiText("天", " days")}`, uiText("按每天至少 6 杯统计", "At least 6 cups per day"))}
+        ${footprintMetricMarkup(uiText("总计减重", "Total weight loss"), totalWeightLoss == null ? uiText("继续记录中", "Keep recording") : `${totalWeightLoss.toFixed(1)} kg`, uiText("从最早到最新体重记录", "From earliest to latest weight record"))}
+        ${footprintMetricMarkup(uiText("心情很好的日子", "Good-mood days"), `${goodMoodDays}${uiText("天", " days")}`, uiText("已记录为“很好”的日期", "Days marked Great"))}
+        ${footprintMetricMarkup(uiText("累计训练日", "Workout days"), `${workoutDays}${uiText("天", " days")}`, uiText("已完成的训练记录", "Completed workout records"))}
+      </div>
+    `;
+    if (!records.length && !filteredKeys.length) target.querySelector(".footprints-grid").innerHTML = `<div class="empty-state">${uiText("还没有灵感记录。", "No inspiration records yet.")}</div>`;
   }
 
   function renderCalendar() {
     renderCalendars();
     renderDayDashboard();
+    renderFootprints();
   }
 
   function renderAll() {
@@ -2651,6 +3138,10 @@
     if (updateHash && location.hash !== `#${valid}`) history.pushState(null, "", `#${valid}`);
     if (valid === "home") renderHome();
     if (valid === "calendar") renderCalendar();
+    if (valid === "footprints") {
+      renderDayDashboard();
+      renderFootprints();
+    }
     if (valid === "work") renderProjects();
     if (valid === "fitness") renderFitness();
     updateBackButton();
@@ -2683,6 +3174,10 @@
       closeProjectHistory();
       return;
     }
+    if (event.target.id === "inspirationModal") {
+      closeInspirationRecord();
+      return;
+    }
     const pageLink = event.target.closest("[data-page]");
     if (pageLink) {
       event.preventDefault();
@@ -2710,8 +3205,84 @@
       if (item) openProjectHistory(item);
       return;
     }
+    if (action === "jump-project") {
+      const projectId = actionButton.dataset.id;
+      projectStatusFilter = "all";
+      projectAreaFilter = "all";
+      const search = document.getElementById("globalSearch");
+      if (search) search.value = "";
+      if (activePage !== "work") switchPage("work");
+      else renderProjects();
+      requestAnimationFrame(() => {
+        const card = document.getElementById(`project-card-${projectId}`);
+        if (!card) return;
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+        card.classList.add("project-card-target");
+        window.setTimeout(() => card.classList.remove("project-card-target"), 1400);
+      });
+      return;
+    }
     if (action === "close-project-history") {
       closeProjectHistory();
+      return;
+    }
+    if (action === "open-inspiration") {
+      openInspirationRecord(actionButton.dataset.inspirationDate);
+      return;
+    }
+    if (action === "breeze-add") {
+      breezeEditorId = "new";
+      breezeHistoryOpen = false;
+      renderBreezeGuide();
+      requestAnimationFrame(() => document.getElementById("breezeEditorInput")?.focus());
+      return;
+    }
+    if (action === "breeze-toggle-history") {
+      breezeHistoryOpen = !breezeHistoryOpen;
+      renderBreezeGuide();
+      return;
+    }
+    if (action === "breeze-edit") {
+      breezeEditorId = actionButton.dataset.breezeId || null;
+      breezeHistoryOpen = true;
+      renderBreezeGuide();
+      requestAnimationFrame(() => {
+        const input = document.getElementById("breezeEditorInput");
+        input?.focus();
+        input?.select();
+      });
+      return;
+    }
+    if (action === "breeze-delete") {
+      const breezeId = actionButton.dataset.breezeId;
+      const entry = state.breezeGuide?.entries?.find((item) => item.id === breezeId);
+      if (!entry || !window.confirm(uiText("删除这条微风指南吗？", "Delete this breeze guide entry?"))) return;
+      state.breezeGuide.entries = state.breezeGuide.entries.filter((item) => item.id !== breezeId);
+      const entries = currentBreezeEntries();
+      breezeEntryIndex = Math.min(breezeEntryIndex, Math.max(0, entries.length - 1));
+      if (breezeEditorId === breezeId) breezeEditorId = null;
+      save();
+      renderBreezeGuide();
+      renderHome();
+      notify(uiText("微风指南已删除", "Breeze guide deleted"));
+      return;
+    }
+    if (action === "breeze-save") {
+      saveBreezeEntry();
+      return;
+    }
+    if (action === "breeze-cancel") {
+      breezeEditorId = null;
+      renderBreezeGuide();
+      return;
+    }
+    if (action === "close-inspiration-modal") {
+      closeInspirationRecord();
+      return;
+    }
+    if (action === "toggle-footprints-expand") {
+      footprintsExpanded = !footprintsExpanded;
+      renderFootprints();
       return;
     }
     if (action === "project-prev-record" || action === "project-next-record") {
@@ -2817,6 +3388,8 @@
     }
     if (action === "edit-workout") {
       editingWorkoutDate = actionButton.dataset.workoutDate;
+      workoutDraft = null;
+      workoutDraftFor(editingWorkoutDate);
       renderFitness();
       renderCalendar();
       requestAnimationFrame(() => document.querySelector('.v2-screen.active [data-workout-editor] input')?.focus());
@@ -2824,8 +3397,24 @@
     }
     if (action === "cancel-workout-edit") {
       editingWorkoutDate = null;
+      workoutDraft = null;
       renderFitness();
       renderCalendar();
+      return;
+    }
+    if (action === "add-workout-item" || action === "delete-workout-item") {
+      const key = actionButton.dataset.workoutDate;
+      const form = document.querySelector(`[data-workout-editor="${key}"]`);
+      const draft = syncWorkoutDraftFromForm(form) || workoutDraftFor(key);
+      if (action === "add-workout-item") {
+        draft.items.push([String(draft.items.length + 1), "", ""]);
+      } else {
+        const index = Number(actionButton.dataset.workoutIndex);
+        if (Number.isInteger(index) && index >= 0) draft.items.splice(index, 1);
+      }
+      renderFitness();
+      renderCalendar();
+      requestAnimationFrame(() => document.querySelector(`[data-workout-editor="${key}"] [data-workout-name="${action === "add-workout-item" ? draft.items.length - 1 : Math.max(0, Number(actionButton.dataset.workoutIndex) - 1)}"]`)?.focus());
       return;
     }
     if (action === "toggle-routine-edit") {
@@ -2899,6 +3488,23 @@
     }
     if (action === "reminder-next-day") {
       updateSelectedDate(addDays(selectedDate, 1));
+    }
+    if (action === "calendar-prev-day" || action === "calendar-next-day") {
+      updateSelectedDate(addDays(selectedDate, action === "calendar-prev-day" ? -1 : 1));
+      return;
+    }
+    if (action === "defer-task") {
+      const fromKeyValue = actionButton.dataset.taskDate;
+      const fromDay = ensureDay(fromKeyValue);
+      const task = fromDay.tasks.find((item) => item.id === id);
+      if (!task) return;
+      fromDay.tasks = fromDay.tasks.filter((item) => item.id !== id);
+      const nextDay = ensureDay(addDays(fromKeyValue, 1));
+      nextDay.tasks.push({ ...task, done: false });
+      save();
+      updateSelectedDate(addDays(fromKeyValue, 1));
+      notify("顺延到明天");
+      return;
     }
     if (action === "toggle-workout") {
       const key = actionButton.dataset.workoutDate;
@@ -3060,7 +3666,9 @@
       const source = actionButton.dataset.inspirationSource || "reminders";
       const input = document.querySelector(`[data-inspiration-input="${source}"]`);
       if (!input) return;
-      ensureDay(source === "home" ? todayKey() : selectedDate).inspiration = input.value;
+      const day = ensureDay(source === "home" ? todayKey() : selectedDate);
+      day.inspiration = input.value;
+      day.inspirationEn = "";
       save();
       renderHome();
       renderReminders();
@@ -3073,6 +3681,7 @@
       day.food = document.getElementById("calendarFoodInput").value;
       day.notes = document.getElementById("calendarNotesInput").value;
       save();
+      renderHealth();
       renderHome();
       renderReminders();
       renderCalendar();
@@ -3098,7 +3707,10 @@
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeProjectHistory();
+    if (event.key === "Escape") {
+      closeProjectHistory();
+      closeInspirationRecord();
+    }
     const eventRow = event.target.closest?.('.event-row[data-action="edit-event"]');
     if (eventRow && (event.key === "Enter" || event.key === " ") && !event.target.closest("button")) {
       event.preventDefault();
@@ -3107,20 +3719,50 @@
   });
 
   document.addEventListener("contextmenu", (event) => {
-    const nameButton = event.target.closest('.completed-project-name[data-history-type="工作项目"]');
-    if (!nameButton) return;
+    const row = event.target.closest(".completed-project-row[data-history-id]");
+    if (!row) return;
     event.preventDefault();
-    const project = state.projects.find((item) => item.id === nameButton.dataset.historyId);
+    const historyId = row.dataset.historyId;
+    const historyType = row.dataset.historyType;
+    const project = historyType === "工作项目" ? state.projects.find((item) => item.id === historyId) : null;
+    const milestone = historyType === "长期待办" ? state.milestones.find((item) => item.id === historyId) : null;
+    const title = project?.title || milestone?.title || "this item";
     const confirmation = currentLanguage === "en"
-      ? `Delete all records for "${project?.title || "this project"}"? This cannot be undone.`
-      : `删除项目「${project?.title || "此项目"}」的全部记录吗？此操作无法撤销。`;
-    if (!project || !confirm(confirmation)) return;
-    state.projects = state.projects.filter((item) => item.id !== project.id);
+      ? `Delete all records for "${title}"? This cannot be undone.`
+      : `删除「${title}」的全部记录吗？此操作无法撤销。`;
+    if ((!project && !milestone) || !confirm(confirmation)) return;
+    if (project) state.projects = state.projects.filter((item) => item.id !== project.id);
+    if (milestone) state.milestones = state.milestones.filter((item) => item.id !== milestone.id);
     save();
     renderHome();
+    renderProjects();
+    renderMilestones();
     renderCalendar();
-    notify(uiText("项目及其全部记录已删除", "Project and all its records deleted"));
+    notify(uiText("已删除归档记录", "Archived record deleted"));
   });
+
+  document.addEventListener("wheel", (event) => {
+    const breezePanel = event.target.closest?.("#northStarPanel");
+    if (breezePanel && Math.abs(event.deltaY) >= 4) {
+      if (event.target.closest?.("#breezeEditor, #breezeHistory, textarea, input, select, button")) return;
+      const entries = currentBreezeEntries();
+      if (entries.length > 1) {
+        event.preventDefault();
+        breezeEntryIndex = (breezeEntryIndex + (event.deltaY > 0 ? 1 : -1) + entries.length) % entries.length;
+        renderBreezeGuide(true);
+        renderHome();
+      }
+      return;
+    }
+    if (event.target.closest?.(".footprints-record-list")) return;
+    const panel = event.target.closest?.("#footprintsPanel");
+    if (!panel || Math.abs(event.deltaY) < 4) return;
+    const nextZoom = event.deltaY < 0 ? 3 : 1;
+    if (nextZoom === footprintsZoom) return;
+    event.preventDefault();
+    footprintsZoom = nextZoom;
+    renderFootprints();
+  }, { passive: false });
 
   document.addEventListener("change", (event) => {
     const target = event.target;
@@ -3246,10 +3888,31 @@
       completedProjectFilter = target.value;
       renderCalendar();
     }
+    if (target.matches("#projectStatusFilter")) {
+      projectStatusFilter = target.value;
+      renderProjects();
+    }
+    if (target.matches("#projectAreaFilter")) {
+      projectAreaFilter = target.value;
+      renderProjects();
+    }
+    if (target.matches("#footprintsYearFilter, #footprintsMonthFilter")) {
+      if (target.matches("#footprintsYearFilter")) footprintsYearFilter = target.value;
+      if (target.matches("#footprintsMonthFilter")) footprintsMonthFilter = target.value;
+      footprintsZoom = 3;
+      renderFootprints();
+    }
   });
 
   document.addEventListener("input", (event) => {
     const target = event.target;
+    const workoutForm = target.closest?.("[data-workout-editor]");
+    if (workoutForm && (target.matches('[name="workout-title"], [data-workout-name], [data-workout-detail]'))) {
+      const draft = syncWorkoutDraftFromForm(workoutForm);
+      const summary = workoutForm.querySelector("[data-workout-summary]");
+      if (summary) summary.textContent = workoutSummaryFromItems(draft.items);
+      return;
+    }
     if (target.matches("[data-goal-title], [data-goal-progress], [data-goal-area]")) {
       const id = target.dataset.goalTitle || target.dataset.goalProgress || target.dataset.goalArea;
       const goal = state.goals.find((item) => item.id === id);
@@ -3342,19 +4005,18 @@
     const form = event.target;
     if (form.matches("[data-workout-editor]")) {
       const key = form.dataset.workoutEditor;
-      const current = planFor(key);
-      const title = form.elements["workout-title"].value.trim();
-      const subtitle = form.elements["workout-subtitle"].value.trim();
-      const items = current.items.map((item, index) => [
-        item[0],
-        form.querySelector(`[data-workout-name="${index}"]`).value.trim(),
-        form.querySelector(`[data-workout-detail="${index}"]`).value.trim()
-      ]);
+      const draft = syncWorkoutDraftFromForm(form) || workoutDraftFor(key);
+      const title = draft.title || uiText("运动安排", "Workout plan");
+      const items = draft.items
+        .map((item, index) => [String(item[0] || index + 1), String(item[1] || "").trim(), String(item[2] || "").trim()])
+        .filter((item) => item[1]);
+      const subtitle = workoutSummaryFromItems(items);
       const weekday = fromKey(key).getDay();
       state.workoutPlanChanges = (state.workoutPlanChanges || []).filter((change) => change.weekday !== weekday || change.effectiveFrom < key);
       state.workoutPlanChanges.push({ id: uid("workout-change"), effectiveFrom: key, weekday, plan: { title, subtitle, items } });
       ensureDay(key).workoutPlan = null;
       editingWorkoutDate = null;
+      workoutDraft = null;
       save();
       renderFitness();
       renderCalendar();
