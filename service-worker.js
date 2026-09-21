@@ -1,12 +1,14 @@
-const CACHE_NAME = "kinetic-life-os-v51-shell";
+const CACHE_NAME = "kinetic-life-os-v61-shell";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./app-v2.css?v=88",
-  "./app-v2.js?v=87",
-  "./assets/icon-smile-180.png",
-  "./assets/icon-smile-192.png",
-  "./assets/icon-smile-512.png"
+  "./manifest.webmanifest?v=3",
+  "./app-v2.css?v=98",
+  "./app-v2.js?v=96",
+  "./assets/icon.svg?v=3",
+  "./assets/icon-smile-180.png?v=3",
+  "./assets/icon-smile-192.png?v=3",
+  "./assets/icon-smile-512.png?v=3"
 ];
 
 self.addEventListener("install", (event) => {

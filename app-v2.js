@@ -5,7 +5,9 @@
   const RESET_MARKER = `${STORE}:cleared`;
   const APP_VERSION = "v1.4.2";
   const LANGUAGE_STORE = "kinetic-life-os:language";
+  const SIDEBAR_COLLAPSED_STORE = "kinetic-life-os:sidebar-collapsed";
   let currentLanguage = localStorage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
+  let sidebarCollapsed = localStorage.getItem(SIDEBAR_COLLAPSED_STORE) === "true";
   const pageScrollPositions = new Map();
   let activePage = "home";
   let internalHistoryDepth = 0;
@@ -113,8 +115,8 @@
     "打开日历看板": "Open dashboard",
     "进度概览": "Progress overview",
     "工作推进与年度方向": "Work progress and annual direction",
-    "本月工作完成率": "Monthly work completion",
-    "工作事项": "Work items",
+    "本月事件完成率": "Monthly event completion",
+    "事件": "Events",
     "年度目标完成率": "Annual goal completion",
     "平均进度": "Average progress",
     "年度目标": "Annual goals",
@@ -536,10 +538,10 @@
   document.body.innerHTML = `
     <a class="skip-link" href="#v2Main">跳到主要内容</a>
     <div class="v2-shell">
-      <aside class="v2-sidebar">
+      <aside class="v2-sidebar${sidebarCollapsed ? " is-collapsed" : ""}">
         <div class="v2-brand"><span class="v2-logo" aria-hidden="true">${smileyLogoMarkup()}</span><div><strong>个人工作台</strong><span>${uiText("LIFE OS · 本地版", "LIFE OS · Local edition")}</span></div></div>
         <nav class="v2-nav" aria-label="主导航">
-          ${pages.map(([id, label, iconName]) => `<a href="#${id}" data-page="${id}">${icon(iconName)}<span>${label}</span></a>`).join("")}
+          ${pages.map(([id, label, iconName]) => `<a href="#${id}" data-page="${id}" aria-label="${label}">${icon(iconName)}<span>${label}</span></a>`).join("")}
         </nav>
         <div class="sidebar-spacer"></div>
         <div class="sidebar-save">修改会自动保存在当前浏览器</div>
@@ -547,7 +549,8 @@
 
       <main class="v2-main" id="v2Main">
         <header class="v2-topbar">
-          <div class="v2-topbar-brand"><span class="v2-mobile-logo" aria-hidden="true">${smileyLogoMarkup()}</span><div class="v2-crumb" id="pageCrumb">总览</div></div>
+          <button class="sidebar-toggle" type="button" data-action="toggle-sidebar" aria-expanded="${sidebarCollapsed ? "false" : "true"}" aria-label="${sidebarCollapsed ? uiText("展开侧栏", "Expand sidebar") : uiText("折叠侧栏", "Collapse sidebar")}"><span aria-hidden="true">${sidebarCollapsed ? "›" : "‹"}</span></button>
+          <div class="v2-topbar-brand"><span class="v2-mobile-logo" aria-hidden="true">${smileyLogoMarkup()}</span></div>
           <div class="v2-top-actions">
             <button class="back-button" id="backButton" type="button" data-action="go-back" aria-label="返回上一页" title="返回上一页" disabled><span class="back-button-icon" aria-hidden="true">←</span><span class="back-button-label">返回</span></button>
             <button class="lang-switch" id="languageToggle" type="button" aria-label="切换语言">EN</button>
@@ -861,6 +864,7 @@
       ["placeholder", "aria-label", "title"].forEach((name) => translateAttribute(element, name));
     });
     if (languageToggle) languageToggle.setAttribute("aria-label", currentLanguage === "en" ? "Switch to Chinese" : "切换到英文");
+    syncSidebarToggle();
   }
 
   const languageObserver = new MutationObserver(() => requestAnimationFrame(applyLanguage));
@@ -1805,9 +1809,8 @@
   }
 
   function currentBreezeEntries() {
-    const period = currentBreezePeriod().id;
-    const entries = Array.isArray(state.breezeGuide?.entries) ? state.breezeGuide.entries.filter((entry) => entry.period === period) : [];
-    return entries.length ? entries : normalizeBreezeGuide().entries.filter((entry) => entry.period === period);
+    const entries = Array.isArray(state.breezeGuide?.entries) ? state.breezeGuide.entries : [];
+    return entries.length ? entries : normalizeBreezeGuide().entries;
   }
 
   function breezeEntryText(entry) {
@@ -1879,7 +1882,7 @@
     history.hidden = !breezeHistoryOpen;
     historyToggle.textContent = breezeHistoryOpen ? uiText("收起", "Collapse") : uiText("展开", "Expand");
     if (breezeHistoryOpen) {
-      history.innerHTML = entries.length ? entries.map((item, index) => `<div class="breeze-history-row ${index === breezeEntryIndex ? "is-current" : ""}"><div class="breeze-history-copy"><small>${esc(item.updatedAt || item.createdAt || "")}</small><p>${esc(breezeEntryText(item))}</p></div><div class="breeze-history-actions"><button class="text-btn" type="button" data-action="breeze-edit" data-breeze-id="${esc(item.id)}">${uiText("修改", "Edit")}</button><button class="text-btn danger-text-btn" type="button" data-action="breeze-delete" data-breeze-id="${esc(item.id)}">${uiText("删除", "Delete")}</button></div></div>`).join("") : `<div class="empty-state">${uiText("还没有这一时段的记录。", "No entries for this time period yet.")}</div>`;
+      history.innerHTML = entries.length ? entries.map((item, index) => `<div class="breeze-history-row ${index === breezeEntryIndex ? "is-current" : ""}"><div class="breeze-history-copy"><small>${esc(item.updatedAt || item.createdAt || "")}</small><p>${esc(breezeEntryText(item))}</p></div><div class="breeze-history-actions"><button class="text-btn" type="button" data-action="breeze-edit" data-breeze-id="${esc(item.id)}">${uiText("修改", "Edit")}</button><button class="text-btn danger-text-btn" type="button" data-action="breeze-delete" data-breeze-id="${esc(item.id)}">${uiText("删除", "Delete")}</button></div></div>`).join("") : `<div class="empty-state">${uiText("还没有记录。", "No entries yet.")}</div>`;
     } else {
       history.innerHTML = "";
     }
@@ -1925,6 +1928,23 @@
     toast.classList.add("show");
     clearTimeout(notify.timer);
     notify.timer = setTimeout(() => toast.classList.remove("show"), 1900);
+  }
+
+  function syncSidebarToggle() {
+    const sidebar = document.querySelector(".v2-sidebar");
+    const toggle = document.querySelector('[data-action="toggle-sidebar"]');
+    if (!sidebar || !toggle) return;
+    const label = sidebarCollapsed ? uiText("展开侧栏", "Expand sidebar") : uiText("折叠侧栏", "Collapse sidebar");
+    sidebar.classList.toggle("is-collapsed", sidebarCollapsed);
+    toggle.setAttribute("aria-expanded", String(!sidebarCollapsed));
+    toggle.setAttribute("aria-label", label);
+    toggle.innerHTML = `<span aria-hidden="true">${sidebarCollapsed ? "›" : "‹"}</span>`;
+  }
+
+  function toggleSidebar() {
+    sidebarCollapsed = !sidebarCollapsed;
+    localStorage.setItem(SIDEBAR_COLLAPSED_STORE, String(sidebarCollapsed));
+    syncSidebarToggle();
   }
 
   function completedHistoryEntries(item) {
@@ -2002,6 +2022,13 @@
     return { done, total: tasks.length, rate: tasks.length ? Math.round((done / tasks.length) * 100) : 0 };
   }
 
+  function addDayTask(key, text) {
+    const value = String(text || "").trim();
+    if (!value) return false;
+    ensureDay(key).tasks.push({ id: uid("task"), text: value, done: false, area: "生活" });
+    return true;
+  }
+
   function linkedProjectsForGoal(goal) {
     return state.projects.filter((project) => project.goalId === goal.id);
   }
@@ -2017,19 +2044,16 @@
     return Math.round(state.goals.reduce((sum, goal) => sum + goalProgress(goal), 0) / state.goals.length);
   }
 
-  function monthlyTaskStats(date = todayKey()) {
+  function monthlyEventStats(date = todayKey()) {
     const prefix = `${date.slice(0, 7)}-`;
     let allDone = 0;
-    let workDone = 0;
-    let workTotal = 0;
+    let allTotal = 0;
     Object.entries(state.days).filter(([key]) => key.startsWith(prefix)).forEach(([, day]) => {
       const tasks = day.tasks || [];
       allDone += tasks.filter((task) => task.done).length;
-      const workTasks = tasks.filter((task) => ["work", "工作"].includes(task.area));
-      workDone += workTasks.filter((task) => task.done).length;
-      workTotal += workTasks.length;
+      allTotal += tasks.length;
     });
-    return { allDone, workDone, workTotal, workRate: workTotal ? Math.round((workDone / workTotal) * 100) : 0 };
+    return { allDone, allTotal, eventRate: allTotal ? Math.round((allDone / allTotal) * 100) : 0 };
   }
 
   function completedProjectsThisYear(date = todayKey()) {
@@ -2220,11 +2244,11 @@
     const homeOverviewTitle = document.getElementById("homeOverviewTitle");
     syncHomeBreezeTitle();
     const score = overallProgress();
-    const monthStats = monthlyTaskStats();
+    const monthStats = monthlyEventStats();
     const homeStats = document.getElementById("homeStats");
     if (homeStats) {
       homeStats.innerHTML = [
-        [uiText("本月工作完成率", "Monthly work completion"), `${monthStats.workRate}%`, uiText("工作事项", "Work items")],
+        [uiText("本月事件完成率", "Monthly event completion"), `${monthStats.eventRate}%`, uiText("事件", "Events")],
         [uiText("年度目标完成率", "Annual goal completion"), `${score}%`, uiText("关联项目实时计算", "Linked projects update this live")],
         [uiText("本月已完成待办", "Tasks completed this month"), `${monthStats.allDone}`, uiText("已完成待办", "Completed tasks")],
         [uiText("本年已完成项目", "Projects completed this year"), `${completedProjectsThisYear()}`, uiText("已归档项目", "Archived projects")]
@@ -2509,13 +2533,18 @@
       const yy = top + (index / 3) * (height - top - bottom);
       return `<line class="chart-grid" x1="${left}" y1="${yy}" x2="${width - right}" y2="${yy}"/>`;
     }).join("");
-    const pointNodes = data.map((entry, index) => `
-      <g tabindex="0" aria-label="${esc(entry.date)}, ${entry.weight} kg">
-        <circle class="chart-point" cx="${x(index)}" cy="${y(Number(entry.weight))}" r="5"><title>${esc(entry.date)} · ${entry.weight} kg</title></circle>
-        <text class="chart-value" x="${x(index)}" y="${y(Number(entry.weight)) - 11}" text-anchor="middle">${entry.weight}</text>
+    const pointNodes = data.map((entry, index) => {
+      const anchor = index === 0 ? "start" : index === data.length - 1 ? "end" : "middle";
+      const labelX = index === 0 ? x(index) + 5 : index === data.length - 1 ? x(index) - 5 : x(index);
+      const labelY = Math.max(16, y(Number(entry.weight)) - 16);
+      return `
+      <g class="chart-record-point" tabindex="0" aria-label="${esc(entry.date)}, ${entry.weight} kg">
+        <circle class="chart-point" cx="${x(index)}" cy="${y(Number(entry.weight))}" r="5"></circle>
+        <text class="chart-hover-label" x="${labelX}" y="${labelY}" text-anchor="${anchor}" aria-hidden="true">${esc(`${entry.date.slice(5)} · ${entry.weight} kg`)}</text>
         <text class="chart-label" x="${x(index)}" y="${height - 12}" text-anchor="middle">${esc(entry.date.slice(5))}</text>
       </g>
-    `).join("");
+    `;
+    }).join("");
     target.innerHTML = `
       <svg class="line-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${uiText("体重折线图。", "Weight trend chart. ")}${esc(chartSummary(data))}">
         ${gridLines}
@@ -2606,7 +2635,10 @@
     const labelStep = Math.max(1, Math.ceil((data.length - 1) / 5));
     const pointNodes = data.map((entry, index) => {
       const showLabel = index === 0 || index === data.length - 1 || index % labelStep === 0;
-      return `<g tabindex="0" aria-label="${esc(entry.date)}, ${entry.calories} kcal"><circle class="chart-point calorie-point" cx="${x(index)}" cy="${y(entry.calories)}" r="${data.length > 24 ? 3.5 : 5}"><title>${esc(entry.date)} · ${entry.calories} kcal</title></circle>${showLabel ? `<text class="chart-label" x="${x(index)}" y="${height - 12}" text-anchor="middle">${esc(entry.date.slice(5))}</text>` : ""}</g>`;
+      const anchor = index === 0 ? "start" : index === data.length - 1 ? "end" : "middle";
+      const labelX = index === 0 ? x(index) + 5 : index === data.length - 1 ? x(index) - 5 : x(index);
+      const labelY = Math.max(16, y(entry.calories) - 16);
+      return `<g class="chart-record-point" tabindex="0" aria-label="${esc(entry.date)}, ${entry.calories} kcal"><circle class="chart-point calorie-point" cx="${x(index)}" cy="${y(entry.calories)}" r="${data.length > 24 ? 3.5 : 5}"></circle><text class="chart-hover-label" x="${labelX}" y="${labelY}" text-anchor="${anchor}" aria-hidden="true">${esc(`${entry.date.slice(5)} · ${entry.calories} kcal`)}</text>${showLabel ? `<text class="chart-label" x="${x(index)}" y="${height - 12}" text-anchor="middle">${esc(entry.date.slice(5))}</text>` : ""}</g>`;
     }).join("");
     const summary = currentLanguage === "en" ? `Latest ${data.length} calorie records.` : `最近 ${data.length} 次热量记录。`;
     return `<svg class="line-chart calorie-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(uiText("饮食热量折线图", "Calorie trend chart"))}">${gridLines}${data.length > 1 ? `<polyline class="chart-line calorie-line" points="${points}"/>` : ""}${pointNodes}</svg><p class="chart-summary">${esc(summary)}</p>${averageSummary}`;
@@ -2749,7 +2781,7 @@
       <div class="workout-overview${day.fitness ? " is-completed" : ""}">
         ${editing ? workoutEditorMarkup(key, plan) : `
           <div class="subhead"><div><strong>${esc(localizedPlanTitle(plan.title))}</strong><p>${esc(workoutSummaryFromItems(plan.items))}</p></div><div class="workout-actions"><button class="edit-btn" data-action="edit-workout" data-workout-date="${key}">${uiText("编辑", "Edit")}</button><button class="btn ${day.fitness ? "green" : "secondary"}" data-action="toggle-workout" data-workout-date="${key}">${day.fitness ? uiText("已完成", "Completed") : uiText("完成", "Done")}</button></div></div>
-          <div class="workout-items">${plan.items.map(([number, title, detail]) => `<div class="workout-item"><b>${esc(number)}</b><span>${esc(localizedWorkoutText(title))}</span><small>${esc(localizedWorkoutText(detail))}</small></div>`).join("")}</div>
+          <div class="workout-items">${plan.items.map(([number, title, detail]) => `<div class="workout-item"><b>${esc(number)}</b><span data-no-translate="true">${esc(title)}</span><small data-no-translate="true">${esc(detail)}</small></div>`).join("")}</div>
         `}
       </div>
     `;
@@ -2761,7 +2793,7 @@
     const scrollClass = items.length > 6 ? " routine-list-scroll" : "";
     if (!editingRoutines) {
       return `<div class="routine-list${scrollClass}">${items.map((item) => `
-        <label class="routine-row"><input class="check" type="checkbox" data-routine="${esc(item.id)}" data-routine-date="${key}" ${day.routines[item.id] ? "checked" : ""} /><span><strong>${esc(item.title)}</strong><small>${esc(item.detail)}</small></span></label>
+        <label class="routine-row"><input class="check" type="checkbox" data-routine="${esc(item.id)}" data-routine-date="${key}" ${day.routines[item.id] ? "checked" : ""} /><span><strong data-no-translate="true">${esc(item.title)}</strong><small data-no-translate="true">${esc(item.detail)}</small></span></label>
       `).join("")}</div>`;
     }
     return `
@@ -2790,7 +2822,7 @@
       <article class="card training-panel">
         <div class="card-head"><div><h3>${esc(panel.title)}</h3><small>${esc(panel.note || "")}</small></div></div>
         <div class="training-row-list">
-          ${panel.rows.length ? panel.rows.map((row) => `<div class="training-row"><strong>${esc(row.action || "未命名动作")}</strong><span>${esc(row.frequency || "未设置频次")}</span></div>`).join("") : '<div class="empty-state">还没有动作。</div>'}
+          ${panel.rows.length ? panel.rows.map((row) => `<div class="training-row"><strong data-no-translate="true">${esc(row.action || "未命名动作")}</strong><span data-no-translate="true">${esc(row.frequency || "未设置频次")}</span></div>`).join("") : '<div class="empty-state">还没有动作。</div>'}
         </div>
       </article>
     `;
@@ -3178,7 +3210,6 @@
         else link.removeAttribute("aria-current");
       }
     });
-    document.getElementById("pageCrumb").textContent = pageNames[valid];
     if (updateHash && location.hash !== `#${valid}`) history.pushState(null, "", `#${valid}`);
     if (valid === "home") renderHome();
     if (valid === "calendar") renderCalendar();
@@ -3242,6 +3273,10 @@
 
     if (action === "go-back") {
       goBack();
+      return;
+    }
+    if (action === "toggle-sidebar") {
+      toggleSidebar();
       return;
     }
     if (action === "open-project-history") {
@@ -4083,7 +4118,7 @@
     }
     if (form.id === "reminderForm") {
       const input = document.getElementById("reminderInput");
-      if (input.value.trim()) ensureDay(selectedDate).tasks.push({ id: uid("task"), text: input.value.trim(), done: false, area: "生活" });
+      addDayTask(selectedDate, input.value);
       input.value = "";
       save();
       renderHome();
@@ -4093,7 +4128,7 @@
     }
     if (form.id === "calendarTaskForm") {
       const input = document.getElementById("calendarTaskInput");
-      if (input.value.trim()) ensureDay(selectedDate).tasks.push({ id: uid("task"), text: input.value.trim(), done: false, area: "生活" });
+      addDayTask(selectedDate, input.value);
       save();
       renderHome();
       renderReminders();
