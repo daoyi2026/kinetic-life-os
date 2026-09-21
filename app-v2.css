@@ -133,7 +133,7 @@ svg { display: block; }
 .search-field { position: relative; width: min(300px, 30vw); }
 .search-field svg { position: absolute; left: 14px; top: 13px; width: 17px; height: 17px; fill: none; stroke: var(--muted); stroke-width: 2; pointer-events: none; }
 .search-field input { padding-left: 40px; }
-.v2-content { width: 100%; min-width: 0; max-width: 1360px; margin: 0 auto; padding: 32px 34px 84px; }
+.v2-content { container-type: inline-size; width: 100%; min-width: 0; max-width: 1360px; margin: 0 auto; padding: 32px 34px 84px; }
 .v2-screen { display: none; }
 .v2-screen.active { display: block; animation: reveal 180ms ease both; }
 @keyframes reveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
@@ -199,7 +199,7 @@ svg { display: block; }
 .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.home-top { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.home-top { grid-template-columns: 1fr; align-items: start; }
 .home-left-stack { display: grid; gap: 16px; align-content: start; }
 .home-mid { grid-template-columns: 4fr 8fr; }
 .calendar-layout { grid-template-columns: minmax(330px, 0.8fr) minmax(500px, 1.2fr); align-items: start; }
@@ -832,8 +832,8 @@ body.modal-open { overflow: hidden; }
 .v2-footer { padding: 42px 0 0; color: var(--muted); text-align: center; font-size: 10px; letter-spacing: 0.07em; }
 .mobile-nav-v2 { display: none; }
 
-@media (min-width: 1121px) {
-  .home-top { grid-template-rows: auto auto; align-items: stretch; }
+@container (min-width: 801px) {
+  .home-top { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto auto; align-items: stretch; }
   .home-left-stack { display: contents; }
   .home-left-stack > article:first-child { grid-column: 1; grid-row: 1; }
   .home-left-stack > article:last-child { grid-column: 1; grid-row: 2; }
@@ -846,10 +846,12 @@ body.modal-open { overflow: hidden; }
   .calendar-layout { grid-template-columns: minmax(0, 1fr); }
 }
 
-@media (max-width: 1120px) {
-  .home-top { grid-template-columns: 1fr; }
+@container (max-width: 800px) {
   .progress-overview-card { height: auto; max-height: none; overflow: visible; }
   .progress-overview-card #homeGoals { max-height: none; overflow: visible; padding-right: 4px; }
+}
+
+@media (max-width: 1120px) {
   #homeTasks { grid-template-columns: repeat(auto-fit, minmax(210px, 280px)); }
   .home-mid, .calendar-layout, .health-layout, .important-layout { grid-template-columns: 1fr; }
   .calendar-bottom-grid { grid-template-columns: 1fr; }
@@ -864,8 +866,12 @@ body.modal-open { overflow: hidden; }
   .workout-item small { grid-column: 2; width: 100%; text-align: left; }
 }
 
-@container (max-width: 740px) {
+@container (max-width: 800px) {
   .project-list { grid-template-columns: 1fr; }
+}
+
+@container (min-width: 736px) {
+  .v2-main.is-sidebar-collapsed .project-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 760px) {
