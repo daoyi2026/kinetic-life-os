@@ -849,17 +849,18 @@ body.modal-open { overflow: hidden; }
 @container (max-width: 800px) {
   .progress-overview-card { height: auto; max-height: none; overflow: visible; }
   .progress-overview-card #homeGoals { max-height: none; overflow: visible; padding-right: 4px; }
-}
-
-@media (max-width: 1120px) {
-  #homeTasks { grid-template-columns: repeat(auto-fit, minmax(210px, 280px)); }
-  .home-mid, .calendar-layout, .health-layout, .important-layout { grid-template-columns: 1fr; }
-  .calendar-bottom-grid { grid-template-columns: 1fr; }
+  .health-layout { grid-template-columns: 1fr; }
   .fitness-calendar-layout { grid-template-columns: 1fr; gap: 18px; }
   .fitness-calendar-pane { padding-right: 0; padding-bottom: 18px; border-right: 0; border-bottom: 1px solid var(--line); }
   .calendar-overview-grid { grid-template-columns: 1fr; }
   .calendar-compact-pane { padding: 0 0 20px; border-right: 0; border-bottom: 1px solid var(--line); }
   .calendar-health-pane { padding: 4px 0 0; }
+}
+
+@media (max-width: 1120px) {
+  #homeTasks { grid-template-columns: repeat(auto-fit, minmax(210px, 280px)); }
+  .home-mid, .calendar-layout, .important-layout { grid-template-columns: 1fr; }
+  .calendar-bottom-grid { grid-template-columns: 1fr; }
   .calendar-detail-grid { grid-template-columns: 1fr; }
   .workout-item { grid-template-columns: 24px minmax(0, 1fr); align-items: start; }
   .workout-item span,
