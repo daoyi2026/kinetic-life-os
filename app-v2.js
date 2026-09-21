@@ -556,7 +556,7 @@
         <div class="sidebar-save">修改会自动保存在当前浏览器</div>
       </aside>
 
-      <main class="v2-main" id="v2Main">
+      <main class="v2-main${sidebarCollapsed ? " is-sidebar-collapsed" : ""}" id="v2Main">
         <header class="v2-topbar">
           <button class="sidebar-toggle" type="button" data-action="toggle-sidebar" aria-expanded="${sidebarCollapsed ? "false" : "true"}" aria-label="${sidebarCollapsed ? uiText("展开侧栏", "Expand sidebar") : uiText("折叠侧栏", "Collapse sidebar")}"><span aria-hidden="true">${sidebarCollapsed ? "›" : "‹"}</span></button>
           <div class="v2-topbar-brand"><span class="v2-mobile-logo" aria-hidden="true">${smileyLogoMarkup()}</span></div>
@@ -607,7 +607,7 @@
           </section>
 
           <section class="v2-screen" data-screen="work">
-            <div class="page-heading"><h2>项目推进</h2><p>${uiText("管理工作与长期项目，记录每一次推进，并随时回看完整历史。", "Manage work and long-term projects, record every update, and review the full history.")}</p></div>
+            <div class="page-heading"><h2 data-i18n-key="项目推进">项目推进</h2><p data-i18n-key="管理工作与长期项目，记录每一次推进，并随时回看完整历史。">管理工作与长期项目，记录每一次推进，并随时回看完整历史。</p></div>
             <section class="section"><article class="card"><div class="card-head"><div><h3>项目总进度</h3><small>${uiText("与下方项目状态和进度实时同步", "Synced with project status and progress below")}</small></div></div><div class="project-overview" id="projectOverview"></div></article></section>
             <section class="section project-list-section">
               <div class="section-head project-section-head"><div><h3>正在推进</h3><p>状态、进度和下一步会自动保存。</p></div><div class="project-section-actions"><label class="project-filter"><span>状态</span><select class="select" id="projectStatusFilter" aria-label="按状态筛选项目"><option value="all">全部状态</option></select></label><label class="project-filter"><span>领域</span><select class="select" id="projectAreaFilter" aria-label="按领域筛选项目"><option value="all">全部领域</option></select></label><button class="btn green" data-action="add-project">＋ 新项目</button></div></div>
@@ -616,7 +616,7 @@
           </section>
 
           <section class="v2-screen" data-screen="health">
-            <div class="page-heading"><h2>健康记录</h2><p>记录体重、饮水、饮食与每日状态，重点观察连续变化。</p></div>
+            <div class="page-heading"><h2 data-i18n-key="健康记录">健康记录</h2><p data-i18n-key="记录体重、饮水、饮食与每日状态，重点观察连续变化。">记录体重、饮水、饮食与每日状态，重点观察连续变化。</p></div>
             <section class="section grid health-layout">
               <article class="card health-trend-card">
                 <div class="card-head"><div><h3 id="healthTrendTitle">体重趋势</h3><small id="healthTrendSubtitle">按日期形成折线趋势</small></div><div class="trend-switcher" role="group" aria-label="切换健康趋势"><button class="trend-arrow" type="button" data-action="health-trend-prev" aria-label="上一个趋势面板">‹</button><button class="trend-arrow" type="button" data-action="health-trend-next" aria-label="下一个趋势面板">›</button></div></div>
@@ -646,7 +646,7 @@
           </section>
 
           <section class="v2-screen" data-screen="fitness">
-            <div class="page-heading"><h2>健身计划</h2><p>每周 3 次力量、2 次有氧；切换日期即可查看当天的完整运动安排。</p></div>
+            <div class="page-heading"><h2 data-i18n-key="健身计划">健身计划</h2><p data-i18n-key="每周 3 次力量、2 次有氧；切换日期即可查看当天的完整运动安排。">每周 3 次力量、2 次有氧；切换日期即可查看当天的完整运动安排。</p></div>
             <section class="section">
               <article class="card fitness-calendar-card">
                 <div class="fitness-calendar-layout">
@@ -678,7 +678,7 @@
           </section>
 
           <section class="v2-screen" data-screen="reminders">
-            <div class="page-heading"><h2>日常提醒</h2><p>统一管理每日待办、长期事项和需要按日期跟进的工作与生活事件。</p></div>
+            <div class="page-heading"><h2 data-i18n-key="日常提醒">日常提醒</h2><p data-i18n-key="统一管理每日待办、长期事项和需要按日期跟进的工作与生活事件。">统一管理每日待办、长期事项和需要按日期跟进的工作与生活事件。</p></div>
             <section class="section north-star-section"><article class="card north-star-card" id="northStarPanel"><div class="breeze-head"><div class="breeze-title-line"><h3 class="breeze-title">${uiText("微风指南", "Breeze guide")}</h3><small id="breezePeriodLabel"></small></div><div class="breeze-actions"><button class="icon-btn breeze-add-btn" type="button" data-action="breeze-add" aria-label="${uiText("新增微风指南", "Add breeze guide")}" title="${uiText("新增微风指南", "Add breeze guide")}">＋</button><button class="text-btn" type="button" data-action="breeze-toggle-history" id="breezeHistoryToggle">展开</button></div></div><div class="breeze-viewport" id="breezeViewport" tabindex="0" aria-label="${uiText("微风指南，可用鼠标滚轮切换", "Breeze guide; use the mouse wheel to switch entries")}"><h3 id="northStarQuote"></h3></div><div class="breeze-editor" id="breezeEditor" hidden></div><div class="breeze-history" id="breezeHistory" hidden></div></article></section>
             <section class="section grid grid-2">
               <article class="card">
@@ -718,7 +718,7 @@
           </section>
 
           <section class="v2-screen" data-screen="calendar">
-            <div class="page-heading"><h2>日历看板</h2><p>选择日期后，集中查看当天计划、运动、状态、饮水、体重和项目推进。</p></div>
+            <div class="page-heading"><h2 data-i18n-key="日历看板">日历看板</h2><p data-i18n-key="选择日期后，集中查看当天计划、运动、状态、饮水、体重和项目推进。">选择日期后，集中查看当天计划、运动、状态、饮水、体重和项目推进。</p></div>
             <section class="section calendar-stack">
               <article class="card calendar-card calendar-overview-card">
                 <div class="calendar-overview-grid">
@@ -752,7 +752,7 @@
           </section>
 
           <section class="v2-screen" data-screen="settings">
-            <div class="page-heading"><h2>设置与备份</h2><p>管理本地记录的备份与恢复。</p></div>
+            <div class="page-heading"><h2 data-i18n-key="设置与备份">设置与备份</h2><p data-i18n-key="管理本地记录的备份与恢复。">管理本地记录的备份与恢复。</p></div>
             <section class="section settings-stack">
               <article class="card settings-card"><h3>数据备份</h3><p>导出 JSON 备份后，可以在另一台设备恢复工作台数据。</p><div class="settings-actions"><button class="btn green" data-action="export">导出备份</button><label class="btn secondary file-btn">导入备份<input id="importInput" type="file" accept="application/json,.json" aria-label="选择备份文件" /></label></div></article>
               <article class="card settings-card"><h3>清除当前设备记录</h3><p>此操作会清除当前浏览器中的工作台记录，且无法撤销。</p><div class="settings-actions"><button class="btn danger" data-action="reset">清除全部记录</button></div></article>
@@ -1961,9 +1961,11 @@
   function syncSidebarToggle() {
     const sidebar = document.querySelector(".v2-sidebar");
     const toggle = document.querySelector('[data-action="toggle-sidebar"]');
+    const main = document.querySelector(".v2-main");
     if (!sidebar || !toggle) return;
     const label = sidebarCollapsed ? uiText("展开侧栏", "Expand sidebar") : uiText("折叠侧栏", "Collapse sidebar");
     sidebar.classList.toggle("is-collapsed", sidebarCollapsed);
+    main?.classList.toggle("is-sidebar-collapsed", sidebarCollapsed);
     toggle.setAttribute("aria-expanded", String(!sidebarCollapsed));
     toggle.setAttribute("aria-label", label);
     toggle.innerHTML = `<span aria-hidden="true">${sidebarCollapsed ? "›" : "‹"}</span>`;
