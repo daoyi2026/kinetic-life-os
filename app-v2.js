@@ -446,6 +446,7 @@
         period,
         zh,
         en,
+        source: "system",
         createdAt: todayKey(),
         updatedAt: todayKey()
       }))
@@ -454,14 +455,22 @@
   function normalizeBreezeGuide(value, fallback = createDefaultBreezeGuide()) {
     const source = Array.isArray(value?.entries) ? value.entries : [];
     const entries = source.map((entry, index) => {
-      const period = BREEZE_PERIODS.some((item) => item.id === entry?.period) ? entry.period : "morning";
-      const zh = String(entry?.zh || entry?.text || "").trim();
-      const en = String(entry?.en || entry?.text || zh).trim();
+      const id = String(entry?.id || `breeze-${index + 1}`);
+      const seedIndex = id.match(/^breeze-seed-(\d+)$/)?.[1];
+      const seed = seedIndex ? BREEZE_SEEDS[Number(seedIndex) - 1] : null;
+      const period = seed?.[0] || (BREEZE_PERIODS.some((item) => item.id === entry?.period) ? entry.period : "morning");
+      const rawText = String(entry?.text || "").trim();
+      const zh = String(seed?.[1] || entry?.zh || rawText || "").trim();
+      const en = String(seed?.[2] || entry?.en || rawText || zh).trim();
+      const entrySource = seed || entry?.source === "system" ? "system" : "user";
       return {
-        id: String(entry?.id || `breeze-${index + 1}`),
+        id,
         period,
         zh,
         en,
+        source: entrySource,
+        text: entrySource === "user" ? (rawText || zh || en) : "",
+        language: entrySource === "user" && entry?.language === "en" ? "en" : entrySource === "user" && entry?.language === "zh" ? "zh" : "",
         createdAt: isDateKey(entry?.createdAt) ? entry.createdAt : todayKey(),
         updatedAt: isDateKey(entry?.updatedAt) ? entry.updatedAt : todayKey()
       };
@@ -600,7 +609,7 @@
           <section class="v2-screen" data-screen="work">
             <div class="page-heading"><h2>项目推进</h2><p>${uiText("管理工作与长期项目，记录每一次推进，并随时回看完整历史。", "Manage work and long-term projects, record every update, and review the full history.")}</p></div>
             <section class="section"><article class="card"><div class="card-head"><div><h3>项目总进度</h3><small>${uiText("与下方项目状态和进度实时同步", "Synced with project status and progress below")}</small></div></div><div class="project-overview" id="projectOverview"></div></article></section>
-            <section class="section">
+            <section class="section project-list-section">
               <div class="section-head project-section-head"><div><h3>正在推进</h3><p>状态、进度和下一步会自动保存。</p></div><div class="project-section-actions"><label class="project-filter"><span>状态</span><select class="select" id="projectStatusFilter" aria-label="按状态筛选项目"><option value="all">全部状态</option></select></label><label class="project-filter"><span>领域</span><select class="select" id="projectAreaFilter" aria-label="按领域筛选项目"><option value="all">全部领域</option></select></label><button class="btn green" data-action="add-project">＋ 新项目</button></div></div>
               <div class="project-list" id="projectList"></div>
             </section>
@@ -1635,6 +1644,8 @@
       const input = resettingNonFitnessData
         ? buildDemoState(base, raw)
         : raw;
+      const normalizedBreezeGuide = normalizeBreezeGuide(input.breezeGuide, base.breezeGuide);
+      const breezeGuideChanged = JSON.stringify(normalizedBreezeGuide) !== JSON.stringify(input.breezeGuide || null);
       const merged = {
         ...base,
         ...input,
@@ -1649,7 +1660,7 @@
         supplementaryTraining: normalizeSupplementaryTraining(input.supplementaryTraining),
         weightHistory: Array.isArray(input.weightHistory) ? input.weightHistory : [],
         routineItems: normalizeRoutineItems(input.routineItems),
-        breezeGuide: normalizeBreezeGuide(input.breezeGuide, base.breezeGuide)
+        breezeGuide: normalizedBreezeGuide
       };
       let appliedDemoLanguageRecords = false;
       const workoutChanges = new Map();
@@ -1732,7 +1743,7 @@
         merged.days[todayKey()] = day;
       }
       merged.migratedToV2 = true;
-      if (resettingNonFitnessData || appliedDemoLanguageRecords) localStorage.setItem(STORE, JSON.stringify(merged));
+      if (resettingNonFitnessData || appliedDemoLanguageRecords || breezeGuideChanged) localStorage.setItem(STORE, JSON.stringify(merged));
       return merged;
     } catch {
       return base;
@@ -1815,6 +1826,7 @@
 
   function breezeEntryText(entry) {
     if (!entry) return "";
+    if (entry.source === "user") return String(entry.text || entry.zh || entry.en || "").trim();
     return String(currentLanguage === "en" ? (entry.en || entry.zh) : (entry.zh || entry.en) || "").trim();
   }
 
@@ -1876,7 +1888,7 @@
     editor.hidden = breezeEditorId === null;
     if (!editor.hidden) {
       const editing = breezeEditorId !== "new" ? state.breezeGuide.entries.find((item) => item.id === breezeEditorId) : null;
-      const value = editing ? (currentLanguage === "en" ? editing.en || editing.zh : editing.zh || editing.en) : "";
+      const value = editing ? breezeEntryText(editing) : "";
       editor.innerHTML = `<label class="sr-only" for="breezeEditorInput">${uiText("微风指南内容", "Breeze guide entry")}</label><textarea class="textarea" id="breezeEditorInput" maxlength="160" placeholder="${uiText("写下一句想留给自己的话", "Write a line to keep with you")}">${esc(value)}</textarea><div class="breeze-editor-actions"><button class="btn green" type="button" data-action="breeze-save">${uiText("保存", "Save")}</button><button class="btn secondary" type="button" data-action="breeze-cancel">${uiText("取消", "Cancel")}</button></div>`;
     }
     history.hidden = !breezeHistoryOpen;
@@ -1898,15 +1910,31 @@
     const period = currentBreezePeriod().id;
     if (!state.breezeGuide || !Array.isArray(state.breezeGuide.entries)) state.breezeGuide = createDefaultBreezeGuide();
     if (breezeEditorId === "new") {
-      const entry = { id: uid("breeze"), period, zh: text, en: text, createdAt: todayKey(), updatedAt: todayKey() };
+      const entry = {
+        id: uid("breeze"),
+        period,
+        zh: currentLanguage === "zh" ? text : "",
+        en: currentLanguage === "en" ? text : "",
+        source: "user",
+        text,
+        language: currentLanguage,
+        createdAt: todayKey(),
+        updatedAt: todayKey()
+      };
       state.breezeGuide.entries.push(entry);
       breezeEntryIndex = currentBreezeEntries().length - 1;
     } else {
       const entry = state.breezeGuide.entries.find((item) => item.id === breezeEditorId);
       if (entry) {
-        entry[currentLanguage === "en" ? "en" : "zh"] = text;
-        if (!entry.zh) entry.zh = text;
-        if (!entry.en) entry.en = text;
+        if (entry.source === "user") {
+          entry.text = text;
+          entry.language = currentLanguage;
+          entry[currentLanguage === "en" ? "en" : "zh"] = text;
+        } else {
+          entry[currentLanguage === "en" ? "en" : "zh"] = text;
+          if (!entry.zh) entry.zh = text;
+          if (!entry.en) entry.en = text;
+        }
         entry.updatedAt = todayKey();
       }
     }
