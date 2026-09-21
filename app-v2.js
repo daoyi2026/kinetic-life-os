@@ -432,12 +432,18 @@
     { id: "evening", zh: "晚上好", en: "Good evening", start: 18, end: 23 },
     { id: "late", zh: "夜深了", en: "It is late", start: 23, end: 29 }
   ];
+  const LATE_NIGHT_LINES = [
+    { zh: "今天已经够努力了，先去休息吧。", en: "You have done enough for today. Let yourself rest." },
+    { zh: "把屏幕放下，早点睡，明天再继续。", en: "Put the screen down, sleep a little earlier, and continue tomorrow." },
+    { zh: "不用把今天的所有事都做完，睡好也是在推进。", en: "You do not have to finish everything today; good sleep is progress too." },
+    { zh: "夜深了，给身体一个收尾的时间。", en: "It is late; give your body time to wind down." },
+    { zh: "先照顾好自己，明天会更有力气。", en: "Take care of yourself first; tomorrow will have more energy." }
+  ];
   const BREEZE_SEEDS = [
     ["morning", "去表达，去输出", "Express, then share"],
     ["noon", "留一点空白，再继续推进", "Leave a little space, then keep moving"],
     ["afternoon", "把好奇心做成作品", "Turn curiosity into work"],
-    ["evening", "温柔地做难而重要的事", "Do the difficult, meaningful things gently"],
-    ["late", "先休息，明天再继续", "Rest first, continue tomorrow"]
+    ["evening", "温柔地做难而重要的事", "Do the difficult, meaningful things gently"]
   ];
   function createDefaultBreezeGuide() {
     return {
@@ -474,7 +480,7 @@
         createdAt: isDateKey(entry?.createdAt) ? entry.createdAt : todayKey(),
         updatedAt: isDateKey(entry?.updatedAt) ? entry.updatedAt : todayKey()
       };
-    }).filter((entry) => entry.zh || entry.en);
+    }).filter((entry) => entry.id !== "breeze-seed-5" && (entry.zh || entry.en));
     return { entries: entries.length ? entries : fallback.entries.map((entry) => ({ ...entry })) };
   }
   function breezePeriodForNow() {
@@ -1225,6 +1231,45 @@
     });
   }
 
+  const DEMO_INSPIRATIONS = [
+    "把今天看到的光线记下来，先保留感觉，不急着解释。",
+    "疗愈产品要留出安静的空白，不必每一步都有反馈。",
+    "旅行和摄影都需要慢一点，观察本身就是收获。",
+    "一段古诗和一张胶片，可能会成为同一个视觉线索。",
+    "一个小问题被写清楚之后，行动会变得更轻。",
+    "好的节奏不是塞满日程，而是知道什么时候停下来。",
+    "先完成一个小的真实版本，再让它慢慢长出来。",
+    "把注意力放回手边，复杂的事也会逐渐变得清楚。",
+    "朋友的一次回应，有时会打开新的观察角度。",
+    "身体的反馈值得被记录，也值得被认真对待。",
+    "写下一个不完整的想法，它也许会成为明天的起点。",
+    "留一点时间给散步，很多念头会在路上整理好。"
+  ];
+
+  function pickDemoAges(count, seed) {
+    const ages = Array.from({ length: 365 }, (_, age) => age);
+    let value = seed;
+    for (let index = ages.length - 1; index > 0; index -= 1) {
+      value = (value * 1664525 + 1013904223) % 4294967296;
+      const swapIndex = Math.floor((value / 4294967296) * (index + 1));
+      [ages[index], ages[swapIndex]] = [ages[swapIndex], ages[index]];
+    }
+    return new Set(ages.slice(0, count));
+  }
+
+  function addDemoInspirationTrail(days, today = todayKey()) {
+    const inspirationAges = pickDemoAges(140, 20260921);
+    inspirationAges.forEach((age) => {
+      const key = addDays(today, -age);
+      const day = days[key] || emptyDay();
+      normalizeDay(day);
+      if (!String(day.inspiration || "").trim() && !String(day.inspirationEn || "").trim()) {
+        day.inspiration = DEMO_INSPIRATIONS[(age * 7 + Math.floor(age / 5)) % DEMO_INSPIRATIONS.length];
+      }
+      days[key] = day;
+    });
+  }
+
   function buildDemoState(base, raw) {
     const today = todayKey();
     const fitnessDays = preserveFitnessDays({}, raw?.days);
@@ -1361,22 +1406,6 @@
       water: 6
     });
 
-    const demoInspirations = [
-      "把今天看到的光线记下来，先保留感觉，不急着解释。",
-      "疗愈产品要留出安静的空白，不必每一步都有反馈。",
-      "旅行和摄影都需要慢一点，观察本身就是收获。",
-      "一段古诗和一张胶片，可能会成为同一个视觉线索。"
-    ];
-    const pickDemoAges = (count, seed) => {
-      const ages = Array.from({ length: 365 }, (_, age) => age);
-      let value = seed;
-      for (let index = ages.length - 1; index > 0; index -= 1) {
-        value = (value * 1664525 + 1013904223) % 4294967296;
-        const swapIndex = Math.floor((value / 4294967296) * (index + 1));
-        [ages[index], ages[swapIndex]] = [ages[swapIndex], ages[index]];
-      }
-      return new Set(ages.slice(0, count));
-    };
     const demoMoodAges = pickDemoAges(250, 20260914);
     const demoWaterAges = pickDemoAges(250, 20261003);
     const demoMoodForAge = (age) => {
@@ -1421,9 +1450,10 @@
       } else {
         day.calories = "";
       }
-      if (age <= 109 && !day.inspiration && age % 9 === 0) day.inspiration = demoInspirations[age % demoInspirations.length];
+      if (age <= 109 && !day.inspiration && age % 9 === 0) day.inspiration = DEMO_INSPIRATIONS[age % DEMO_INSPIRATIONS.length];
       days[key] = day;
     }
+    addDemoInspirationTrail(days, today);
     addDemoEnglishInspirationRecords(days, today);
 
     Object.entries(fitnessDays).forEach(([key, fitnessDay]) => {
@@ -1630,7 +1660,8 @@
       focusSeconds: 1500,
       migratedToV2: true,
       nonPersonalDemoDataApplied: true,
-      demoLanguageRecordsApplied: true
+      demoLanguageRecordsApplied: true,
+      demoInspirationTrailApplied: true
     };
   }
 
@@ -1646,6 +1677,7 @@
         : raw;
       const normalizedBreezeGuide = normalizeBreezeGuide(input.breezeGuide, base.breezeGuide);
       const breezeGuideChanged = JSON.stringify(normalizedBreezeGuide) !== JSON.stringify(input.breezeGuide || null);
+      const inspirationTrailNeedsExpansion = input.nonPersonalDemoDataApplied === true && input.demoInspirationTrailApplied !== true;
       const merged = {
         ...base,
         ...input,
@@ -1660,9 +1692,11 @@
         supplementaryTraining: normalizeSupplementaryTraining(input.supplementaryTraining),
         weightHistory: Array.isArray(input.weightHistory) ? input.weightHistory : [],
         routineItems: normalizeRoutineItems(input.routineItems),
-        breezeGuide: normalizedBreezeGuide
+        breezeGuide: normalizedBreezeGuide,
+        demoInspirationTrailApplied: input.demoInspirationTrailApplied === true
       };
       let appliedDemoLanguageRecords = false;
+      let appliedDemoInspirationTrail = false;
       const workoutChanges = new Map();
       merged.workoutPlanChanges.forEach((change) => {
         if (!change || !/^\d{4}-\d{2}-\d{2}$/.test(change.effectiveFrom || "") || !Number.isInteger(Number(change.weekday)) || !change.plan || !Array.isArray(change.plan.items)) return;
@@ -1699,6 +1733,11 @@
         addDemoEnglishInspirationRecords(merged.days);
         merged.demoLanguageRecordsApplied = true;
         appliedDemoLanguageRecords = true;
+      }
+      if (inspirationTrailNeedsExpansion) {
+        addDemoInspirationTrail(merged.days);
+        merged.demoInspirationTrailApplied = true;
+        appliedDemoInspirationTrail = true;
       }
       merged.workoutPlanChanges = [...workoutChanges.values()].sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
       merged.projects.forEach((project) => {
@@ -1743,7 +1782,7 @@
         merged.days[todayKey()] = day;
       }
       merged.migratedToV2 = true;
-      if (resettingNonFitnessData || appliedDemoLanguageRecords || breezeGuideChanged) localStorage.setItem(STORE, JSON.stringify(merged));
+      if (resettingNonFitnessData || appliedDemoLanguageRecords || appliedDemoInspirationTrail || breezeGuideChanged) localStorage.setItem(STORE, JSON.stringify(merged));
       return merged;
     } catch {
       return base;
@@ -1796,6 +1835,7 @@
   let viewingHomeInspiration = false;
   let breezeEntryIndex = 0;
   let homeBreezeEntryIndex = 0;
+  let homeLateLineIndex = 0;
   let homeBreezeRotationTimer = null;
   let breezeEditorId = null;
   let breezeHistoryOpen = false;
@@ -1841,13 +1881,29 @@
     const copyNode = document.getElementById("homeBreezeCopy");
     if (!homeOverviewTitle || !periodNode || !copyNode) return;
     const period = currentBreezePeriod();
+    periodNode.textContent = `${uiText(period.zh, period.en)}!`;
+    if (period.id === "late") {
+      const line = LATE_NIGHT_LINES[homeLateLineIndex % LATE_NIGHT_LINES.length];
+      copyNode.textContent = uiText(line.zh, line.en);
+      return;
+    }
     const entries = currentBreezeEntries();
     homeBreezeEntryIndex = Math.min(homeBreezeEntryIndex, Math.max(0, entries.length - 1));
-    periodNode.textContent = `${uiText(period.zh, period.en)}!`;
     copyNode.textContent = breezeQuoteText(entries[homeBreezeEntryIndex], period);
   }
 
   function rotateHomeBreezeTitle() {
+    if (currentBreezePeriod().id === "late") {
+      if (LATE_NIGHT_LINES.length > 1) {
+        let nextIndex = Math.floor(Math.random() * LATE_NIGHT_LINES.length);
+        if (nextIndex === homeLateLineIndex) nextIndex = (nextIndex + 1) % LATE_NIGHT_LINES.length;
+        homeLateLineIndex = nextIndex;
+      } else {
+        homeLateLineIndex = 0;
+      }
+      syncHomeBreezeTitle();
+      return;
+    }
     const entries = currentBreezeEntries();
     if (entries.length > 1) {
       let nextIndex = Math.floor(Math.random() * entries.length);
@@ -3864,9 +3920,8 @@
       }
       return;
     }
-    if (event.target.closest?.(".footprints-record-list")) return;
-    const panel = event.target.closest?.("#footprintsPanel");
-    if (!panel || Math.abs(event.deltaY) < 4) return;
+    const grid = event.target.closest?.("#footprintsPanel .footprints-grid");
+    if (!grid || Math.abs(event.deltaY) < 4) return;
     const nextZoom = event.deltaY < 0 ? 3 : 1;
     if (nextZoom === footprintsZoom) return;
     event.preventDefault();
