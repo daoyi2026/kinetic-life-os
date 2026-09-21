@@ -515,6 +515,7 @@ html[lang="en"] .date-nav-btn[data-action="fitness-calendar-today"] { min-width:
 .routine-edit-fields .input { min-height: 38px; padding: 7px 10px; }
 .routine-add-form { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
 
+.project-list-section { container-type: inline-size; }
 .project-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .project-section-actions { display: flex; align-items: flex-end; justify-content: flex-end; flex-wrap: wrap; gap: 9px; }
 .project-filter { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; white-space: nowrap; }
@@ -858,10 +859,13 @@ body.modal-open { overflow: hidden; }
   .calendar-compact-pane { padding: 0 0 20px; border-right: 0; border-bottom: 1px solid var(--line); }
   .calendar-health-pane { padding: 4px 0 0; }
   .calendar-detail-grid { grid-template-columns: 1fr; }
-  .project-list { grid-template-columns: 1fr; }
   .workout-item { grid-template-columns: 24px minmax(0, 1fr); align-items: start; }
   .workout-item span,
   .workout-item small { grid-column: 2; width: 100%; text-align: left; }
+}
+
+@container (max-width: 740px) {
+  .project-list { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 760px) {
