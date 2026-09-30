@@ -105,9 +105,9 @@ The latest Chrome or Edge is recommended on desktop. On iPhone/iPad, use Safari'
 
 User-entered data is stored in the current browser under the `kinetic-life-os:data:v1` storage key by default. The app has no account system, backend, analytics service, or automatic cloud sync. Installing the PWA does not change this; data remains tied to the current browser profile.
 
-首次打开时，应用会提供一组通用演示数据，方便了解页面结构。需要从空白状态开始时，可以在“设置与备份”中使用“清除当前设备记录”；重要内容请先导出 JSON 备份。
+首次打开时，应用会提供一组全方位但完全虚构的演示数据，覆盖研究方向、项目、产品、旅行、聚会、公益、博士申请示例、运动、爱好和摄影等场景；这些内容不对应任何真实个人、学校、导师、地点或申请记录。需要从空白状态开始时，可以在“设置与备份”中使用“清除当前设备记录”；重要内容请先导出 JSON 备份。
 
-The first launch includes generic demo data so you can understand the workspace. To start from an empty state, use “Clear current-device records” in Settings & backup. Export a JSON backup before clearing important content.
+The first launch includes broad, fully fictional demo data covering research directions, projects, products, travel, gatherings, volunteering, a sample doctoral application, fitness, hobbies, and photography. It does not correspond to any real person, school, advisor, place, or application record. To start from an empty state, use “Clear current-device records” in Settings & backup. Export a JSON backup before clearing important content.
 
 请不要在公开部署中输入密码、身份证件、支付信息、真实联系方式或其他高度敏感信息。<br>
 Do not enter passwords, identity documents, payment data, real contact details, or other highly sensitive information into a public deployment.

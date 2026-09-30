@@ -3,7 +3,7 @@
 
   const STORE = "serene-personal-workspace-v1";
   const RESET_MARKER = `${STORE}:cleared`;
-  const APP_VERSION = "v1.4.2";
+  const APP_VERSION = "v1.4.3";
   const LANGUAGE_STORE = "kinetic-life-os:language";
   const SIDEBAR_COLLAPSED_STORE = "kinetic-life-os:sidebar-collapsed";
   let currentLanguage = localStorage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
@@ -107,6 +107,7 @@
     "记录今天捕捉到的灵感、片段或想继续观察的方向": "Capture an idea, fragment, or direction to keep exploring today",
     "保存今日灵感": "Save today's inspiration",
     "今日灵感已保存": "Today's inspiration saved",
+    "已删除灵感记录": "Inspiration record deleted",
     "现在": "Now",
     "接下来": "Next",
     "随后": "Later",
@@ -198,6 +199,8 @@
     "过去30天日均摄入热量": "Average daily calories · past 30 days",
     "过去15天日均摄入热量": "Average daily calories · past 15 days",
     "无热量记录": "No calorie records",
+    "已删除热量记录": "Calorie record deleted",
+    "删除这条记录": "Delete this record",
     "基于已记录天数": "Based on recorded days",
     "无记录": "No record",
     "切换健康趋势": "Switch health trend",
@@ -789,6 +792,7 @@
           <button class="icon-button" type="button" data-action="close-inspiration-modal" aria-label="关闭">×</button>
         </div>
         <div class="inspiration-modal-text" id="inspirationModalText"></div>
+        <div class="inspiration-modal-actions"><button class="btn danger" type="button" id="deleteInspirationButton" data-action="delete-inspiration">${uiText("删除这条记录", "Delete this record")}</button></div>
       </section>
     </div>
   `;
@@ -1180,7 +1184,9 @@
       breezeGuide: createDefaultBreezeGuide(),
       migratedToV2: true,
       nonPersonalDemoDataApplied: true,
-      demoLanguageRecordsApplied: true
+      demoLanguageRecordsApplied: true,
+      demoInspirationTrailApplied: true,
+      demoInspirationTrailVersion: 3
     };
   }
 
@@ -1192,7 +1198,7 @@
       return !isSeed;
     });
     const legacyGoalIds = new Set(["g-phd", "g-career"]);
-    const legacyProjectIds = new Set(["p-job", "p-phd", "p-novel", "p-media", "p-room"]);
+    const legacyProjectIds = new Set(["p-job", "p-phd", "p-novel", "p-media", "p-room", "demo-project-healing", "demo-project-doctoral", "demo-project-product", "demo-project-life"]);
     const legacyReminderIds = new Set(["r1", "r2", "r3"]);
     const legacyMilestoneIds = new Set(["m1", "m2", "m3", "m4"]);
     state.goals = removeSeed(state.goals || [], legacyGoalIds, () => true);
@@ -1275,6 +1281,58 @@
     "留一点时间给散步，很多念头会在路上整理好。"
   ];
 
+  const DEMO_INSPIRATION_SUBJECTS = [
+    "今天的光线",
+    "一段阅读",
+    "街角的树影",
+    "朋友的回应",
+    "一次散步",
+    "网球练习后的呼吸",
+    "胶片里的留白",
+    "公益活动的准备",
+    "一个产品问题",
+    "研究笔记里的疑问",
+    "海边的风",
+    "晚间安静下来时"
+  ];
+  const DEMO_INSPIRATION_ACTIONS = [
+    "让我想到要把观察写得更具体",
+    "提醒我给计划留一点余地",
+    "让我重新看见熟悉事物里的变化",
+    "适合先记下来，再慢慢理解",
+    "让我意识到节奏比速度更重要",
+    "可以成为下一次尝试的起点",
+    "让我愿意把注意力放回当下",
+    "像是在告诉我不必一次完成全部",
+    "也许能和另一个想法连成线索",
+    "让一个模糊的方向开始变得清楚",
+    "值得留在今天的记录里",
+    "让我想给接下来的行动留出空间"
+  ];
+  const DEMO_INSPIRATION_ENDINGS = [
+    "先保留感觉，不急着下结论。",
+    "明天再回来看，也许会有新的答案。",
+    "把它变成一个轻一点的行动。",
+    "允许自己用更慢的方式继续。",
+    "记录本身就是一种推进。",
+    "不追求完整，先留下真实的一小段。",
+    "让好奇心带着我往前走。",
+    "给这个念头一个继续生长的机会。",
+    "先做最容易开始的那一步。",
+    "也给没有结果的过程留一点位置。",
+    "把注意力放在下一次观察上。",
+    "慢慢来，清楚比热闹更有用。"
+  ];
+
+  function demoInspirationForAge(age) {
+    const subjectCount = DEMO_INSPIRATION_SUBJECTS.length;
+    const actionCount = DEMO_INSPIRATION_ACTIONS.length;
+    const subject = DEMO_INSPIRATION_SUBJECTS[age % subjectCount];
+    const action = DEMO_INSPIRATION_ACTIONS[Math.floor(age / subjectCount) % actionCount];
+    const ending = DEMO_INSPIRATION_ENDINGS[Math.floor(age / (subjectCount * actionCount)) % DEMO_INSPIRATION_ENDINGS.length];
+    return `${subject}${action}，${ending}`;
+  }
+
   function pickDemoAges(count, seed) {
     const ages = Array.from({ length: 365 }, (_, age) => age);
     let value = seed;
@@ -1293,10 +1351,54 @@
       const day = days[key] || emptyDay();
       normalizeDay(day);
       if (!String(day.inspiration || "").trim() && !String(day.inspirationEn || "").trim()) {
-        day.inspiration = DEMO_INSPIRATIONS[(age * 7 + Math.floor(age / 5)) % DEMO_INSPIRATIONS.length];
+        day.inspiration = demoInspirationForAge(age);
       }
       days[key] = day;
     });
+  }
+
+  function refreshLegacyDemoInspirationTrail(days, today = todayKey()) {
+    const legacyTexts = new Set(DEMO_INSPIRATIONS);
+    let changed = false;
+    for (let age = 0; age < 365; age += 1) {
+      const day = days[addDays(today, -age)];
+      if (!day || !legacyTexts.has(String(day.inspiration || "").trim())) continue;
+      day.inspiration = demoInspirationForAge(age);
+      day.inspirationEn = "";
+      changed = true;
+    }
+    return changed;
+  }
+
+  function dedupeDemoInspirationRecords(days) {
+    const knownDemoTexts = new Set([...DEMO_INSPIRATIONS, ...ENGLISH_DEMO_INSPIRATIONS]);
+    const candidateTexts = [];
+    for (let age = 0; age < 1728; age += 1) {
+      const candidate = demoInspirationForAge(age);
+      knownDemoTexts.add(candidate);
+      candidateTexts.push(candidate);
+    }
+    const used = new Set();
+    let candidateIndex = 0;
+    let changed = false;
+    Object.keys(days).filter(isDateKey).sort().forEach((date) => {
+      const day = days[date];
+      const inspiration = String(day?.inspiration || "").trim();
+      if (!inspiration) return;
+      if (!used.has(inspiration)) {
+        used.add(inspiration);
+        return;
+      }
+      if (!knownDemoTexts.has(inspiration)) return;
+      while (candidateIndex < candidateTexts.length && used.has(candidateTexts[candidateIndex])) candidateIndex += 1;
+      if (candidateIndex >= candidateTexts.length) return;
+      day.inspiration = candidateTexts[candidateIndex];
+      day.inspirationEn = "";
+      used.add(day.inspiration);
+      candidateIndex += 1;
+      changed = true;
+    });
+    return changed;
   }
 
   function buildDemoState(base, raw) {
@@ -1379,8 +1481,8 @@
       water: 5
     });
     addDemoDay(-4, {
-      tasks: [demoTask("demo-task-17", "完成作品集研究页检查", true, "产品"), demoTask("demo-task-18", "冥想 15 分钟", true, "疗愈")],
-      notes: "研究页的逻辑已经更清楚，冥想后把两个不必要的功能删掉了。",
+      tasks: [demoTask("demo-task-17", "完成作品集研究页检查", true, "产品"), demoTask("demo-task-18", "整理博士申请研究方向（示例）", false, "研究"), demoTask("demo-task-19", "冥想 15 分钟", true, "疗愈")],
+      notes: "研究页的逻辑已经更清楚，顺手把虚构的研究申请时间线整理成了几个阶段。",
       inspiration: "冥想之后更容易看见哪些内容只是噪音，删掉也是一种设计。",
       mood: "很好",
       energy: "充足",
@@ -1389,7 +1491,7 @@
       water: 7
     });
     addDemoDay(-3, {
-      tasks: [demoTask("demo-task-19", "整理星空参考图", true, "数字艺术"), demoTask("demo-task-20", "给公益活动留言", true, "公益"), demoTask("demo-task-21", "阅读 20 分钟", false, "学习")],
+      tasks: [demoTask("demo-task-20", "整理星空参考图", true, "数字艺术"), demoTask("demo-task-21", "给公益活动留言", true, "公益"), demoTask("demo-task-22", "阅读 20 分钟", false, "学习")],
       notes: "完成星空和雪豹的视觉参考整理，也找到一个适合周末参加的公益活动。",
       inspiration: "星星、雪豹和小鸟都在提醒我，喜欢的事物可以组成自己的视觉语言。",
       mood: "平稳",
@@ -1399,7 +1501,7 @@
       water: 6
     });
     addDemoDay(-2, {
-      tasks: [demoTask("demo-task-22", "确认旅行路线候选", true, "旅行"), demoTask("demo-task-23", "画一张雪豹速写", false, "绘画")],
+      tasks: [demoTask("demo-task-23", "确认旅行路线候选", true, "旅行"), demoTask("demo-task-24", "画一张雪豹速写", false, "绘画")],
       notes: "路线保留两条，先选择可以慢慢走、可以拍胶片的那一条。",
       inspiration: "旅行不必塞满景点，留一段没有安排的路，可能会遇见真正想记住的画面。",
       mood: "平稳",
@@ -1409,7 +1511,7 @@
       water: 4
     });
     addDemoDay(-1, {
-      tasks: [demoTask("demo-task-24", "完成一轮研究文字校对", true, "研究"), demoTask("demo-task-25", "预约网球场", true, "生活"), demoTask("demo-task-26", "联系一位朋友", false, "朋友")],
+      tasks: [demoTask("demo-task-25", "完成一轮研究文字校对", true, "研究"), demoTask("demo-task-26", "预约网球场", true, "运动"), demoTask("demo-task-27", "联系一位朋友", false, "朋友")],
       notes: "完成研究文字校对和网球安排，和朋友约好下周一起吃饭。",
       inspiration: "运动、朋友和写作放在同一天里，生活会比计划表更有弹性。",
       mood: "很好",
@@ -1424,7 +1526,8 @@
         demoTask("demo-task-today-02", "阅读心理学章节", false, "学习"),
         demoTask("demo-task-today-03", "上传一张胶片照片", false, "摄影"),
         demoTask("demo-task-today-04", "晚间冥想 15 分钟", false, "疗愈"),
-        demoTask("demo-task-today-05", "给朋友发送周末邀请", true, "朋友")
+        demoTask("demo-task-today-05", "给朋友发送周末邀请", true, "朋友"),
+        demoTask("demo-task-today-06", "核对研究申请时间线（示例）", false, "研究")
       ],
       notes: "完成用户研究框架和朋友邀请，明天继续补齐访谈问题与数字艺术草图。",
       inspiration: "今天看到一束很像胶片颗粒的光，想把它和星空、呼吸感一起做成一个小作品。",
@@ -1433,6 +1536,13 @@
       calories: "1850",
       food: "燕麦、时蔬、豆制品与水果",
       water: 6
+    });
+
+    [-10, -7, -4, -1].forEach((offset) => {
+      const key = addDays(today, offset);
+      const day = days[key] || emptyDay();
+      if (!fitnessDays[key]) day.fitness = true;
+      days[key] = day;
     });
 
     const demoMoodAges = pickDemoAges(250, 20260914);
@@ -1479,7 +1589,7 @@
       } else {
         day.calories = "";
       }
-      if (age <= 109 && !day.inspiration && age % 9 === 0) day.inspiration = DEMO_INSPIRATIONS[age % DEMO_INSPIRATIONS.length];
+      if (age <= 109 && !day.inspiration && age % 9 === 0) day.inspiration = demoInspirationForAge(age);
       days[key] = day;
     }
     addDemoInspirationTrail(days, today);
@@ -1497,39 +1607,21 @@
     const projectDate = (offset) => addDays(today, offset);
     const projects = [
       {
-        id: "demo-project-healing",
-        title: "心理学与疗愈产品研究",
-        description: "从心理学阅读、用户观察和日常练习出发，研究更温和、更可持续的疗愈产品体验。",
-        symbol: "◎",
-        area: "产品与研究",
+        id: "demo-project-research-direction",
+        title: "数字疗愈与行为设计研究方向",
+        description: "虚构示例：把心理学阅读、行为观察和产品设计连接起来，整理一个可以长期探索的研究方向。",
+        symbol: "✦",
+        area: "研究与学习",
         status: "进行中",
-        progress: 55,
-        next: "完成访谈提纲，整理三位潜在使用者的真实需求。",
-        createdAt: projectDate(-8),
-        updatedAt: today,
+        progress: 40,
+        next: "完成一页方向说明，并选出两篇入门论文。",
+        createdAt: projectDate(-21),
+        updatedAt: projectDate(-2),
         completed: false,
         logs: [
-          demoLog("demo-log-healing-1", projectDate(-7), "完成心理学与疗愈书目的初步梳理。"),
-          demoLog("demo-log-healing-2", projectDate(-3), "整理出三个值得继续观察的使用场景。"),
-          demoLog("demo-log-healing-3", today, "完成研究框架，开始补充访谈问题。")
-        ]
-      },
-      {
-        id: "demo-project-product",
-        title: "产品设计研究作品集",
-        description: "记录从问题定义、心理学洞察到原型验证的完整过程，让设计判断可以被理解和复用。",
-        symbol: "↗",
-        area: "产品与研究",
-        status: "收尾中",
-        progress: 75,
-        next: "补齐研究过程页，并完成一次移动端阅读检查。",
-        createdAt: projectDate(-18),
-        updatedAt: projectDate(-4),
-        completed: false,
-        logs: [
-          demoLog("demo-log-product-1", projectDate(-15), "重新整理研究案例的信息层级。"),
-          demoLog("demo-log-product-2", projectDate(-9), "完成作品集桌面端第一版。"),
-          demoLog("demo-log-product-3", projectDate(-4), "完成移动端检查并记录两项微调。")
+          demoLog("demo-log-research-direction-1", projectDate(-18), "把研究兴趣拆成行为、情绪和产品体验三个关键词。"),
+          demoLog("demo-log-research-direction-2", projectDate(-9), "整理出一页问题地图，保留几个待验证的假设。"),
+          demoLog("demo-log-research-direction-3", projectDate(-2), "选择两篇入门论文，准备写第一版方向说明。")
         ]
       },
       {
@@ -1547,6 +1639,59 @@
         logs: [
           demoLog("demo-log-film-1", projectDate(-5), "整理喜欢的胶片色调和街道观察主题。"),
           demoLog("demo-log-film-2", projectDate(-2), "选出两个适合周末慢走的街区。")
+        ]
+      },
+      {
+        id: "demo-project-trip",
+        title: "海边慢旅行计划",
+        description: "设计一次不赶行程的短途旅行，留出散步、拍照和临时改变路线的空间。",
+        symbol: "⌂",
+        area: "旅行与朋友",
+        status: "进行中",
+        progress: 35,
+        next: "在两条虚构路线中选出一条，并列出轻量行李清单。",
+        createdAt: projectDate(-11),
+        updatedAt: projectDate(-1),
+        completed: false,
+        logs: [
+          demoLog("demo-log-trip-1", projectDate(-11), "整理慢旅行的三个关键词：散步、光线和留白。"),
+          demoLog("demo-log-trip-2", projectDate(-6), "列出两条不对应真实预订的路线草案。"),
+          demoLog("demo-log-trip-3", projectDate(-1), "和朋友讨论周末出发时间，保留一段自由活动。")
+        ]
+      },
+      {
+        id: "demo-project-community",
+        title: "社区公益与旧物交换",
+        description: "参加一场虚构的社区公益活动，把闲置物品、邻里交流和可持续生活放到同一个小计划里。",
+        symbol: "♡",
+        area: "公益与生活",
+        status: "待选择",
+        progress: 20,
+        next: "确认活动形式，并准备一份不涉及真实个人信息的物品清单。",
+        createdAt: projectDate(-9),
+        updatedAt: projectDate(-3),
+        completed: false,
+        logs: [
+          demoLog("demo-log-community-1", projectDate(-9), "记录三个适合小规模参与的公益主题。"),
+          demoLog("demo-log-community-2", projectDate(-3), "整理旧物分类和活动流程草案。")
+        ]
+      },
+      {
+        id: "demo-project-tennis",
+        title: "网球入门与周末运动",
+        description: "把网球练习、基础体能和朋友约球安排成一套轻松可持续的运动节奏。",
+        symbol: "◎",
+        area: "运动与健康",
+        status: "长期维护",
+        progress: 45,
+        next: "完成一次发球练习，并记录当天身体感受。",
+        createdAt: projectDate(-13),
+        updatedAt: projectDate(-1),
+        completed: false,
+        logs: [
+          demoLog("demo-log-tennis-1", projectDate(-13), "安排每周一次轻量网球练习。"),
+          demoLog("demo-log-tennis-2", projectDate(-7), "完成正手和脚步练习，记录需要放慢的动作。"),
+          demoLog("demo-log-tennis-3", projectDate(-1), "和朋友约好周末打一场不计分的练习赛。")
         ]
       },
       {
@@ -1582,23 +1727,6 @@
         logs: [
           demoLog("demo-log-digital-1", projectDate(-12), "收集星空、雪豹和小鸟的视觉参考。"),
           demoLog("demo-log-digital-2", projectDate(-3), "完成第一张数字艺术构图草稿。")
-        ]
-      },
-      {
-        id: "demo-project-life",
-        title: "公益、朋友与短途旅行",
-        description: "把公益活动、朋友见面和旅行安排成可以真正发生的生活计划，不让兴趣只停留在收藏夹里。",
-        symbol: "♡",
-        area: "生活方式",
-        status: "进行中",
-        progress: 20,
-        next: "确认一次公益活动，并邀请朋友一起参加。",
-        createdAt: projectDate(-10),
-        updatedAt: projectDate(-1),
-        completed: false,
-        logs: [
-          demoLog("demo-log-life-1", projectDate(-8), "整理感兴趣的公益活动和旅行目的地。"),
-          demoLog("demo-log-life-2", projectDate(-1), "和朋友讨论周末网球与短途旅行安排。")
         ]
       },
       {
@@ -1640,11 +1768,13 @@
     ];
 
     const demoGoalLinks = {
-      "demo-project-healing": "demo-goal-healing",
-      "demo-project-product": "demo-goal-product",
+      "demo-project-research-direction": "demo-goal-research",
       "demo-project-writing": "demo-goal-creative",
       "demo-project-digital": "demo-goal-creative",
-      "demo-project-life": "demo-goal-life"
+      "demo-project-film": "demo-goal-creative",
+      "demo-project-trip": "demo-goal-life",
+      "demo-project-community": "demo-goal-community",
+      "demo-project-tennis": "demo-goal-health"
     };
     projects.forEach((project) => { project.goalId = demoGoalLinks[project.id] || ""; });
 
@@ -1652,15 +1782,18 @@
       ...base,
       version: 5,
       goals: [
+        { id: "demo-goal-research", title: "探索一个长期研究方向", area: "研究与学习", progress: 30 },
+        { id: "demo-goal-doctoral", title: "完成博士申请准备（示例）", area: "研究与学习", progress: 20 },
         { id: "demo-goal-product", title: "建立产品设计与研究作品集", area: "产品与研究", progress: 55 },
         { id: "demo-goal-healing", title: "把心理学与疗愈转化为可体验的产品", area: "心理学与疗愈", progress: 35 },
         { id: "demo-goal-health", title: "从 60 kg 开始建立稳定的身体节奏", area: "健康与体态", progress: 45 },
         { id: "demo-goal-creative", title: "维持摄影、写作与数字艺术的长期输出", area: "创作与学习", progress: 40 },
-        { id: "demo-goal-life", title: "让公益、旅行和朋友成为生活的一部分", area: "生活方式", progress: 30 }
+        { id: "demo-goal-life", title: "让旅行和朋友成为生活的一部分", area: "生活方式", progress: 30 },
+        { id: "demo-goal-community", title: "保持对公益与社区的参与", area: "公益与生活", progress: 25 }
       ],
       priorities: [
         { id: "demo-priority-now", label: "现在", text: "完成疗愈产品用户研究框架", detail: "先写清楚对象、问题和观察方式，再开始安排访谈。" },
-        { id: "demo-priority-next", label: "接下来", text: "整理心理学与疗愈阅读卡片", detail: "从已有书目中选出两条，写成可复用的主题摘要。" },
+        { id: "demo-priority-next", label: "接下来", text: "整理研究方向与申请时间线（示例）", detail: "把研究兴趣、材料清单和下一步沟通整理成一页。" },
         { id: "demo-priority-later", label: "随后", text: "策划一次公益活动与周末旅行", detail: "邀请朋友一起参与，保留轻量、真实、可以完成的方案。" }
       ],
       projects,
@@ -1670,13 +1803,20 @@
         { id: "demo-milestone-2", title: "访谈三位潜在使用者", note: "围绕疗愈、陪伴感和日常使用场景记录真实反馈。", done: false, createdAt: projectDate(-9), completedAt: "" },
         { id: "demo-milestone-3", title: "完成第一组 Ukulele 练习", note: "保留轻松的练习节奏，不追求一次学会整首歌。", done: true, createdAt: projectDate(-14), completedAt: projectDate(-6) },
         { id: "demo-milestone-4", title: "整理胶片摄影主题", note: "确定一个街区和一组可以慢慢观察的画面。", done: false, createdAt: projectDate(-5), completedAt: "" },
-        { id: "demo-milestone-5", title: "报名一次公益活动", note: "邀请朋友一起参加，让关心的事情真正发生。", done: false, createdAt: projectDate(-7), completedAt: "" }
+        { id: "demo-milestone-5", title: "报名一次公益活动", note: "邀请朋友一起参加，让关心的事情真正发生。", done: false, createdAt: projectDate(-7), completedAt: "" },
+        { id: "demo-milestone-6", title: "完成研究方向一页说明", note: "用虚构示例整理问题、方法和下一步阅读。", done: false, createdAt: projectDate(-9), completedAt: "" },
+        { id: "demo-milestone-7", title: "整理博士申请材料清单（示例）", note: "只保留通用材料类别，不填写学校、导师或联系方式。", done: false, createdAt: projectDate(-8), completedAt: "" },
+        { id: "demo-milestone-8", title: "完成一次网球练习", note: "记录发球、脚步和身体恢复感受。", done: true, createdAt: projectDate(-6), completedAt: projectDate(-1) },
+        { id: "demo-milestone-9", title: "确定短途旅行路线草案", note: "保留一段自由时间，不填真实预订或地点信息。", done: false, createdAt: projectDate(-6), completedAt: "" },
+        { id: "demo-milestone-10", title: "参加一次社区公益活动", note: "从一次轻量、可完成的活动开始。", done: false, createdAt: projectDate(-4), completedAt: "" }
       ],
       events: [
         { id: "demo-event-1", date: today, title: "疗愈产品研究讨论", copy: "整理用户研究框架和待确认问题。" },
-        { id: "demo-event-2", date: projectDate(3), title: "周末网球与朋友见面", copy: "记录身体感受，也留出轻松聊天的时间。" },
-        { id: "demo-event-3", date: projectDate(8), title: "公益活动报名截止", copy: "确认参加方式，并邀请朋友一起行动。" },
-        { id: "demo-event-4", date: projectDate(12), title: "胶片摄影小旅行", copy: "带上相机，拍一组街道、天空和沿途的小鸟。" }
+        { id: "demo-event-2", date: projectDate(2), title: "研究方向整理（示例）", copy: "把研究兴趣和申请准备拆成几个可以推进的小步骤。" },
+        { id: "demo-event-3", date: projectDate(3), title: "周末网球与朋友见面", copy: "记录身体感受，也留出轻松聊天的时间。" },
+        { id: "demo-event-4", date: projectDate(8), title: "公益活动报名截止", copy: "确认参加方式，并邀请朋友一起行动。" },
+        { id: "demo-event-5", date: projectDate(12), title: "胶片摄影小旅行", copy: "带上相机，拍一组街道、天空和沿途的小鸟。" },
+        { id: "demo-event-6", date: projectDate(17), title: "朋友聚会主题讨论", copy: "选一个不需要复杂准备的主题，一起吃饭或散步。" }
       ],
       days,
       workoutPlanChanges: Array.isArray(raw?.workoutPlanChanges) ? raw.workoutPlanChanges : base.workoutPlanChanges,
@@ -1690,7 +1830,8 @@
       migratedToV2: true,
       nonPersonalDemoDataApplied: true,
       demoLanguageRecordsApplied: true,
-      demoInspirationTrailApplied: true
+      demoInspirationTrailApplied: true,
+      demoInspirationTrailVersion: 3
     };
   }
 
@@ -1707,6 +1848,7 @@
       const normalizedBreezeGuide = normalizeBreezeGuide(input.breezeGuide, base.breezeGuide);
       const breezeGuideChanged = JSON.stringify(normalizedBreezeGuide) !== JSON.stringify(input.breezeGuide || null);
       const inspirationTrailNeedsExpansion = input.nonPersonalDemoDataApplied === true && input.demoInspirationTrailApplied !== true;
+      const inspirationTrailNeedsRefresh = input.nonPersonalDemoDataApplied === true && Number(input.demoInspirationTrailVersion) !== 3;
       const merged = {
         ...base,
         ...input,
@@ -1722,10 +1864,12 @@
         weightHistory: Array.isArray(input.weightHistory) ? input.weightHistory : [],
         routineItems: normalizeRoutineItems(input.routineItems),
         breezeGuide: normalizedBreezeGuide,
-        demoInspirationTrailApplied: input.demoInspirationTrailApplied === true
+        demoInspirationTrailApplied: input.demoInspirationTrailApplied === true,
+        demoInspirationTrailVersion: Number(input.demoInspirationTrailVersion) || 0
       };
       let appliedDemoLanguageRecords = false;
       let appliedDemoInspirationTrail = false;
+      let refreshedDemoInspirationTrail = false;
       const workoutChanges = new Map();
       merged.workoutPlanChanges.forEach((change) => {
         if (!change || !/^\d{4}-\d{2}-\d{2}$/.test(change.effectiveFrom || "") || !Number.isInteger(Number(change.weekday)) || !change.plan || !Array.isArray(change.plan.items)) return;
@@ -1767,6 +1911,11 @@
         addDemoInspirationTrail(merged.days);
         merged.demoInspirationTrailApplied = true;
         appliedDemoInspirationTrail = true;
+      }
+      if (inspirationTrailNeedsRefresh) {
+        refreshedDemoInspirationTrail = refreshLegacyDemoInspirationTrail(merged.days);
+        refreshedDemoInspirationTrail = dedupeDemoInspirationRecords(merged.days) || refreshedDemoInspirationTrail;
+        merged.demoInspirationTrailVersion = 3;
       }
       merged.workoutPlanChanges = [...workoutChanges.values()].sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
       merged.projects.forEach((project) => {
@@ -1812,7 +1961,7 @@
       }
       const removedLegacyPersonalDemoContent = removeLegacyPersonalDemoContent(merged);
       merged.migratedToV2 = true;
-      if (resettingNonFitnessData || appliedDemoLanguageRecords || appliedDemoInspirationTrail || breezeGuideChanged || removedLegacyPersonalDemoContent) localStorage.setItem(STORE, JSON.stringify(merged));
+      if (resettingNonFitnessData || appliedDemoLanguageRecords || appliedDemoInspirationTrail || refreshedDemoInspirationTrail || inspirationTrailNeedsRefresh || breezeGuideChanged || removedLegacyPersonalDemoContent) localStorage.setItem(STORE, JSON.stringify(merged));
       return merged;
     } catch {
       return base;
@@ -1845,6 +1994,14 @@
   monthCursor.setDate(1);
   let fitnessMonthCursor = fromKey(todayKey());
   fitnessMonthCursor.setDate(1);
+  function resetDateContextToToday() {
+    const today = todayKey();
+    const date = fromKey(today);
+    selectedDate = today;
+    selectedFitnessDate = today;
+    monthCursor = new Date(date.getFullYear(), date.getMonth(), 1);
+    fitnessMonthCursor = new Date(date.getFullYear(), date.getMonth(), 1);
+  }
   let editingGoals = false;
   let editingPriorities = false;
   let editingMasterTodos = false;
@@ -1862,6 +2019,7 @@
   let footprintsExpanded = false;
   const HEALTH_TREND_PANELS = ["weight", "mood", "water", "calories"];
   let healthTrendPanel = "weight";
+  let calorieTableExpanded = false;
   let viewingHomeInspiration = false;
   let breezeEntryIndex = 0;
   let homeBreezeEntryIndex = 0;
@@ -2104,10 +2262,12 @@
     const title = document.getElementById("inspirationModalTitle");
     const dateLabel = document.getElementById("inspirationModalDate");
     const text = document.getElementById("inspirationModalText");
+    const deleteButton = document.getElementById("deleteInspirationButton");
     if (!inspiration || !modal || !title || !dateLabel || !text) return;
     title.textContent = uiText("灵感记录", "Inspiration record");
     dateLabel.textContent = dayText(date);
     text.textContent = inspiration;
+    if (deleteButton) deleteButton.dataset.inspirationDate = date;
     modal.hidden = false;
     document.body.classList.add("modal-open");
     requestAnimationFrame(() => modal.querySelector("[data-action=close-inspiration-modal]")?.focus());
@@ -2721,13 +2881,14 @@
   }
 
   function renderCaloriesTrend() {
-    const data = Object.entries(state.days)
+    const allRecords = Object.entries(state.days)
       .filter(([key, day]) => isDateKey(key) && Number(day?.calories) > 0)
       .map(([date, day]) => ({ date, calories: Number(day.calories) }))
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(-15);
+      .sort((a, b) => a.date.localeCompare(b.date));
+    const data = allRecords.slice(-15);
     const averageSummary = `<div class="calorie-average-grid">${[180, 90, 60, 30, 15].map(calorieAverageMarkup).join("")}</div>`;
-    if (!data.length) return `<div class="empty-state">${uiText("记录热量后会在这里形成折线。", "Log calories to build this line.")}</div>${averageSummary}`;
+    const dataTable = allRecords.length ? `<details data-calorie-table${calorieTableExpanded ? " open" : ""}><summary class="text-btn">${uiText("查看数据表", "View data table")}</summary><div class="data-table-scroll"><table class="data-table"><thead><tr><th>${uiText("日期", "Date")}</th><th>${uiText("热量", "Calories")}</th><th><span class="sr-only">${uiText("操作", "Actions")}</span></th></tr></thead><tbody>${allRecords.slice().reverse().map((entry) => `<tr><td>${esc(entry.date)}</td><td>${entry.calories} kcal</td><td class="data-table-action"><button class="mini-btn danger" data-action="delete-calorie" data-calorie-date="${esc(entry.date)}" aria-label="${uiText("删除热量记录", "Delete calorie record")} ${esc(entry.date)}">×</button></td></tr>`).join("")}</tbody></table></div></details>` : "";
+    if (!data.length) return `<div class="empty-state">${uiText("记录热量后会在这里形成折线。", "Log calories to build this line.")}</div>${averageSummary}${dataTable}`;
     const width = 640;
     const height = 220;
     const left = 38;
@@ -2757,7 +2918,7 @@
       return `<g class="chart-record-point" tabindex="0" aria-label="${esc(entry.date)}, ${entry.calories} kcal"><circle class="chart-point calorie-point" cx="${x(index)}" cy="${y(entry.calories)}" r="${data.length > 24 ? 3.5 : 5}"></circle><text class="chart-hover-label" x="${labelX}" y="${labelY}" text-anchor="${anchor}" aria-hidden="true">${esc(`${entry.date.slice(5)} · ${entry.calories} kcal`)}</text>${showLabel ? `<text class="chart-label" x="${x(index)}" y="${height - 12}" text-anchor="middle">${esc(entry.date.slice(5))}</text>` : ""}</g>`;
     }).join("");
     const summary = currentLanguage === "en" ? `Latest ${data.length} calorie records.` : `最近 ${data.length} 次热量记录。`;
-    return `<svg class="line-chart calorie-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(uiText("饮食热量折线图", "Calorie trend chart"))}">${gridLines}${data.length > 1 ? `<polyline class="chart-line calorie-line" points="${points}"/>` : ""}${pointNodes}</svg><p class="chart-summary">${esc(summary)}</p>${averageSummary}`;
+    return `<svg class="line-chart calorie-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(uiText("饮食热量折线图", "Calorie trend chart"))}">${gridLines}${data.length > 1 ? `<polyline class="chart-line calorie-line" points="${points}"/>` : ""}${pointNodes}</svg><p class="chart-summary">${esc(summary)}</p>${averageSummary}${dataTable}`;
   }
 
   function renderHealthTrendPanel() {
@@ -3244,6 +3405,7 @@
     const totalWeightLoss = firstWeight == null || latestWeight == null ? null : Math.max(0, Math.round((Number(firstWeight) - Number(latestWeight)) * 10) / 10);
     const goodMoodDays = Object.values(state.days).filter((day) => day?.mood === "很好").length;
     const workoutDays = Object.values(state.days).filter((day) => day?.fitness).length;
+    const inspirationDays = Object.values(state.days).filter((day) => String(day?.inspiration || "").trim() || String(day?.inspirationEn || "").trim()).length;
     metricsTarget.innerHTML = `
       <div class="card-head"><div><h3>${uiText("正在变好的证据", "Signs of progress")}</h3><small>${uiText("从真实记录里看见已经发生的变化。", "Small positive signals from your real records.")}</small></div></div>
       <div class="footprint-metrics-grid">
@@ -3251,6 +3413,7 @@
         ${footprintMetricMarkup(uiText("总计减重", "Total weight loss"), totalWeightLoss == null ? uiText("继续记录中", "Keep recording") : `${totalWeightLoss.toFixed(1)} kg`, uiText("从最早到最新体重记录", "From earliest to latest weight record"))}
         ${footprintMetricMarkup(uiText("心情很好的日子", "Good-mood days"), `${goodMoodDays}${uiText("天", " days")}`, uiText("已记录为“很好”的日期", "Days marked Great"))}
         ${footprintMetricMarkup(uiText("累计训练日", "Workout days"), `${workoutDays}${uiText("天", " days")}`, uiText("已完成的训练记录", "Completed workout records"))}
+        ${footprintMetricMarkup(uiText("灵感记录", "Inspiration records"), `${inspirationDays}${uiText("条", " records")}`, uiText("已保存的灵感内容", "Saved inspiration entries"))}
       </div>
     `;
     if (!records.length && !filteredKeys.length) target.querySelector(".footprints-grid").innerHTML = `<div class="empty-state">${uiText("还没有灵感记录。", "No inspiration records yet.")}</div>`;
@@ -3369,6 +3532,13 @@
       closeInspirationRecord();
       return;
     }
+    const calorieSummary = event.target.closest?.("#healthTrendPanel details[data-calorie-table] > summary");
+    if (calorieSummary) {
+      window.setTimeout(() => {
+        calorieTableExpanded = Boolean(calorieSummary.parentElement?.open);
+      }, 0);
+      return;
+    }
     const pageLink = event.target.closest("[data-page]");
     if (pageLink) {
       event.preventDefault();
@@ -3423,6 +3593,20 @@
     }
     if (action === "open-inspiration") {
       openInspirationRecord(actionButton.dataset.inspirationDate);
+      return;
+    }
+    if (action === "delete-inspiration") {
+      const date = actionButton.dataset.inspirationDate;
+      const day = state.days[date];
+      if (!day || !localizedInspiration(day) || !confirm(uiText(`删除 ${date} 的灵感记录吗？`, `Delete the inspiration record from ${date}?`))) return;
+      day.inspiration = "";
+      day.inspirationEn = "";
+      save();
+      closeInspirationRecord();
+      renderHome();
+      renderReminders();
+      renderCalendar();
+      notify("已删除灵感记录");
       return;
     }
     if (action === "breeze-add") {
@@ -3782,6 +3966,19 @@
       renderCalendar();
       renderHome();
       notify("已删除体重记录");
+      return;
+    }
+    if (action === "delete-calorie") {
+      const date = actionButton.dataset.calorieDate;
+      const day = state.days[date];
+      if (!day || Number(day.calories) <= 0 || !confirm(uiText(`删除 ${date} 的热量记录吗？`, `Delete the calorie record from ${date}?`))) return;
+      calorieTableExpanded = Boolean(actionButton.closest("details")?.open) || calorieTableExpanded;
+      day.calories = "";
+      save();
+      renderHealth();
+      renderCalendar();
+      renderHome();
+      notify("已删除热量记录");
       return;
     }
     if (action === "delete-master-todo") {
@@ -4354,6 +4551,13 @@
     internalHistoryDepth = Number.isInteger(event.state?.kineticDepth) ? event.state.kineticDepth : 0;
     switchPage(location.hash.slice(1), false, true);
   });
+  window.addEventListener("pageshow", () => {
+    resetDateContextToToday();
+    renderAll();
+    switchPage(location.hash.slice(1) || "home", false);
+    applyLanguage();
+  });
+  resetDateContextToToday();
   save();
   renderAll();
   const initialPage = pageNames[location.hash.slice(1)] ? location.hash.slice(1) : "home";
