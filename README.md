@@ -13,8 +13,6 @@ Kinetic Life OS 是一个本地优先的个人工作台。它把项目、待办�
 
 Kinetic Life OS is a local-first personal workbench for projects, tasks, health, fitness, calendar review, and inspiration. It connects small actions, daily states, and long-term direction without turning personal life into a noisy productivity dashboard.
 
-![产品总览 / Product overview](assets/github-overview-2026-09-20.png)
-
 ## 当前工作台 / Current workspace
 
 ### 总览 / Overview
@@ -95,12 +93,8 @@ Kinetic Life OS is an installable web application. Open the deployed HTTPS URL t
 1. 在 GitHub 仓库右侧 About 区域点击产品链接。<br>
    Click the product link in the About section of the GitHub repository.
 
-![步骤一：打开产品链接 / Step 1: Open the product link](assets/install-step-1.png)
-
 2. 进入产品页面后，点击浏览器地址栏右侧的安装图标，确认安装。<br>
    On the product page, click the install icon on the right side of the browser address bar and confirm the installation.
-
-![步骤二：安装 PWA / Step 2: Install the PWA](assets/install-step-2.png)
 
 桌面端推荐使用最新版 Chrome 或 Edge；iPhone/iPad 使用 Safari 的“添加到主屏幕”；Android 使用 Chrome 的“安装应用”。<br>
 The latest Chrome or Edge is recommended on desktop. On iPhone/iPad, use Safari's “Add to Home Screen”; on Android, use Chrome's “Install app”.

@@ -1115,31 +1115,31 @@
     const state = {
       version: 5,
       goals: [
-        { id: "g-phd", title: "推进一个重要项目", area: "学习与兴趣", progress: 25 },
+        { id: "g-focus", title: "推进一个重要项目", area: "工作与成长", progress: 25 },
         { id: "g-health", title: "建立稳定的身体节奏", area: "健康与体态", progress: 20 },
-        { id: "g-career", title: "建立稳定的学习节奏", area: "工作与成长", progress: 10 },
+        { id: "g-learning", title: "建立稳定的学习节奏", area: "学习与兴趣", progress: 15 },
         { id: "g-create", title: "保持长期创作与输出", area: "创作与学习", progress: 10 },
-        { id: "g-base", title: "完成个人数字空间初版", area: "产品与空间", progress: 20 }
+        { id: "g-base", title: "完成工作台体验优化", area: "产品与空间", progress: 20 }
       ],
       priorities: [
-        { id: "priority-now", label: "现在", text: "完成一次任务推进或跟进", detail: "用一个真实行动降低工作推进焦虑，并记录岗位与后续日期。" },
-        { id: "priority-next", label: "接下来", text: "整理整理下一阶段计划", detail: "先说明问题、对象和方法；发送后记录回复与下一步。" },
-        { id: "priority-later", label: "随后", text: "完成项目空间的首个可见区块", detail: "先完成空间建模和首屏，不等待职业定位完全确定。" }
+        { id: "priority-now", label: "现在", text: "完成一项当前重点", detail: "把任务拆成一个可以立即开始的小行动。" },
+        { id: "priority-next", label: "接下来", text: "整理下一阶段计划", detail: "确认目标、截止日期和下一步。" },
+        { id: "priority-later", label: "随后", text: "完成项目的第一个可见版本", detail: "先做出可用初版，再根据实际反馈继续优化。" }
       ],
       projects: [
-        { id: "p-job", title: "季度项目推进", description: "整理岗位、任务推进材料和跟进节奏，逐步建立稳定的机会管道。", symbol: "↗", area: "工作与成长", status: "进行中", progress: 10, next: "完成一版主简历，开始记录工作推进。", logs: [], createdAt, completed: false },
-        { id: "p-phd", title: "专题研究整理", description: "围绕研究方向整理说明、筛选合适的导师，并持续记录沟通结果。", symbol: "✉", area: "学习与兴趣", status: "进行中", progress: 25, next: "整理研究方向说明、导师名单和第一封邮件。", logs: [], createdAt, completed: false },
-        { id: "p-app", title: "入睡时间记录 App", description: "做一个足够轻量的记录工具，帮助观察作息变化并形成可回看的趋势。", symbol: "⌛", area: "产品与空间", status: "收尾中", progress: 80, next: "列出发布前剩余事项并逐件关闭。", logs: [], createdAt, completed: false },
-        { id: "p-room", title: "工作台页面优化", description: "把个人空间、作品入口和持续记录整合成一个可以逐步扩展的数字基地。", symbol: "⌂", area: "产品与空间", status: "进行中", progress: 15, next: "先完成一个可用初版，再根据实际使用补充内容。", logs: [], createdAt, completed: false },
-        { id: "p-novel", title: "写作与阅读练习", description: "保持低压力、可持续的写作节奏，逐步完善故事设定和章节内容。", symbol: "✎", area: "创作与学习", status: "长期维护", progress: 5, next: "安排本周一次写作时段，先完成一个小片段。", logs: [], createdAt, completed: false },
-        { id: "p-media", title: "创作主题练习", description: "围绕真实兴趣持续产出完整主题，先保持稳定，再逐步形成自己的表达方式。", symbol: "◎", area: "创作与学习", status: "长期维护", progress: 5, next: "完成一个不完美但完整的主题输出。", logs: [], createdAt, completed: false },
+        { id: "p-work", title: "季度项目推进", description: "整理项目目标、行动节奏和阶段成果，持续记录每一次推进。", symbol: "↗", area: "工作与成长", status: "进行中", progress: 25, next: "确定本周需要交付的最小成果。", logs: [], createdAt, completed: false },
+        { id: "p-research", title: "专题研究整理", description: "围绕一个感兴趣的主题整理资料、问题和阶段性结论。", symbol: "✉", area: "学习与兴趣", status: "进行中", progress: 25, next: "整理研究框架并完成第一轮资料归档。", logs: [], createdAt, completed: false },
+        { id: "p-app", title: "作息记录原型", description: "做一个足够轻量的记录工具，帮助观察作息变化并形成可回看的趋势。", symbol: "⌛", area: "产品与空间", status: "收尾中", progress: 80, next: "列出发布前剩余事项并逐件关闭。", logs: [], createdAt, completed: false },
+        { id: "p-room", title: "工作台体验优化", description: "持续优化信息结构、页面入口和记录流程，让工作台更容易使用。", symbol: "⌂", area: "产品与空间", status: "进行中", progress: 15, next: "先完成一个可用初版，再根据实际使用补充内容。", logs: [], createdAt, completed: false },
+        { id: "p-writing", title: "写作与阅读练习", description: "保持低压力、可持续的表达节奏，逐步整理主题和素材。", symbol: "✎", area: "创作与学习", status: "长期维护", progress: 5, next: "安排本周一次写作或阅读时段，先完成一个小片段。", logs: [], createdAt, completed: false },
+        { id: "p-media", title: "创作主题练习", description: "围绕感兴趣的主题持续产出完整内容，先保持稳定，再逐步形成表达方式。", symbol: "◎", area: "创作与学习", status: "长期维护", progress: 5, next: "完成一个不完美但完整的主题输出。", logs: [], createdAt, completed: false },
         { id: "p-healing", title: "疗愈网页：森林 / 极光二选一", description: "探索一个节奏舒缓的沉浸式网页，用简单的视觉和声音帮助进入放松状态。", symbol: "◌", area: "产品与空间", status: "未开始", progress: 0, next: "先确定一个主题，再研究循环视频。", logs: [], createdAt, completed: false }
       ],
       milestones: [
-        { id: "m1", title: "研究方向说明第一版", note: "先写清楚问题、对象和方法，不追求最终稿。", done: false, createdAt },
-        { id: "m2", title: "建立导师候选名单", note: "记录研究重合度、近期发表和招生信息。", done: false, createdAt },
-        { id: "m3", title: "发送第一封沟通邮件", note: "整理内容后发送，并记录后续跟进。", done: false, createdAt },
-        { id: "m4", title: "建立申请材料清单", note: "研究计划、简历、语言和推荐材料逐项推进。", done: false, createdAt }
+        { id: "m1", title: "完成项目目标拆解", note: "把目标拆分为季度、月度和本周行动。", done: false, createdAt },
+        { id: "m2", title: "整理第一轮资料", note: "保留可以支持下一步判断的关键信息。", done: false, createdAt },
+        { id: "m3", title: "完成一次阶段复盘", note: "记录进展、阻碍和下一步调整。", done: false, createdAt },
+        { id: "m4", title: "建立阶段事项清单", note: "把需要按日期跟进的事项逐项记录。", done: false, createdAt }
       ],
       events: [],
       days: {},
@@ -1182,6 +1182,35 @@
       nonPersonalDemoDataApplied: true,
       demoLanguageRecordsApplied: true
     };
+  }
+
+  function removeLegacyPersonalDemoContent(state) {
+    let changed = false;
+    const removeSeed = (items, ids, matches) => items.filter((item) => {
+      const isSeed = ids.has(item?.id) && matches(item);
+      if (isSeed) changed = true;
+      return !isSeed;
+    });
+    const legacyGoalIds = new Set(["g-phd", "g-career"]);
+    const legacyProjectIds = new Set(["p-job", "p-phd", "p-novel", "p-media", "p-room"]);
+    const legacyReminderIds = new Set(["r1", "r2", "r3"]);
+    const legacyMilestoneIds = new Set(["m1", "m2", "m3", "m4"]);
+    state.goals = removeSeed(state.goals || [], legacyGoalIds, () => true);
+    state.projects = removeSeed(state.projects || [], legacyProjectIds, () => true);
+    state.reminders = removeSeed(state.reminders || [], legacyReminderIds, () => true);
+    state.milestones = removeSeed(state.milestones || [], legacyMilestoneIds, () => true);
+    const priorityReplacements = new Map([
+      ["priority-now", { text: "完成一项当前重点", detail: "把任务拆成一个可以立即开始的小行动。" }],
+      ["priority-next", { text: "整理下一阶段计划", detail: "确认目标、截止日期和下一步。" }],
+      ["priority-later", { text: "完成项目的第一个可见版本", detail: "先做出可用初版，再根据实际反馈继续优化。" }]
+    ]);
+    state.priorities = (state.priorities || []).map((item) => {
+      const replacement = priorityReplacements.get(item?.id);
+      if (!replacement) return item;
+      changed = true;
+      return { ...item, ...replacement };
+    });
+    return changed;
   }
 
   function preserveFitnessDays(baseDays, rawDays) {
@@ -1522,13 +1551,13 @@
       },
       {
         id: "demo-project-writing",
-        title: "写作与古诗练习",
-        description: "在写作、随笔和古诗阅读之间保持稳定的表达练习，让写作成为理解生活和整理情绪的方式。",
+        title: "写作与阅读练习",
+        description: "在写作、随笔和阅读之间保持稳定的表达练习，让记录成为理解生活和整理思绪的方式。",
         symbol: "✎",
         area: "学习与创作",
         status: "长期维护",
         progress: 35,
-        next: "完成一段短写作，并摘录五句喜欢的古诗。",
+        next: "完成一段短写作，并摘录五句喜欢的句子。",
         createdAt: projectDate(-28),
         updatedAt: projectDate(-3),
         completed: false,
@@ -1774,15 +1803,16 @@
       if (!resettingNonFitnessData && !raw.migratedToV2 && Array.isArray(raw.reminders)) {
         const day = merged.days[todayKey()] || emptyDay();
         normalizeDay(day);
-        raw.reminders.filter((item) => !item.done && item.text).forEach((item) => {
+        raw.reminders.filter((item) => !["r1", "r2", "r3"].includes(item?.id) && !item.done && item.text).forEach((item) => {
           if (!day.tasks.some((task) => task.text === item.text)) {
             day.tasks.push({ id: uid("task"), text: item.text, done: false, area: "生活" });
           }
         });
         merged.days[todayKey()] = day;
       }
+      const removedLegacyPersonalDemoContent = removeLegacyPersonalDemoContent(merged);
       merged.migratedToV2 = true;
-      if (resettingNonFitnessData || appliedDemoLanguageRecords || appliedDemoInspirationTrail || breezeGuideChanged) localStorage.setItem(STORE, JSON.stringify(merged));
+      if (resettingNonFitnessData || appliedDemoLanguageRecords || appliedDemoInspirationTrail || breezeGuideChanged || removedLegacyPersonalDemoContent) localStorage.setItem(STORE, JSON.stringify(merged));
       return merged;
     } catch {
       return base;
