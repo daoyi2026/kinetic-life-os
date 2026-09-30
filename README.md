@@ -1,17 +1,43 @@
-# Kinetic Life OS
+<p align="center">
+  <img src="assets/social-preview.jpg" alt="Kinetic Life OS — a local-first personal workbench" width="100%">
+</p>
 
-个人工作台 · 把自己作为项目 / A personal workbench for turning everyday actions into a visible trajectory
+<h1 align="center">Kinetic Life OS</h1>
 
-当前版本：v1.4.2<br>
-Current release: v1.4.2
+<p align="center">
+  <strong>把自己作为项目，但不把生活变成 KPI。</strong><br>
+  A calm, local-first personal workbench that turns everyday actions into a visible trajectory.
+</p>
 
-[在线体验 / Live PWA](https://daoyi2026.github.io/kinetic-life-os/) · [GitHub 仓库 / Repository](https://github.com/daoyi2026/kinetic-life-os)
+<p align="center">
+  <a href="https://daoyi2026.github.io/kinetic-life-os/"><strong>立即体验 / Try the live PWA</strong></a>
+  ·
+  <a href="#安装为-pwa--install-as-a-pwa">安装到设备 / Install</a>
+  ·
+  <a href="#数据与隐私--data-and-privacy">数据与隐私 / Privacy</a>
+</p>
 
-## 产品介绍 / Product overview
+<p align="center">
+  <sub>无需账号 · 无后端 · 无自动云同步 · 支持 JSON 备份<br>No account · No backend · No automatic cloud sync · JSON backup</sub>
+</p>
 
-Kinetic Life OS 是一个本地优先的个人工作台。它把项目、待办、健康、训练、日历和灵感记录放在同一个可回顾的系统里：今天完成的一件小事、一次身体状态记录或一句突然出现的灵感，都会成为之后回看自己轨迹的一部分。
+当前版本：v1.4.3<br>
+Current release: v1.4.3
 
-Kinetic Life OS is a local-first personal workbench for projects, tasks, health, fitness, calendar review, and inspiration. It connects small actions, daily states, and long-term direction without turning personal life into a noisy productivity dashboard.
+## 为什么是 Kinetic Life OS / Why Kinetic Life OS
+
+生活常常被拆散在待办、备忘录、健康 App 和表格里。Kinetic Life OS 用日期把项目、日常行动、身体状态、训练和灵感重新连接起来，让今天完成的一件小事，慢慢成为之后可以回看的生活轨迹。
+
+Life is often fragmented across task lists, notes, health apps, and spreadsheets. Kinetic Life OS reconnects projects, everyday actions, wellbeing, workouts, and ideas through time—without turning personal life into a noisy productivity dashboard.
+
+- **一条可以回看的轨迹 / One visible trajectory**：从今天要做的事，到长期项目、健康趋势和突然出现的灵感，都能在日历中重新相遇。<br>
+  Daily tasks, long-term projects, health trends, workouts, and ideas come back together in the calendar.
+- **数据默认留在本地 / Local by default**：记录保存在当前浏览器，不需要注册，也不会自动上传到云端。<br>
+  Records stay in the current browser. No sign-up or automatic cloud upload is required.
+- **温和而不是催促 / Gentle, not demanding**：关注变化、复盘和长期方向，而不是用更多红点与数字制造压力。<br>
+  The system supports reflection and long-term direction instead of adding more pressure.
+- **打开即可体验 / Ready to try**：使用虚构演示数据直接体验，也可以清空后从自己的第一条记录开始。<br>
+  Explore with fictional demo data, or clear it and begin with your own first record.
 
 ## 当前工作台 / Current workspace
 
