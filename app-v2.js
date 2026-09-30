@@ -3,7 +3,7 @@
 
   const STORE = "serene-personal-workspace-v1";
   const RESET_MARKER = `${STORE}:cleared`;
-  const APP_VERSION = "v1.4.3";
+  const APP_VERSION = "v1.4.4";
   const LANGUAGE_STORE = "kinetic-life-os:language";
   const SIDEBAR_COLLAPSED_STORE = "kinetic-life-os:sidebar-collapsed";
   let currentLanguage = localStorage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
@@ -314,6 +314,10 @@
     "导出 JSON 备份后，可以在另一台设备恢复工作台数据。": "Export a JSON backup to restore your workbench data on another device.",
     "此操作会清除当前浏览器中的工作台记录，且无法撤销。": "This clears workbench records in the current browser and cannot be undone.",
     "清除全部记录": "Clear all records",
+    "隐私与开源许可": "Privacy & open-source license",
+    "了解本地数据如何保存，以及本项目采用的开源许可。": "Learn how local data is stored and which open-source license applies.",
+    "查看隐私政策": "View privacy policy",
+    "查看 GPL-3.0 许可": "View GPL-3.0 license",
     "保存日期": "Save date",
     "数据与隐私": "Data & privacy",
     "保存": "Save",
@@ -765,6 +769,7 @@
             <section class="section settings-stack">
               <article class="card settings-card"><h3>数据备份</h3><p>导出 JSON 备份后，可以在另一台设备恢复工作台数据。</p><div class="settings-actions"><button class="btn green" data-action="export">导出备份</button><label class="btn secondary file-btn">导入备份<input id="importInput" type="file" accept="application/json,.json" aria-label="选择备份文件" /></label></div></article>
               <article class="card settings-card"><h3>清除当前设备记录</h3><p>此操作会清除当前浏览器中的工作台记录，且无法撤销。</p><div class="settings-actions"><button class="btn danger" data-action="reset">清除全部记录</button></div></article>
+              <article class="card settings-card"><h3 data-i18n-key="隐私与开源许可">隐私与开源许可</h3><p data-i18n-key="了解本地数据如何保存，以及本项目采用的开源许可。">了解本地数据如何保存，以及本项目采用的开源许可。</p><div class="settings-actions"><a class="btn secondary" href="https://github.com/daoyi2026/kinetic-life-os/blob/main/PRIVACY.md" target="_blank" rel="noopener noreferrer" data-i18n-key="查看隐私政策">查看隐私政策</a><a class="btn secondary" href="https://github.com/daoyi2026/kinetic-life-os/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" data-i18n-key="查看 GPL-3.0 许可">查看 GPL-3.0 许可</a></div></article>
             </section>
           </section>
 

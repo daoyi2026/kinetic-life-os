@@ -826,6 +826,7 @@ body.modal-open { overflow: hidden; }
 .settings-card h3 { margin: 0; font: 600 20px var(--serif); }
 .settings-card p { margin: 5px 0 0; color: var(--muted); }
 .settings-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 16px; }
+.settings-actions a.btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .file-btn { position: relative; overflow: hidden; }
 .file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .toast { position: fixed; z-index: 100; left: 50%; bottom: 24px; transform: translate(-50%, 12px); padding: 10px 15px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 12px; opacity: 0; pointer-events: none; transition: 180ms ease; }

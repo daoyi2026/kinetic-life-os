@@ -14,15 +14,17 @@
   ·
   <a href="#安装为-pwa--install-as-a-pwa">安装到设备 / Install</a>
   ·
-  <a href="#数据与隐私--data-and-privacy">数据与隐私 / Privacy</a>
+  <a href="PRIVACY.md">数据与隐私 / Privacy</a>
+  ·
+  <a href="LICENSE">GPL-3.0 License</a>
 </p>
 
 <p align="center">
   <sub>无需账号 · 无后端 · 无自动云同步 · 支持 JSON 备份<br>No account · No backend · No automatic cloud sync · JSON backup</sub>
 </p>
 
-当前版本：v1.4.3<br>
-Current release: v1.4.3
+当前版本：v1.4.4<br>
+Current release: v1.4.4
 
 ## 为什么是 Kinetic Life OS / Why Kinetic Life OS
 
@@ -127,9 +129,9 @@ The latest Chrome or Edge is recommended on desktop. On iPhone/iPad, use Safari'
 
 ## 数据与隐私 / Data and privacy
 
-用户输入的数据默认保存在当前浏览器的 `kinetic-life-os:data:v1` 存储键中。应用没有账号系统、后端、分析服务或自动云端同步；安装 PWA 不会改变这一点，数据仍然属于当前浏览器配置文件。
+用户输入的数据默认保存在当前浏览器的 `serene-personal-workspace-v1` 存储键中。应用没有账号系统、后端、分析服务或自动云端同步；安装 PWA 不会改变这一点，数据仍然属于当前浏览器配置文件。
 
-User-entered data is stored in the current browser under the `kinetic-life-os:data:v1` storage key by default. The app has no account system, backend, analytics service, or automatic cloud sync. Installing the PWA does not change this; data remains tied to the current browser profile.
+User-entered data is stored in the current browser under the `serene-personal-workspace-v1` storage key by default. The app has no account system, backend, analytics service, or automatic cloud sync. Installing the PWA does not change this; data remains tied to the current browser profile.
 
 首次打开时，应用会提供一组全方位但完全虚构的演示数据，覆盖研究方向、项目、产品、旅行、聚会、公益、博士申请示例、运动、爱好和摄影等场景；这些内容不对应任何真实个人、学校、导师、地点或申请记录。需要从空白状态开始时，可以在“设置与备份”中使用“清除当前设备记录”；重要内容请先导出 JSON 备份。
 
@@ -137,6 +139,9 @@ The first launch includes broad, fully fictional demo data covering research dir
 
 请不要在公开部署中输入密码、身份证件、支付信息、真实联系方式或其他高度敏感信息。<br>
 Do not enter passwords, identity documents, payment data, real contact details, or other highly sensitive information into a public deployment.
+
+完整说明请阅读 [隐私政策 / Privacy Policy](PRIVACY.md)。<br>
+Read the full [Privacy Policy / 隐私政策](PRIVACY.md).
 
 ## 本地预览与部署 / Local preview and deployment
 
@@ -148,5 +153,5 @@ The repository includes a GitHub Actions workflow. Every push to `main` automati
 
 ## 许可证 / License
 
-当前仓库尚未选择开源许可证。<br>
-No open-source license has been selected for this repository yet.
+本项目采用 [GNU General Public License v3.0](LICENSE)。您可以在该许可证条款下使用、研究、修改和再分发代码；对外分发衍生版本时，需要继续以 GPL-3.0 提供相应源代码。<br>
+This project is licensed under the [GNU General Public License v3.0](LICENSE). You may use, study, modify, and redistribute the code under its terms. Distributed derivative versions must remain available under GPL-3.0 with the corresponding source code.
