@@ -920,15 +920,15 @@
       title: "力量 A",
       subtitle: "肩背与手臂 · 全站立 · 不超过 60 分钟",
       items: [
-        ["热", "热身 6–8 分钟", "绕肩、肩胛活动、胸椎旋转与手腕活动"],
-        ["1", "站姿哑铃肩推", "4 × 8–12"],
-        ["2", "站姿哑铃侧平举", "4 × 10–15"],
-        ["3", "站姿单臂哑铃划船", "4 × 10–12 / 侧"],
-        ["4", "站姿俯身反向飞鸟", "4 × 12–15"],
-        ["5", "站姿哑铃弯举", "3 × 10–12"],
-        ["6", "保加利亚分腿蹲", "2 × 10–12"],
-        ["7", "站姿靠墙滑手", "3 × 8–12"],
-        ["伸", "拉伸 5–8 分钟", "胸肌、背阔肌与前臂"]
+        ["1", "热身 6–8 分钟", "绕肩、肩胛活动、胸椎旋转与手腕活动"],
+        ["2", "站姿哑铃肩推", "4 × 8–12"],
+        ["3", "站姿哑铃侧平举", "4 × 10–15"],
+        ["4", "站姿单臂哑铃划船", "4 × 10–12 / 侧"],
+        ["5", "站姿俯身反向飞鸟", "4 × 12–15"],
+        ["6", "站姿哑铃弯举", "3 × 10–12"],
+        ["7", "保加利亚分腿蹲", "2 × 10–12"],
+        ["8", "站姿靠墙滑手", "3 × 8–12"],
+        ["9", "拉伸 5–8 分钟", "胸肌、背阔肌与前臂"]
       ]
     },
     2: {
@@ -944,15 +944,15 @@
       title: "力量 B",
       subtitle: "臀腿、骨盆控制与核心 · 不超过 60 分钟",
       items: [
-        ["热", "热身 6–8 分钟", "髋、踝活动与徒手深蹲"],
-        ["1", "哑铃深蹲", "4 × 10–12"],
-        ["2", "臀桥", "4 × 12–15"],
-        ["3", "哑铃罗马尼亚硬拉", "4 × 10–12"],
-        ["4", "扶墙辅助静态分腿蹲", "3 × 8–12 / 侧"],
-        ["5", "保加利亚分腿蹲", "2 × 10–12"],
-        ["6", "平板支撑", "30–60 秒"],
-        ["7", "死虫式", "3 × 8–10 / 侧"],
-        ["伸", "拉伸 5–8 分钟", "髋屈肌、臀部与大腿后侧"]
+        ["1", "热身 6–8 分钟", "髋、踝活动与徒手深蹲"],
+        ["2", "哑铃深蹲", "4 × 10–12"],
+        ["3", "臀桥", "4 × 12–15"],
+        ["4", "哑铃罗马尼亚硬拉", "4 × 10–12"],
+        ["5", "扶墙辅助静态分腿蹲", "3 × 8–12 / 侧"],
+        ["6", "保加利亚分腿蹲", "2 × 10–12"],
+        ["7", "平板支撑", "30–60 秒"],
+        ["8", "死虫式", "3 × 8–10 / 侧"],
+        ["9", "拉伸 5–8 分钟", "髋屈肌、臀部与大腿后侧"]
       ]
     },
     4: {
@@ -964,15 +964,15 @@
       title: "力量 C",
       subtitle: "背部稳定、臀部与后链 · 不超过 60 分钟",
       items: [
-        ["热", "热身 6–8 分钟", "走步、绕肩、胸椎旋转与髋铰链"],
-        ["1", "单臂哑铃划船", "4 × 10–12 / 侧"],
-        ["2", "俯身反向飞鸟", "4 × 12–15"],
-        ["3", "哑铃罗马尼亚硬拉", "4 × 10–12"],
-        ["4", "单腿臀桥", "4 × 10–12 / 侧"],
-        ["5", "超人式", "4 × 12–15"],
-        ["6", "站姿单侧提重行走 / 原地抬膝", "3 × 30–45 秒 / 侧"],
-        ["7", "站姿靠墙滑手", "3 × 8–12"],
-        ["伸", "拉伸 5–8 分钟", "背阔肌、胸、臀部与后链"]
+        ["1", "热身 6–8 分钟", "走步、绕肩、胸椎旋转与髋铰链"],
+        ["2", "单臂哑铃划船", "4 × 10–12 / 侧"],
+        ["3", "俯身反向飞鸟", "4 × 12–15"],
+        ["4", "哑铃罗马尼亚硬拉", "4 × 10–12"],
+        ["5", "单腿臀桥", "4 × 10–12 / 侧"],
+        ["6", "超人式", "4 × 12–15"],
+        ["7", "站姿单侧提重行走 / 原地抬膝", "3 × 30–45 秒 / 侧"],
+        ["8", "站姿靠墙滑手", "3 × 8–12"],
+        ["9", "拉伸 5–8 分钟", "背阔肌、胸、臀部与后链"]
       ]
     },
     6: {
@@ -990,6 +990,13 @@
       items: [["1", "轻松活动", "散步或按状态完成日常维护"]]
     }
   };
+
+  function normalizeWorkoutPlanItems(items) {
+    return (Array.isArray(items) ? items : []).map((item, index) => {
+      const tuple = Array.isArray(item) ? item : [item?.number, item?.title || item?.name, item?.detail];
+      return [String(index + 1), String(tuple[1] || "").trim(), String(tuple[2] || "").trim()];
+    });
+  }
 
   const WORKOUT_TEXT_EN = {
     "热身 6–8 分钟": "Warm-up · 6–8 minutes",
@@ -1885,7 +1892,7 @@
           plan: {
             title: String(change.plan.title || "运动安排"),
             subtitle: String(change.plan.subtitle || ""),
-            items: change.plan.items.map((item, index) => [String(item?.[0] ?? index + 1), String(item?.[1] || "运动项目"), String(item?.[2] || "")])
+            items: normalizeWorkoutPlanItems(change.plan.items)
           }
         };
         workoutChanges.set(`${normalized.weekday}:${normalized.effectiveFrom}`, normalized);
@@ -1901,7 +1908,7 @@
             plan: {
               title: String(day.workoutPlan.title || "运动安排"),
               subtitle: String(day.workoutPlan.subtitle || ""),
-              items: day.workoutPlan.items.map((item, index) => [String(item?.[0] ?? index + 1), String(item?.[1] || "运动项目"), String(item?.[2] || "")])
+              items: normalizeWorkoutPlanItems(day.workoutPlan.items)
             }
           });
           day.workoutPlan = null;
@@ -2013,6 +2020,7 @@
   let editingEventId = null;
   let editingWorkoutDate = null;
   let workoutDraft = null;
+  let workoutDragState = null;
   let editingRoutines = false;
   let editingSupplementaryTraining = false;
   let completedProjectFilter = "全部";
@@ -3006,7 +3014,7 @@
       workoutDraft = {
         key,
         title: String(plan.title || ""),
-        items: plan.items.map((item, index) => [String(item?.[0] ?? index + 1), String(item?.[1] || ""), String(item?.[2] || "")])
+        items: normalizeWorkoutPlanItems(plan.items)
       };
     }
     return workoutDraft;
@@ -3018,7 +3026,7 @@
     const draft = workoutDraftFor(key);
     draft.title = form.elements["workout-title"]?.value.trim() || "";
     draft.items = [...form.querySelectorAll(".workout-edit-row")].map((row, index) => [
-      row.querySelector("[data-workout-number]")?.value.trim() || row.querySelector(".workout-edit-index")?.textContent.trim() || String(index + 1),
+      String(index + 1),
       row.querySelector("[data-workout-name]")?.value.trim() || "",
       row.querySelector("[data-workout-detail]")?.value.trim() || ""
     ]);
@@ -3030,8 +3038,8 @@
     const weekday = fromKey(key).getDay();
     const weekdayLabel = currentLanguage === "en" ? WEEKDAYS_EN[weekday] : `周${"日一二三四五六"[weekday]}`;
     const helper = currentLanguage === "en"
-      ? `Changes apply from ${dayText(key)} to this day and all future ${weekdayLabel} sessions; past dates stay unchanged.`
-      : `修改将从 ${dayText(key)} 起，应用于当天及以后所有${weekdayLabel}；过去日期保持原样。`;
+      ? `Drag a row to reorder it. Changes apply from ${dayText(key)} to this day and all future ${weekdayLabel} sessions; past dates stay unchanged.`
+      : `拖动项目行可调整顺序。修改将从 ${dayText(key)} 起，应用于当天及以后所有${weekdayLabel}；过去日期保持原样。`;
     return `
       <form class="workout-editor" data-workout-editor="${key}">
         <div class="workout-edit-meta">
@@ -3040,8 +3048,8 @@
         </div>
         <div class="workout-edit-list">
           ${draft.items.length ? draft.items.map(([number, title, detail], index) => `
-            <div class="workout-edit-row">
-              <span class="workout-edit-index">${esc(number)}</span>
+            <div class="workout-edit-row" draggable="true" data-workout-row-index="${index}">
+              <span class="workout-edit-index" title="拖动调整顺序" aria-label="拖动调整顺序">${esc(number)}</span>
               <label class="field"><span class="sr-only">运动名称</span><input class="inline-input" data-workout-name="${index}" maxlength="60" value="${esc(title)}" placeholder="运动名称" required /></label>
               <label class="field"><span class="sr-only">运动时间或次数</span><input class="inline-input" data-workout-detail="${index}" maxlength="100" value="${esc(detail)}" placeholder="时间或次数" /></label>
               <button class="mini-btn danger workout-row-remove" type="button" data-action="delete-workout-item" data-workout-date="${key}" data-workout-index="${index}" aria-label="删除运动项目">×</button>
@@ -3094,7 +3102,7 @@
       <form class="form-grid routine-add-form" data-routine-add-form>
         <label class="field"><span>项目名称</span><input class="input" name="routine-title" maxlength="60" placeholder="例如：午间散步" required /></label>
         <label class="field"><span>补充说明</span><input class="input" name="routine-detail" maxlength="120" placeholder="例如：按状态完成 15 分钟" /></label>
-        <div class="wide form-row"><button class="btn green" type="submit">添加项目</button></div>
+        <div class="wide form-row"><button class="btn green" type="submit">添加项目</button><button class="btn secondary" type="button" data-action="save-routine-edit">${uiText("保存安排", "Save plan")}</button></div>
       </form>
     `;
   }
@@ -3796,6 +3804,7 @@
         const index = Number(actionButton.dataset.workoutIndex);
         if (Number.isInteger(index) && index >= 0) draft.items.splice(index, 1);
       }
+      draft.items = normalizeWorkoutPlanItems(draft.items);
       renderFitness();
       renderCalendar();
       requestAnimationFrame(() => document.querySelector(`[data-workout-editor="${key}"] [data-workout-name="${action === "add-workout-item" ? draft.items.length - 1 : Math.max(0, Number(actionButton.dataset.workoutIndex) - 1)}"]`)?.focus());
@@ -3804,6 +3813,15 @@
     if (action === "toggle-routine-edit") {
       editingRoutines = !editingRoutines;
       renderFitness();
+      return;
+    }
+    if (action === "save-routine-edit") {
+      save();
+      editingRoutines = false;
+      renderFitness();
+      renderHome();
+      renderCalendar();
+      notify(uiText("日常安排已保存", "Daily routines saved"));
       return;
     }
     if (action === "toggle-supplementary-edit") {
@@ -4301,6 +4319,57 @@
     }
   });
 
+  document.addEventListener("dragstart", (event) => {
+    const row = event.target.closest?.("[data-workout-row-index]");
+    const form = row?.closest("[data-workout-editor]");
+    if (!row || !form) return;
+    const index = Number(row.dataset.workoutRowIndex);
+    if (!Number.isInteger(index)) return;
+    syncWorkoutDraftFromForm(form);
+    workoutDragState = { key: form.dataset.workoutEditor, index };
+    row.classList.add("is-dragging");
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", `${form.dataset.workoutEditor}:${index}`);
+    }
+  });
+
+  document.addEventListener("dragover", (event) => {
+    const row = event.target.closest?.("[data-workout-row-index]");
+    const form = row?.closest("[data-workout-editor]");
+    if (!row || !form || !workoutDragState || form.dataset.workoutEditor !== workoutDragState.key) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+    document.querySelectorAll(".workout-edit-row.is-drag-over").forEach((item) => item.classList.remove("is-drag-over"));
+    row.classList.add("is-drag-over");
+  });
+
+  document.addEventListener("drop", (event) => {
+    const row = event.target.closest?.("[data-workout-row-index]");
+    const form = row?.closest("[data-workout-editor]");
+    if (!row || !form || !workoutDragState || form.dataset.workoutEditor !== workoutDragState.key) return;
+    event.preventDefault();
+    const fromIndex = workoutDragState.index;
+    const targetIndex = Number(row.dataset.workoutRowIndex);
+    const draft = syncWorkoutDraftFromForm(form);
+    workoutDragState = null;
+    document.querySelectorAll(".workout-edit-row.is-drag-over, .workout-edit-row.is-dragging").forEach((item) => item.classList.remove("is-drag-over", "is-dragging"));
+    if (!draft || !Number.isInteger(targetIndex) || fromIndex === targetIndex || !draft.items[fromIndex]) return;
+    const rect = row.getBoundingClientRect();
+    let insertIndex = targetIndex + (event.clientY > rect.top + rect.height / 2 ? 1 : 0);
+    const [moved] = draft.items.splice(fromIndex, 1);
+    if (fromIndex < insertIndex) insertIndex -= 1;
+    draft.items.splice(Math.max(0, Math.min(insertIndex, draft.items.length)), 0, moved);
+    draft.items = normalizeWorkoutPlanItems(draft.items);
+    renderFitness();
+    renderCalendar();
+  });
+
+  document.addEventListener("dragend", () => {
+    workoutDragState = null;
+    document.querySelectorAll(".workout-edit-row.is-drag-over, .workout-edit-row.is-dragging").forEach((item) => item.classList.remove("is-drag-over", "is-dragging"));
+  });
+
   document.addEventListener("input", (event) => {
     const target = event.target;
     const workoutForm = target.closest?.("[data-workout-editor]");
@@ -4404,8 +4473,7 @@
       const key = form.dataset.workoutEditor;
       const draft = syncWorkoutDraftFromForm(form) || workoutDraftFor(key);
       const title = draft.title || uiText("运动安排", "Workout plan");
-      const items = draft.items
-        .map((item, index) => [String(item[0] || index + 1), String(item[1] || "").trim(), String(item[2] || "").trim()])
+      const items = normalizeWorkoutPlanItems(draft.items)
         .filter((item) => item[1]);
       const subtitle = workoutSummaryFromItems(items);
       const weekday = fromKey(key).getDay();

@@ -491,9 +491,12 @@ html[lang="en"] .date-nav-btn[data-action="fitness-calendar-today"] { min-width:
 .workout-editor { display: grid; gap: 12px; }
 .workout-edit-meta { display: grid; grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr); gap: 8px; }
 .workout-edit-list { display: grid; }
-.workout-edit-row { display: grid; grid-template-columns: 28px minmax(0, 1.15fr) minmax(0, 0.85fr) 34px; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid rgba(54, 113, 22, 0.12); }
+.workout-edit-row { display: grid; grid-template-columns: 28px minmax(0, 1.15fr) minmax(0, 0.85fr) 34px; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid rgba(54, 113, 22, 0.12); cursor: grab; transition: background .15s ease, opacity .15s ease, box-shadow .15s ease; }
+.workout-edit-row:active { cursor: grabbing; }
+.workout-edit-row.is-dragging { opacity: .45; }
+.workout-edit-row.is-drag-over { background: rgba(54, 113, 22, 0.08); box-shadow: inset 0 2px 0 var(--green); }
 .workout-edit-row > * { min-width: 0; }
-.workout-edit-index { color: var(--green); font-size: 12px; font-weight: 700; }
+.workout-edit-index { color: var(--green); font-size: 12px; font-weight: 700; cursor: grab; user-select: none; }
 .workout-edit-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .workout-subtitle-output { display: flex; align-items: center; min-height: 46px; color: var(--muted); }
 .workout-add-item { justify-self: start; }
