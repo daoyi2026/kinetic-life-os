@@ -804,6 +804,9 @@
 
   const languageTextSources = new WeakMap();
   const languageAttributeSources = new WeakMap();
+  let languageObserver = null;
+  let languageSyncFrame = null;
+  let languageApplying = false;
 
   function translateText(value) {
     if (currentLanguage === "zh") return value;
@@ -852,46 +855,70 @@
     if (!languageAttributeSources.has(element)) languageAttributeSources.set(element, {});
     languageAttributeSources.get(element)[name] = source;
     if (name === "placeholder" || name === "aria-label" || name === "title") {
-      element.setAttribute(name, translateText(source));
+      const translated = translateText(source);
+      if (current !== translated) element.setAttribute(name, translated);
     }
   }
 
   function applyLanguage() {
-    document.documentElement.lang = currentLanguage === "en" ? "en" : "zh-CN";
-    document.title = currentLanguage === "en" ? "Personal Workbench · Kinetic Life OS" : "个人工作台 · Kinetic Life OS";
-    const brandEdition = document.querySelector(".v2-brand > div > span");
-    if (brandEdition) brandEdition.textContent = currentLanguage === "en" ? "LIFE OS · Local edition" : "LIFE OS · 本地版";
-    const footer = document.querySelector(".v2-footer");
-    if (footer) footer.textContent = currentLanguage === "en" ? `KINETIC LIFE OS · Local storage · ${APP_VERSION}` : `KINETIC LIFE OS · 本地保存 · ${APP_VERSION}`;
-    const languageToggle = document.getElementById("languageToggle");
-    if (languageToggle) {
-      languageToggle.textContent = currentLanguage === "en" ? "中文" : "EN";
+    if (languageApplying) return;
+    languageApplying = true;
+    languageObserver?.disconnect();
+    try {
+      document.documentElement.lang = currentLanguage === "en" ? "en" : "zh-CN";
+      document.title = currentLanguage === "en" ? "Personal Workbench · Kinetic Life OS" : "个人工作台 · Kinetic Life OS";
+      const brandEdition = document.querySelector(".v2-brand > div > span");
+      const brandEditionText = currentLanguage === "en" ? "LIFE OS · Local edition" : "LIFE OS · 本地版";
+      if (brandEdition && brandEdition.textContent !== brandEditionText) brandEdition.textContent = brandEditionText;
+      const footer = document.querySelector(".v2-footer");
+      const footerText = currentLanguage === "en" ? `KINETIC LIFE OS · Local storage · ${APP_VERSION}` : `KINETIC LIFE OS · 本地保存 · ${APP_VERSION}`;
+      if (footer && footer.textContent !== footerText) footer.textContent = footerText;
+      const languageToggle = document.getElementById("languageToggle");
+      const languageToggleText = currentLanguage === "en" ? "中文" : "EN";
+      if (languageToggle && languageToggle.textContent !== languageToggleText) languageToggle.textContent = languageToggleText;
+      const breezeTitle = document.querySelector(".breeze-title");
+      const breezeTitleText = uiText("微风指南", "Breeze guide");
+      if (breezeTitle && breezeTitle.textContent !== breezeTitleText) breezeTitle.textContent = breezeTitleText;
+      document.querySelectorAll("[data-i18n-key]").forEach((element) => {
+        const key = element.dataset.i18nKey;
+        const translated = TRANSLATIONS[key] ? uiText(key, TRANSLATIONS[key]) : null;
+        if (translated !== null && element.textContent !== translated) element.textContent = translated;
+      });
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      const textNodes = [];
+      let node;
+      while ((node = walker.nextNode())) textNodes.push(node);
+      textNodes.forEach((textNode) => {
+        const parent = textNode.parentElement;
+        if (!parent || ["SCRIPT", "STYLE", "TEXTAREA"].includes(parent.tagName)) return;
+        if (parent.closest("[data-no-translate]")) return;
+        if (!languageTextSources.has(textNode)) languageTextSources.set(textNode, textNode.nodeValue);
+        const translated = translateText(languageTextSources.get(textNode));
+        if (textNode.nodeValue !== translated) textNode.nodeValue = translated;
+      });
+      document.querySelectorAll("[placeholder], [aria-label], [title]").forEach((element) => {
+        ["placeholder", "aria-label", "title"].forEach((name) => translateAttribute(element, name));
+      });
+      if (languageToggle) {
+        const languageLabel = currentLanguage === "en" ? "Switch to Chinese" : "切换到英文";
+        if (languageToggle.getAttribute("aria-label") !== languageLabel) languageToggle.setAttribute("aria-label", languageLabel);
+      }
+      syncSidebarToggle();
+    } finally {
+      languageApplying = false;
+      languageObserver?.observe(document.body, { childList: true, subtree: true });
     }
-    const breezeTitle = document.querySelector(".breeze-title");
-    if (breezeTitle) breezeTitle.textContent = uiText("微风指南", "Breeze guide");
-    document.querySelectorAll("[data-i18n-key]").forEach((element) => {
-      const key = element.dataset.i18nKey;
-      if (TRANSLATIONS[key]) element.textContent = uiText(key, TRANSLATIONS[key]);
-    });
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    const textNodes = [];
-    let node;
-    while ((node = walker.nextNode())) textNodes.push(node);
-    textNodes.forEach((textNode) => {
-      const parent = textNode.parentElement;
-      if (!parent || ["SCRIPT", "STYLE", "TEXTAREA"].includes(parent.tagName)) return;
-      if (parent.closest("[data-no-translate]")) return;
-      if (!languageTextSources.has(textNode)) languageTextSources.set(textNode, textNode.nodeValue);
-      textNode.nodeValue = translateText(languageTextSources.get(textNode));
-    });
-    document.querySelectorAll("[placeholder], [aria-label], [title]").forEach((element) => {
-      ["placeholder", "aria-label", "title"].forEach((name) => translateAttribute(element, name));
-    });
-    if (languageToggle) languageToggle.setAttribute("aria-label", currentLanguage === "en" ? "Switch to Chinese" : "切换到英文");
-    syncSidebarToggle();
   }
 
-  const languageObserver = new MutationObserver(() => requestAnimationFrame(applyLanguage));
+  function scheduleLanguageSync() {
+    if (languageApplying || languageSyncFrame !== null) return;
+    languageSyncFrame = requestAnimationFrame(() => {
+      languageSyncFrame = null;
+      applyLanguage();
+    });
+  }
+
+  languageObserver = new MutationObserver(scheduleLanguageSync);
   languageObserver.observe(document.body, { childList: true, subtree: true });
 
   const routineData = [
@@ -2203,8 +2230,27 @@
   }
 
   function save() {
+    if (saveTimer !== null) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
     localStorage.removeItem(RESET_MARKER);
     localStorage.setItem(STORE, JSON.stringify(state));
+  }
+
+  const SAVE_DEBOUNCE_MS = 300;
+  let saveTimer = null;
+
+  function scheduleSave() {
+    if (saveTimer !== null) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      saveTimer = null;
+      save();
+    }, SAVE_DEBOUNCE_MS);
+  }
+
+  function flushSave() {
+    if (saveTimer !== null) save();
   }
 
   function notify(message) {
@@ -2225,7 +2271,8 @@
     main?.classList.toggle("is-sidebar-collapsed", sidebarCollapsed);
     toggle.setAttribute("aria-expanded", String(!sidebarCollapsed));
     toggle.setAttribute("aria-label", label);
-    toggle.innerHTML = `<span aria-hidden="true">${sidebarCollapsed ? "›" : "‹"}</span>`;
+    const iconMarkup = `<span aria-hidden="true">${sidebarCollapsed ? "›" : "‹"}</span>`;
+    if (toggle.innerHTML !== iconMarkup) toggle.innerHTML = iconMarkup;
   }
 
   function toggleSidebar() {
@@ -4386,7 +4433,7 @@
         if (target.dataset.goalTitle) goal.title = target.value;
         if (target.dataset.goalProgress) goal.progress = Math.max(0, Math.min(100, Number(target.value) || 0));
         if (target.dataset.goalArea) goal.area = target.value;
-        save();
+        scheduleSave();
         if (target.dataset.goalProgress) {
           const score = overallProgress();
           const stat = document.querySelector(".home-stat:nth-child(2) strong");
@@ -4403,12 +4450,12 @@
         if (target.dataset.priorityText) item.text = target.value;
         if (target.dataset.priorityDetail) item.detail = target.value;
       }
-      save();
+      scheduleSave();
     }
     if (target.matches("[data-task-text]")) {
       const task = ensureDay(target.dataset.taskDate).tasks.find((item) => item.id === target.dataset.taskText);
       if (task) task.text = target.value;
-      save();
+      scheduleSave();
     }
     if (target.matches("[data-master-title], [data-master-note]")) {
       const id = target.dataset.masterTitle || target.dataset.masterNote;
@@ -4417,7 +4464,7 @@
         if (target.dataset.masterTitle) item.title = target.value;
         if (target.dataset.masterNote) item.note = target.value;
       }
-      save();
+      scheduleSave();
     }
     if (target.matches("[data-routine-title], [data-routine-detail]")) {
       const id = target.dataset.routineTitle || target.dataset.routineDetail;
@@ -4427,7 +4474,7 @@
         if (target.dataset.routineDetail) item.detail = target.value;
         state.routineItems = currentRoutineItems();
       }
-      save();
+      scheduleSave();
     }
     if (target.matches("[data-supplementary-title], [data-supplementary-note], [data-supplementary-action], [data-supplementary-frequency]")) {
       const panels = currentSupplementaryTraining();
@@ -4445,7 +4492,7 @@
           }
         }
       }
-      save();
+      scheduleSave();
     }
     if (target.matches("[data-project-area]")) {
       const id = target.dataset.projectArea;
@@ -4453,13 +4500,13 @@
       if (project) {
         project.area = target.value;
       }
-      save();
+      scheduleSave();
     }
     if (target.matches("[data-project-title]")) {
       const project = state.projects.find((item) => item.id === target.dataset.projectTitle);
       if (project) {
         project.title = target.value;
-        save();
+        scheduleSave();
         renderHome();
         renderCalendar();
       }
@@ -4618,6 +4665,11 @@
     } catch {
       alert("无法识别这个备份文件，请选择由本工作台导出的 JSON 文件。");
     }
+  });
+
+  window.addEventListener("pagehide", flushSave);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushSave();
   });
 
   window.addEventListener("popstate", (event) => {

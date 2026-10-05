@@ -264,7 +264,7 @@
     document.getElementById('focusSeconds')?.remove();renderFocus();renderAll();const initial=PAGE_NAMES[location.hash.slice(1)]?location.hash.slice(1):'home';switchPage(initial,false);
   })();
   </script>
-    <script src="app-v2.js?v=107" defer></script>
+    <script src="app-v2.js?v=108" defer></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
@@ -274,7 +274,7 @@
           refreshing = true;
           window.location.reload();
         });
-        navigator.serviceWorker.register("./service-worker.js?v=74", { scope: "./", updateViaCache: "none" })
+        navigator.serviceWorker.register("./service-worker.js?v=75", { scope: "./", updateViaCache: "none" })
           .then((registration) => registration.update().catch(() => {}))
           .catch(() => {});
       });
