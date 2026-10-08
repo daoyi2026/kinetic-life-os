@@ -363,7 +363,8 @@ html[lang="en"] .date-nav-btn[data-action="fitness-calendar-today"] { min-width:
 .compact-home-calendar .calendar-grid { gap: 2px; }
 .compact-home-calendar .cal-day { width: 36px; height: 36px; min-height: 36px; font-size: 11px; }
 .compact-home-calendar .date-nav-btn { min-width: 38px; min-height: 38px; }
-#homeTasks { grid-template-columns: repeat(3, minmax(210px, 280px)); justify-content: start; }
+#homeTasks { display: flex; flex-wrap: wrap; gap: 16px; }
+#homeTasks > * { flex: 1 1 calc((100% - 32px) / 3); min-width: min(100%, 210px); }
 .compact-home-calendar .calendar-caption { margin-top: 9px; padding-top: 9px; }
 
 .calendar-card { padding: 24px; }
@@ -864,7 +865,6 @@ body.modal-open { overflow: hidden; }
 }
 
 @media (max-width: 1120px) {
-  #homeTasks { grid-template-columns: repeat(auto-fit, minmax(210px, 280px)); }
   .home-mid, .calendar-layout, .important-layout { grid-template-columns: 1fr; }
 }
 
@@ -995,7 +995,6 @@ body.modal-open { overflow: hidden; }
   .trend-grid { grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 3px; }
   .footprints-grid.zoom-1 { grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 3px; }
   .home-stats-grid { grid-template-columns: 1fr; }
-  #homeTasks { grid-template-columns: 1fr; }
   .quick-links { grid-template-columns: 1fr 1fr; }
 }
 
