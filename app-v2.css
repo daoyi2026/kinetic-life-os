@@ -363,8 +363,7 @@ html[lang="en"] .date-nav-btn[data-action="fitness-calendar-today"] { min-width:
 .compact-home-calendar .calendar-grid { gap: 2px; }
 .compact-home-calendar .cal-day { width: 36px; height: 36px; min-height: 36px; font-size: 11px; }
 .compact-home-calendar .date-nav-btn { min-width: 38px; min-height: 38px; }
-#homeTasks { display: flex; flex-wrap: wrap; gap: 16px; }
-#homeTasks > * { flex: 1 1 calc((100% - 32px) / 3); min-width: min(100%, 210px); }
+#homeTasks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .compact-home-calendar .calendar-caption { margin-top: 9px; padding-top: 9px; }
 
 .calendar-card { padding: 24px; }
@@ -1005,6 +1004,14 @@ body.modal-open { overflow: hidden; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+@container (max-width: 661px) {
+  #homeTasks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@container (max-width: 435px) {
+  #homeTasks { grid-template-columns: 1fr; }
 }
 
 /* Keep every scrollbar quiet until its scroll surface is active. */
