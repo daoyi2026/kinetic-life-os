@@ -289,7 +289,7 @@
     "需要提前准备或按时跟进": "Prepare ahead or follow up on time",
     "日历与复盘": "Calendar & review",
     "每日计划": "Daily plan",
-    "选择日期后，集中查看当天计划、运动、状态、饮水、体重和项目推进。": "Select a date to review plans, workouts, wellbeing, hydration, weight, and project updates.",
+    "按日期查看全年行动热度，点选任意一天回看详情。": "See activity across the year and select any day to review its details.",
     "运动安排": "Workout plan",
     "事务工作": "Work tasks",
     "待办事项": "Tasks",
@@ -731,14 +731,20 @@
           </section>
 
           <section class="v2-screen" data-screen="calendar">
-            <div class="page-heading"><h2 data-i18n-key="日历看板">日历看板</h2><p data-i18n-key="选择日期后，集中查看当天计划、运动、状态、饮水、体重和项目推进。">选择日期后，集中查看当天计划、运动、状态、饮水、体重和项目推进。</p></div>
+            <div class="page-heading"><h2 data-i18n-key="日历看板">日历看板</h2><p data-i18n-key="按日期查看全年行动热度，点选任意一天回看详情。">按日期查看全年行动热度，点选任意一天回看详情。</p></div>
             <section class="section calendar-stack">
               <article class="card calendar-card calendar-overview-card">
                 <div class="calendar-overview-grid">
-                  <div class="calendar-compact-pane">
-                    <div class="calendar-head"><span class="calendar-month" id="calendarMonth"></span><div class="calendar-controls"><button class="date-nav-btn" data-action="prev-month" aria-label="上个月">‹</button><button class="date-nav-btn" data-action="today" aria-label="回到今天">今</button><button class="date-nav-btn" data-action="next-month" aria-label="下个月">›</button></div></div>
-                    <div class="weekdays" aria-hidden="true"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
-                    <div class="calendar-grid" id="calendarGrid"></div>
+                  <div class="calendar-annual-pane">
+                    <div class="calendar-head annual-calendar-head"><span class="calendar-month" id="calendarYearTitle"></span><div class="calendar-controls" role="group" aria-label="切换日历年份"><button class="date-nav-btn" data-action="calendar-prev-year" aria-label="上一年">‹</button><button class="date-nav-btn" data-action="calendar-year-today" aria-label="回到今年">今</button><button class="date-nav-btn" data-action="calendar-next-year" aria-label="下一年">›</button></div></div>
+                    <div class="annual-calendar-meta"><span id="calendarHeatmapMeta"></span><div class="annual-calendar-legend" id="calendarHeatmapLegend"></div></div>
+                    <div class="annual-calendar-plot">
+                      <div class="annual-calendar-months" id="calendarMonthLabels" aria-hidden="true"></div>
+                      <div class="annual-calendar-body">
+                        <div class="annual-weekday-labels" aria-hidden="true"><span>一</span><span></span><span>三</span><span></span><span>五</span><span></span><span>日</span></div>
+                        <div class="annual-week-grid" id="calendarYearGrid"></div>
+                      </div>
+                    </div>
                     <div class="calendar-caption" id="calendarCaption"></div>
                   </div>
                   <div class="calendar-health-pane day-dashboard" id="calendarHealthPanel"></div>
@@ -2031,6 +2037,7 @@
   let selectedFitnessDate = todayKey();
   let monthCursor = fromKey(todayKey());
   monthCursor.setDate(1);
+  let calendarYear = fromKey(todayKey()).getFullYear();
   let fitnessMonthCursor = fromKey(todayKey());
   fitnessMonthCursor.setDate(1);
   function resetDateContextToToday() {
@@ -2038,6 +2045,7 @@
     const date = fromKey(today);
     selectedDate = today;
     selectedFitnessDate = today;
+    calendarYear = date.getFullYear();
     monthCursor = new Date(date.getFullYear(), date.getMonth(), 1);
     fitnessMonthCursor = new Date(date.getFullYear(), date.getMonth(), 1);
   }
@@ -2049,6 +2057,10 @@
   let editingWorkoutDate = null;
   let workoutDraft = null;
   let workoutDragState = null;
+  let editingCalendarHealthDate = null;
+  let calendarHealthDraft = null;
+  let calendarHealthInitialDraft = null;
+  let calendarHealthDraftDirty = false;
   let editingRoutines = false;
   let editingSupplementaryTraining = false;
   let completedProjectFilter = "全部";
@@ -2515,26 +2527,194 @@
 
   function renderCalendars() {
     const grid = monthGrid();
-    ["home", "calendar"].forEach((kind) => {
-      const month = document.getElementById(kind === "home" ? "homeCalendarMonth" : "calendarMonth");
-      const target = document.getElementById(kind === "home" ? "homeCalendarGrid" : "calendarGrid");
-      if (month) month.textContent = grid.title;
-      if (target) target.innerHTML = grid.html;
-    });
+    const homeMonth = document.getElementById("homeCalendarMonth");
+    const homeGrid = document.getElementById("homeCalendarGrid");
+    if (homeMonth) homeMonth.textContent = grid.title;
+    if (homeGrid) homeGrid.innerHTML = grid.html;
     const stats = completionFor(selectedDate);
     const summary = summaryText(selectedDate);
     const homeCaption = document.getElementById("homeCalendarCaption");
     if (homeCaption) homeCaption.innerHTML = calendarCaptionHtml(selectedDate, stats, summary, true);
-    const calendarCaption = document.getElementById("calendarCaption");
-    if (calendarCaption) calendarCaption.innerHTML = calendarCaptionHtml(selectedDate, stats, summary, false);
+  }
+
+  function dailyActivityFor(key) {
+    const day = state.days[key] || {};
+    const tasks = Array.isArray(day.tasks) ? day.tasks : [];
+    const tasksDone = tasks.filter((task) => task.done).length;
+    const weekday = fromKey(key).getDay();
+    const plan = planFor(key);
+    const workoutRequired = TRAINING_WEEKDAYS.includes(weekday) && plan.items.length > 0;
+    const workoutDone = day.fitness === true;
+    const healthRecords = [
+      Boolean(weightOn(key)),
+      Number(day.water) > 0,
+      String(day.calories ?? "").trim() !== "" || String(day.food ?? "").trim() !== ""
+    ];
+    const healthCompleteCount = healthRecords.filter(Boolean).length;
+    const projectUpdateCount = projectLogsOn(key).length;
+    const routines = currentRoutineItems();
+    const routineDoneCount = routines.filter((item) => day.routines?.[item.id]).length;
+    const hasDailyReflection = Boolean(String(day.notes || "").trim() || localizedInspiration(day));
+    let score = 0;
+
+    if (tasks.length) score += (tasksDone / tasks.length) * 30;
+    if (workoutRequired && workoutDone) score += 25;
+    else if (!workoutRequired && workoutDone) score += 8;
+    score += healthCompleteCount * 10;
+    score += Math.min(10, projectUpdateCount * 5);
+    if (routines.length) score += (routineDoneCount / routines.length) * 5;
+    if (day.mood || day.energy) score += 2;
+    if (hasDailyReflection) score += 3;
+
+    const coreComplete = tasks.length > 0 && tasksDone === tasks.length &&
+      (!workoutRequired || workoutDone) && healthCompleteCount === healthRecords.length;
+    score = coreComplete ? 100 : Math.min(89, Math.round(score));
+    const level = score === 0 ? 0 : score < 20 ? 1 : score < 40 ? 2 : score < 60 ? 3 : score < 90 ? 4 : 5;
+    return { score, level, coreComplete };
+  }
+
+  function renderAnnualCalendar() {
+    const grid = document.getElementById("calendarYearGrid");
+    if (!grid) return;
+
+    const title = document.getElementById("calendarYearTitle");
+    const monthLabels = document.getElementById("calendarMonthLabels");
+    const meta = document.getElementById("calendarHeatmapMeta");
+    const legend = document.getElementById("calendarHeatmapLegend");
+    const caption = document.getElementById("calendarCaption");
+    const year = calendarYear;
+    const firstDate = new Date(year, 0, 1);
+    const daysInYear = new Date(year, 1, 29).getMonth() === 1 ? 366 : 365;
+    const startOffset = (firstDate.getDay() + 6) % 7;
+    const weekCount = Math.ceil((startOffset + daysInYear) / 7);
+    const firstGridDate = new Date(year, 0, 1 - startOffset);
+    const today = todayKey();
+    let activeDays = 0;
+    const cells = [];
+
+    if (title) title.textContent = currentLanguage === "en" ? `${year} activity heatmap` : `${year} 年度活动热力图`;
+    if (monthLabels) {
+      monthLabels.style.setProperty("--week-count", String(weekCount));
+      monthLabels.innerHTML = Array.from({ length: 12 }, (_, month) => {
+        const dayOffset = (Date.UTC(year, month, 1) - Date.UTC(year, 0, 1)) / 86400000;
+        const firstWeek = Math.floor((startOffset + dayOffset) / 7) + 1;
+        const label = currentLanguage === "en" ? MONTHS_SHORT_EN[month] : `${month + 1}月`;
+        const offset = ((firstWeek - 1) / weekCount) * 100;
+        return `<span style="left:${offset}%">${label}</span>`;
+      }).join("");
+    }
+
+    for (let index = 0; index < weekCount * 7; index += 1) {
+      const date = new Date(firstGridDate);
+      date.setDate(firstGridDate.getDate() + index);
+      const week = Math.floor(index / 7) + 1;
+      const weekday = (index % 7) + 1;
+      if (date.getFullYear() !== year) {
+        cells.push(`<span class="annual-day-cell is-outside-year" style="grid-column:${week};grid-row:${weekday}" aria-hidden="true"></span>`);
+        continue;
+      }
+
+      const key = keyOf(date);
+      const activity = dailyActivityFor(key);
+      if (activity.score > 0) activeDays += 1;
+      const selectedClass = key === selectedDate ? "is-selected" : "";
+      const todayClass = key === today ? "is-today" : "";
+      const completeLabel = activity.coreComplete ? uiText("关键记录已齐", "Key records complete") : "";
+      const label = `${dayText(key)} · ${uiText("活动热度", "Activity level")} ${activity.score}%${completeLabel ? ` · ${completeLabel}` : ""}`;
+      cells.push(`<button class="annual-day-cell heat-level-${activity.level} ${selectedClass} ${todayClass}" type="button" data-date="${key}" tabindex="${key === selectedDate ? "0" : "-1"}" style="grid-column:${week};grid-row:${weekday}" title="${esc(label)}" aria-label="${esc(label)}" aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight" ${key === selectedDate ? 'aria-pressed="true"' : ""}></button>`);
+    }
+
+    grid.style.setProperty("--week-count", String(weekCount));
+    grid.innerHTML = cells.join("");
+    if (meta) meta.textContent = currentLanguage === "en" ? `${activeDays} active days · ${daysInYear} days` : `${activeDays} 天有记录 · 全年 ${daysInYear} 天`;
+    if (legend) {
+      legend.innerHTML = `<span>${uiText("少", "Less")}</span>${Array.from({ length: 6 }, (_, level) => `<i class="annual-legend-swatch heat-level-${level}" aria-hidden="true"></i>`).join("")}<span>${uiText("多", "More")}</span>`;
+    }
+    if (caption) caption.innerHTML = calendarCaptionHtml(selectedDate, completionFor(selectedDate), summaryText(selectedDate), false);
+  }
+
+  function focusAnnualCalendarDate(key) {
+    const grid = document.getElementById("calendarYearGrid");
+    const nextCell = Array.from(grid?.querySelectorAll(".annual-day-cell[data-date]") || [])
+      .find((cell) => cell.dataset.date === key);
+    nextCell?.focus({ preventScroll: true });
   }
 
   function calendarCaptionHtml(key, stats = completionFor(key), summary = summaryText(key), showSummary = true) {
     const importantCopy = eventsOn(key).map((event) => event.title).filter(Boolean).join(currentLanguage === "en" ? ", " : "、");
     const important = importantCopy ? `<span class="calendar-important-copy"> · ${esc(importantCopy)}</span>` : "";
     const completionCopy = currentLanguage === "en" ? `${stats.done}/${stats.total} complete` : `${stats.done}/${stats.total} 项完成`;
-    const summaryCopy = showSummary ? `${completionCopy} · ${esc(summary)}` : "";
+    const activity = dailyActivityFor(key);
+    const summaryCopy = showSummary
+      ? `${completionCopy} · ${esc(summary)}`
+      : `<span class="calendar-activity-copy">${uiText("活动热度", "Activity level")} ${activity.score}%${currentLanguage === "en" ? ": " : "："}${esc(dailyActivitySummary(key))}</span>`;
     return `<strong>${esc(dayText(key))}${important}</strong>${summaryCopy}`;
+  }
+
+  function dailyActivitySummary(key) {
+    const day = state.days[key] || {};
+    const tasks = Array.isArray(day.tasks) ? day.tasks : [];
+    const completedTasks = tasks.filter((task) => task.done);
+    const parts = [];
+    const compactText = (value, limit) => {
+      const text = String(value || "").trim().replace(/\s+/g, " ");
+      const characters = Array.from(text);
+      return characters.length > limit ? `${characters.slice(0, limit).join("")}…` : text;
+    };
+
+    if (!tasks.length) {
+      parts.push(uiText("今天没有待办事项", "No tasks today"));
+    } else if (!completedTasks.length) {
+      parts.push(currentLanguage === "en" ? `Tasks ${completedTasks.length}/${tasks.length} completed` : `待办完成${completedTasks.length}/${tasks.length}项`);
+    } else {
+      const completedNames = completedTasks.slice(0, 2).map((task) => `“${compactText(task.text, 24)}”`);
+      const more = completedTasks.length > completedNames.length
+        ? (currentLanguage === "en" ? ` and ${completedTasks.length - completedNames.length} more` : `等${completedTasks.length}项`)
+        : "";
+      parts.push(currentLanguage === "en"
+        ? `Completed ${completedTasks.length}/${tasks.length} tasks: ${completedNames.join(", ")}${more}`
+        : `完成待办${completedTasks.length}/${tasks.length}项：${completedNames.join("、")}${more}`);
+    }
+
+    const projectLogs = projectLogsOn(key);
+    if (projectLogs.length) {
+      const updates = projectLogs.slice(0, 2).map((log) => `${compactText(log.project, 16)}：${compactText(log.text, 28)}`);
+      const more = projectLogs.length > updates.length
+        ? (currentLanguage === "en" ? ` and ${projectLogs.length - updates.length} more updates` : `等${projectLogs.length}条推进`)
+        : "";
+      parts.push(currentLanguage === "en" ? `Project updates: ${updates.join("; ")}${more}` : `项目推进：${updates.join("；")}${more}`);
+    } else {
+      parts.push(uiText("暂无项目推进", "No project updates"));
+    }
+
+    const plan = planFor(key);
+    const scheduledWorkout = TRAINING_WEEKDAYS.includes(fromKey(key).getDay()) && plan.items.length > 0;
+    const planTitle = localizedPlanTitle(plan.title);
+    if (scheduledWorkout) {
+      parts.push(currentLanguage === "en"
+        ? (day.fitness ? `Completed ${planTitle} workout` : `${planTitle} workout not completed`)
+        : (day.fitness ? `完成${plan.title}训练` : `${plan.title}训练待完成`));
+    } else {
+      parts.push(day.fitness ? uiText("完成了额外运动", "Extra workout completed") : uiText("今日无计划训练", "No workout scheduled"));
+    }
+
+    const routines = currentRoutineItems();
+    const routineCount = routines.filter((item) => day.routines?.[item.id]).length;
+    if (routineCount) parts.push(currentLanguage === "en" ? `${routineCount} daily routines completed` : `完成${routineCount}项日常项目`);
+
+    const water = Math.max(0, Math.min(8, Number(day.water) || 0));
+    if (water) parts.push(currentLanguage === "en" ? `Hydration ${water} cups` : `饮水${water}杯`);
+    const weight = weightOn(key);
+    if (weight) parts.push(currentLanguage === "en" ? `Weight ${weight.weight} kg recorded` : `记录体重${weight.weight}kg`);
+    const calories = String(day.calories ?? "").trim();
+    if (calories) parts.push(currentLanguage === "en" ? `${calories} kcal recorded` : `记录热量${calories}kcal`);
+    if (String(day.food || "").trim()) parts.push(uiText("记录了饮食", "Diet recorded"));
+    if (day.mood) parts.push(currentLanguage === "en" ? `Mood ${day.mood}` : `心情${day.mood}`);
+    if (day.energy) parts.push(currentLanguage === "en" ? `Energy ${day.energy}` : `精力${day.energy}`);
+    if (String(day.notes || "").trim()) parts.push(uiText("记录了当天复盘", "Daily reflection recorded"));
+    if (localizedInspiration(day)) parts.push(uiText("记录了今日灵感", "Inspiration recorded"));
+
+    return parts.join(currentLanguage === "en" ? "; " : "；");
   }
 
   function summaryText(key) {
@@ -2545,36 +2725,6 @@
     if (day?.fitness) parts.push(uiText("训练已完成", "Workout completed"));
     if (projectLogsOn(key).length) parts.push(currentLanguage === "en" ? `${projectLogsOn(key).length} project updates` : `${projectLogsOn(key).length} 条项目记录`);
     return parts.join(" · ") || uiText("暂无当天记录", "No records for this day");
-  }
-
-  function dashboardSummary(key) {
-    const day = ensureDay(key);
-    const stats = completionFor(key);
-    const logs = projectLogsOn(key);
-    const projectNames = [...new Set(logs.map((log) => log.project).filter(Boolean))];
-    const projectLabel = projectNames.length ? (currentLanguage === "en"
-      ? (projectNames.length > 2 ? `${projectNames.slice(0, 2).join(", ")} and other projects` : `${projectNames.join(", ")} project updates`)
-      : (projectNames.length > 2 ? `${projectNames.slice(0, 2).join("、")}等项目` : `${projectNames.join("、")}项目`)) : "";
-    const projectPart = currentLanguage === "en" ? (projectLabel ? `Moved forward ${projectLabel}` : "No project updates") : (projectLabel ? `推进了${projectLabel}` : "暂无项目推进");
-    const taskPart = currentLanguage === "en"
-      ? (stats.total ? `${stats.done} of ${stats.total} tasks completed` : "No tasks today")
-      : (stats.total ? `完成了${stats.done}项待办（共${stats.total}项）` : "今天没有待办事项");
-    const plan = planFor(key);
-    const weekday = fromKey(key).getDay();
-    const planTitle = localizedPlanTitle(plan.title);
-    const workoutPart = TRAINING_WEEKDAYS.includes(weekday)
-      ? (currentLanguage === "en" ? (day.fitness ? `${planTitle} workout plan completed` : `${planTitle} workout plan pending`) : (day.fitness ? `完成了${plan.title}训练计划` : `${plan.title}训练计划待完成`))
-      : (currentLanguage === "en" ? `Today is ${planTitle}` : `今天是${plan.title}`);
-    const routineDone = currentRoutineItems().filter((item) => day.routines[item.id]).length;
-    const routinePart = currentLanguage === "en" ? `${routineDone} daily routines completed` : `完成了${routineDone}项日常项目`;
-    const extraParts = [];
-    if (day.water) extraParts.push(currentLanguage === "en" ? `Hydration ${day.water} cups` : `饮水${day.water}杯`);
-    if (day.mood) extraParts.push(currentLanguage === "en" ? `Mood ${day.mood}` : `心情${day.mood}`);
-    const events = eventsOn(key);
-    if (events.length) extraParts.push(currentLanguage === "en" ? `${events.length} important dates` : `${events.length}个重要日期`);
-    const lead = key === todayKey() ? uiText("今天", "Today") : dayText(key);
-    if (currentLanguage === "en") return `${lead}: ${projectPart}; ${taskPart}; ${workoutPart}; ${routinePart}${extraParts.length ? `; ${extraParts.join(", ")}` : ""}.`;
-    return `${lead}${projectPart}，${taskPart}，${workoutPart}，${routinePart}${extraParts.length ? `；${extraParts.join("、")}` : ""}。`;
   }
 
   function renderHome() {
@@ -3339,6 +3489,7 @@
 
   function renderDayDashboard() {
     const day = ensureDay(selectedDate);
+    const healthEditing = editingCalendarHealthDate === selectedDate && calendarHealthDraft;
     const stats = completionFor(selectedDate);
     const weight = weightOn(selectedDate);
     const logs = projectLogsOn(selectedDate);
@@ -3364,13 +3515,15 @@
       ["疲惫", uiText("疲惫", "Tired")]
     ];
     const healthSelect = (field, label, options, value) => `
-      <select class="summary-control" data-calendar-health="${field}" aria-label="${esc(label)}">
+      <select class="summary-control" data-calendar-health-draft="${field}" aria-label="${esc(label)}">
         ${options.map(([optionValue, optionLabel]) => `<option value="${esc(optionValue)}" ${optionValue === value ? "selected" : ""}>${esc(optionLabel)}</option>`).join("")}
       </select>
     `;
     const waterValue = Math.max(0, Math.min(8, Number(day.water) || 0));
     const weightValue = weight ? String(weight.weight) : "";
     const caloriesValue = String(day.calories ?? "");
+    const moodLabel = (value) => moodOptions.find(([optionValue]) => optionValue === value)?.[1] || value || unrecorded;
+    const energyLabel = (value) => energyOptions.find(([optionValue]) => optionValue === value)?.[1] || value || unrecorded;
     document.getElementById("calendarWorkoutPanel").innerHTML = `
       <div class="card-head"><div><h3>${uiText("运动安排", "Workout plan")}</h3><small>${esc(dayText(selectedDate))} · ${esc(localizedPlanTitle(planFor(selectedDate).title))}</small></div>${calendarDayNavMarkup()}</div>
       ${workoutMarkup(selectedDate, "calendar")}
@@ -3385,24 +3538,39 @@
     `;
 
     document.getElementById("calendarHealthPanel").innerHTML = `
-      <div class="card-head"><div><h3>${uiText("生活健康", "Life & health")}</h3><small class="calendar-summary-copy">${esc(dashboardSummary(selectedDate))}</small></div></div>
-      <section class="day-section health-summary-section">
-        <div class="day-summary calendar-health-summary">
-          <div class="summary-item editable-summary-item"><small>${uiText("心情", "Mood")}</small>${healthSelect("mood", uiText("编辑心情", "Edit mood"), moodOptions, day.mood)}</div>
-          <div class="summary-item editable-summary-item"><small>${uiText("精力", "Energy")}</small>${healthSelect("energy", uiText("编辑精力", "Edit energy"), energyOptions, day.energy)}</div>
-          <div class="summary-item editable-summary-item"><small>${uiText("饮水", "Hydration")}</small><div class="summary-control-row"><input class="summary-control summary-number" type="number" min="0" max="8" step="1" inputmode="numeric" data-calendar-health="water" value="${waterValue}" aria-label="${esc(uiText("编辑饮水杯数", "Edit hydration cups"))}" /><span>${cupUnit}</span></div></div>
-          <div class="summary-item editable-summary-item"><small>${uiText("体重", "Weight")}</small><div class="summary-control-row"><input class="summary-control summary-number" type="number" min="0" step="0.1" inputmode="decimal" data-calendar-health="weight" value="${esc(weightValue)}" placeholder="${esc(unrecorded)}" aria-label="${esc(uiText("编辑体重", "Edit weight"))}" /><span>kg</span></div></div>
-          <div class="summary-item editable-summary-item"><small>${uiText("热量", "Calories")}</small><div class="summary-control-row"><input class="summary-control summary-number" type="number" min="0" step="1" inputmode="numeric" data-calendar-health="calories" value="${esc(caloriesValue)}" placeholder="${esc(unrecorded)}" aria-label="${esc(uiText("编辑摄入热量", "Edit calorie intake"))}" /><span>kcal</span></div></div>
-        </div>
-      </section>
-
-      <section class="day-section">
-        <div class="form-grid health-notes-grid">
-          <label class="field wide"><span>${uiText("饮食简记", "Food notes")}</span><textarea class="textarea" id="calendarFoodInput" placeholder="${uiText("记录主要食物和大致份量", "Record main foods and approximate portions")}">${esc(day.food)}</textarea></label>
-          <label class="field wide"><span>${uiText("当天复盘", "Daily review")}</span><textarea class="textarea" id="calendarNotesInput" placeholder="${uiText("记录推进情况和明天需要继续的事项", "Record progress and what should continue tomorrow")}">${esc(day.notes)}</textarea></label>
-        </div>
-        <button class="btn secondary" data-action="save-calendar-notes" style="margin-top:10px">保存当天记录</button>
-      </section>
+      <div class="card-head calendar-health-head"><div><h3>${uiText("生活健康", "Life & health")}</h3></div>${healthEditing ? `<span class="tag neutral">${uiText("编辑中", "Editing")}</span>` : `<button class="text-btn" type="button" data-action="edit-calendar-health">${uiText("编辑", "Edit")}</button>`}</div>
+      ${healthEditing ? `
+        <section class="day-section health-summary-section">
+          <div class="day-summary calendar-health-summary">
+            <div class="summary-item editable-summary-item"><small>${uiText("心情", "Mood")}</small>${healthSelect("mood", uiText("编辑心情", "Edit mood"), moodOptions, calendarHealthDraft.mood)}</div>
+            <div class="summary-item editable-summary-item"><small>${uiText("精力", "Energy")}</small>${healthSelect("energy", uiText("编辑精力", "Edit energy"), energyOptions, calendarHealthDraft.energy)}</div>
+            <div class="summary-item editable-summary-item"><small>${uiText("饮水", "Hydration")}</small><div class="summary-control-row"><input class="summary-control summary-number" type="number" min="0" max="8" step="1" inputmode="numeric" data-calendar-health-draft="water" value="${esc(calendarHealthDraft.water)}" aria-label="${esc(uiText("编辑饮水杯数", "Edit hydration cups"))}" /><span>${cupUnit}</span></div></div>
+            <div class="summary-item editable-summary-item"><small>${uiText("体重", "Weight")}</small><div class="summary-control-row"><input class="summary-control summary-number" type="number" min="0" step="0.1" inputmode="decimal" data-calendar-health-draft="weight" value="${esc(calendarHealthDraft.weight)}" placeholder="${esc(unrecorded)}" aria-label="${esc(uiText("编辑体重", "Edit weight"))}" /><span>kg</span></div></div>
+            <div class="summary-item editable-summary-item"><small>${uiText("热量", "Calories")}</small><div class="summary-control-row"><input class="summary-control summary-number" type="number" min="0" step="1" inputmode="numeric" data-calendar-health-draft="calories" value="${esc(calendarHealthDraft.calories)}" placeholder="${esc(unrecorded)}" aria-label="${esc(uiText("编辑摄入热量", "Edit calorie intake"))}" /><span>kcal</span></div></div>
+          </div>
+        </section>
+        <section class="day-section">
+          <div class="form-grid health-notes-grid">
+            <label class="field wide"><span>${uiText("饮食简记", "Food notes")}</span><textarea class="textarea" data-calendar-health-draft="food" placeholder="${uiText("记录主要食物和大致份量", "Record main foods and approximate portions")}">${esc(calendarHealthDraft.food)}</textarea></label>
+            <label class="field wide"><span>${uiText("当天复盘", "Daily review")}</span><textarea class="textarea" data-calendar-health-draft="notes" placeholder="${uiText("记录推进情况和明天需要继续的事项", "Record progress and what should continue tomorrow")}">${esc(calendarHealthDraft.notes)}</textarea></label>
+          </div>
+          <div class="calendar-health-edit-actions"><button class="btn green" type="button" data-action="save-calendar-health">${uiText("保存记录", "Save records")}</button><button class="btn secondary" type="button" data-action="cancel-calendar-health-edit">${uiText("取消", "Cancel")}</button></div>
+        </section>
+      ` : `
+        <section class="day-section health-summary-section">
+          <div class="day-summary calendar-health-summary calendar-health-readonly-summary">
+            <div class="summary-item"><small>${uiText("心情", "Mood")}</small><strong>${esc(moodLabel(day.mood))}</strong></div>
+            <div class="summary-item"><small>${uiText("精力", "Energy")}</small><strong>${esc(energyLabel(day.energy))}</strong></div>
+            <div class="summary-item"><small>${uiText("饮水", "Hydration")}</small><strong>${waterValue} ${esc(cupUnit)}</strong></div>
+            <div class="summary-item"><small>${uiText("体重", "Weight")}</small><strong>${weight ? `${esc(weightValue)} kg` : esc(unrecorded)}</strong></div>
+            <div class="summary-item"><small>${uiText("热量", "Calories")}</small><strong>${caloriesValue.trim() ? `${esc(caloriesValue)} kcal` : esc(unrecorded)}</strong></div>
+          </div>
+        </section>
+        <section class="day-section calendar-health-readonly-notes">
+          <div class="health-readonly-note ${day.food.trim() ? "has-record" : ""}"><small>${uiText("饮食简记", "Food notes")}</small><p title="${esc(day.food || "")}">${day.food.trim() ? esc(day.food) : esc(unrecorded)}</p></div>
+          <div class="health-readonly-note ${day.notes.trim() ? "has-record" : ""}"><small>${uiText("当天复盘", "Daily review")}</small><p title="${esc(day.notes || "")}">${day.notes.trim() ? esc(day.notes) : esc(unrecorded)}</p></div>
+        </section>
+      `}
     `;
 
     document.getElementById("calendarProjectLogPanel").innerHTML = `
@@ -3503,6 +3671,7 @@
 
   function renderCalendar() {
     renderCalendars();
+    renderAnnualCalendar();
     renderDayDashboard();
     renderFootprints();
   }
@@ -3586,13 +3755,104 @@
   }
 
   function updateSelectedDate(key) {
+    if (key !== selectedDate && editingCalendarHealthDate === selectedDate) {
+      if (calendarHealthDraftDirty && !window.confirm(uiText("健康记录有未保存的修改，确定放弃并切换日期吗？", "Discard unsaved health changes and switch dates?"))) return false;
+      editingCalendarHealthDate = null;
+      calendarHealthDraft = null;
+      calendarHealthInitialDraft = null;
+      calendarHealthDraftDirty = false;
+    }
     selectedDate = key;
     const date = fromKey(key);
+    calendarYear = date.getFullYear();
     monthCursor = new Date(date.getFullYear(), date.getMonth(), 1);
     renderHome();
     renderReminders();
     renderProjects();
     renderCalendar();
+    return true;
+  }
+
+  function beginCalendarHealthEdit() {
+    const day = ensureDay(selectedDate);
+    const weight = weightOn(selectedDate);
+    editingCalendarHealthDate = selectedDate;
+    calendarHealthDraft = {
+      mood: day.mood || "",
+      energy: day.energy || "",
+      water: String(Math.max(0, Math.min(8, Number(day.water) || 0))),
+      weight: weight ? String(weight.weight) : "",
+      calories: String(day.calories ?? ""),
+      food: String(day.food || ""),
+      notes: String(day.notes || "")
+    };
+    calendarHealthInitialDraft = { ...calendarHealthDraft };
+    calendarHealthDraftDirty = false;
+    renderCalendar();
+    requestAnimationFrame(() => document.querySelector('[data-calendar-health-draft="mood"]')?.focus());
+  }
+
+  function syncCalendarHealthDraft(target) {
+    if (!target.matches?.("[data-calendar-health-draft]") || !calendarHealthDraft || editingCalendarHealthDate !== selectedDate) return false;
+    const field = target.dataset.calendarHealthDraft;
+    if (!(field in calendarHealthDraft)) return false;
+    calendarHealthDraft[field] = target.value;
+    calendarHealthDraftDirty = Object.keys(calendarHealthDraft).some((key) => calendarHealthDraft[key] !== calendarHealthInitialDraft?.[key]);
+    return true;
+  }
+
+  function cancelCalendarHealthEdit() {
+    editingCalendarHealthDate = null;
+    calendarHealthDraft = null;
+    calendarHealthInitialDraft = null;
+    calendarHealthDraftDirty = false;
+    renderCalendar();
+  }
+
+  function saveCalendarHealthDraft() {
+    if (!calendarHealthDraft || editingCalendarHealthDate !== selectedDate) return;
+    const draft = calendarHealthDraft;
+    const waterInput = draft.water.trim();
+    const weightInput = draft.weight.trim();
+    const caloriesInput = draft.calories.trim();
+    const waterNumber = waterInput === "" ? 0 : Number(waterInput);
+    const weightNumber = weightInput === "" ? null : Number(weightInput);
+    const caloriesNumber = caloriesInput === "" ? null : Number(caloriesInput);
+    if (!Number.isFinite(waterNumber) || waterNumber < 0 || waterNumber > 8) {
+      notify(uiText("饮水量需为 0–8 杯。", "Hydration must be between 0 and 8 cups."));
+      return;
+    }
+    if (weightNumber !== null && (!Number.isFinite(weightNumber) || weightNumber <= 0)) {
+      notify(uiText("请输入大于 0 的有效体重，或留空删除记录。", "Enter a weight above 0, or leave it blank to remove the record."));
+      return;
+    }
+    if (caloriesNumber !== null && (!Number.isFinite(caloriesNumber) || caloriesNumber < 0)) {
+      notify(uiText("热量需为 0 或正数，也可以留空。", "Calories must be zero or greater, or left blank."));
+      return;
+    }
+
+    const day = ensureDay(selectedDate);
+    day.mood = draft.mood;
+    day.energy = draft.energy;
+    day.water = Math.max(0, Math.min(8, Math.round(waterNumber)));
+    day.calories = caloriesNumber === null ? "" : String(Math.round(caloriesNumber));
+    day.food = draft.food;
+    day.notes = draft.notes;
+    if (weightNumber === null) {
+      state.weightHistory = state.weightHistory.filter((entry) => entry.date !== selectedDate);
+    } else {
+      setWeight(selectedDate, Math.round(weightNumber * 10) / 10);
+    }
+    editingCalendarHealthDate = null;
+    calendarHealthDraft = null;
+    calendarHealthInitialDraft = null;
+    calendarHealthDraftDirty = false;
+    save();
+    renderHealth();
+    renderHome();
+    renderReminders();
+    renderCalendar();
+    notify(uiText("当天健康记录已保存", "Daily health records saved."));
   }
 
   function setWeight(date, value) {
@@ -3630,7 +3890,9 @@
 
     const dateButton = event.target.closest("[data-date]");
     if (dateButton) {
-      updateSelectedDate(dateButton.dataset.date);
+      const isAnnualCalendarDate = dateButton.matches("#calendarYearGrid .annual-day-cell[data-date]");
+      const updated = updateSelectedDate(dateButton.dataset.date);
+      if (updated && isAnnualCalendarDate) focusAnnualCalendarDate(dateButton.dataset.date);
       return;
     }
 
@@ -3675,6 +3937,18 @@
     }
     if (action === "open-inspiration") {
       openInspirationRecord(actionButton.dataset.inspirationDate);
+      return;
+    }
+    if (action === "edit-calendar-health") {
+      beginCalendarHealthEdit();
+      return;
+    }
+    if (action === "cancel-calendar-health-edit") {
+      cancelCalendarHealthEdit();
+      return;
+    }
+    if (action === "save-calendar-health") {
+      saveCalendarHealthDraft();
       return;
     }
     if (action === "delete-inspiration") {
@@ -3803,15 +4077,27 @@
       renderHealthTrendPanel();
       return;
     }
-    if (action === "home-prev-month" || action === "prev-month") {
+    if (action === "home-prev-month") {
       monthCursor.setMonth(monthCursor.getMonth() - 1);
       renderCalendars();
     }
-    if (action === "home-next-month" || action === "next-month") {
+    if (action === "home-next-month") {
       monthCursor.setMonth(monthCursor.getMonth() + 1);
       renderCalendars();
     }
     if (action === "today") updateSelectedDate(todayKey());
+    if (action === "calendar-prev-year" || action === "calendar-next-year") {
+      const direction = action === "calendar-prev-year" ? -1 : 1;
+      const date = fromKey(selectedDate);
+      const year = calendarYear + direction;
+      const day = Math.min(date.getDate(), new Date(year, date.getMonth() + 1, 0).getDate());
+      updateSelectedDate(`${year}-${pad(date.getMonth() + 1)}-${pad(day)}`);
+      return;
+    }
+    if (action === "calendar-year-today") {
+      updateSelectedDate(todayKey());
+      return;
+    }
     if (action === "fitness-prev-day") {
       selectedFitnessDate = addDays(selectedFitnessDate, -1);
       const date = fromKey(selectedFitnessDate);
@@ -4192,6 +4478,19 @@
   });
 
   document.addEventListener("keydown", (event) => {
+    const annualCell = event.target.closest?.("#calendarYearGrid .annual-day-cell[data-date]");
+    const dayOffset = {
+      ArrowUp: -1,
+      ArrowDown: 1,
+      ArrowLeft: -7,
+      ArrowRight: 7
+    }[event.key];
+    if (annualCell && dayOffset !== undefined) {
+      event.preventDefault();
+      const nextDate = addDays(annualCell.dataset.date, dayOffset);
+      if (updateSelectedDate(nextDate)) focusAnnualCalendarDate(nextDate);
+      return;
+    }
     if (event.key === "Escape") {
       closeProjectHistory();
       closeInspirationRecord();
@@ -4250,39 +4549,7 @@
 
   document.addEventListener("change", (event) => {
     const target = event.target;
-    if (target.matches("[data-calendar-health]")) {
-      const day = ensureDay(selectedDate);
-      const field = target.dataset.calendarHealth;
-      if (field === "mood" || field === "energy") {
-        day[field] = target.value;
-      }
-      if (field === "water") {
-        day.water = Math.max(0, Math.min(8, Number(target.value) || 0));
-      }
-      if (field === "calories") {
-        const value = target.value.trim();
-        if (value !== "" && (!Number.isFinite(Number(value)) || Number(value) < 0)) {
-          target.value = day.calories || "";
-          return;
-        }
-        day.calories = value === "" ? "" : String(Math.round(Number(value)));
-      }
-      if (field === "weight") {
-        state.weightHistory = state.weightHistory.filter((entry) => entry.date !== selectedDate);
-        const numeric = Number(target.value);
-        if (target.value !== "" && Number.isFinite(numeric) && numeric > 0) {
-          state.weightHistory.push({ date: selectedDate, weight: Math.round(numeric * 10) / 10 });
-          state.weightHistory.sort((a, b) => a.date.localeCompare(b.date));
-          state.weightHistory = state.weightHistory.slice(-90);
-        }
-      }
-      save();
-      renderHome();
-      renderHealth();
-      renderCalendar();
-      notify("当天健康记录已更新");
-      return;
-    }
+    if (syncCalendarHealthDraft(target)) return;
     if (target.matches("[data-task-toggle]")) {
       const task = ensureDay(target.dataset.taskDate).tasks.find((item) => item.id === target.dataset.taskToggle);
       if (task) task.done = target.checked;
@@ -4497,6 +4764,7 @@
 
   document.addEventListener("input", (event) => {
     const target = event.target;
+    if (syncCalendarHealthDraft(target)) return;
     const workoutForm = target.closest?.("[data-workout-editor]");
     if (workoutForm && (target.matches('[name="workout-title"], [data-workout-name], [data-workout-detail]'))) {
       const draft = syncWorkoutDraftFromForm(workoutForm);

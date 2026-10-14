@@ -411,6 +411,7 @@ html[lang="en"] .date-nav-btn[data-action="fitness-calendar-today"] { min-width:
 .cal-day.selected .cal-dot { background: var(--green); }
 .calendar-caption { margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
 .calendar-caption strong { display: block; color: var(--ink); font-size: 14px; }
+.calendar-caption .calendar-activity-copy { display: block; line-height: 1.6; }
 .calendar-important-copy { color: var(--event-text); font-size: 0.92em; font-weight: 750; }
 
 .day-dashboard { display: grid; gap: 14px; }
@@ -724,24 +725,61 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 
 .calendar-stack { display: grid; gap: 16px; }
 .calendar-overview-card { padding: 24px; }
-.calendar-overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; align-items: start; }
-.calendar-compact-pane { min-width: 0; padding-right: 24px; }
-.calendar-compact-pane .calendar-head { margin-bottom: 12px; }
+.calendar-overview-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, .85fr); gap: 0; align-items: start; }
+.calendar-annual-pane { min-width: 0; padding-right: 24px; }
+.annual-calendar-head { margin-bottom: 14px; }
+.annual-calendar-head .calendar-month { font-size: 19px; }
+.annual-calendar-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; color: var(--muted); font-size: 10px; }
+.annual-calendar-legend { display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+.annual-legend-swatch { display: block; width: 10px; height: 10px; border-radius: 0; }
+.annual-calendar-plot { min-width: 0; }
+.annual-calendar-months { position: relative; height: 12px; margin: 0 0 5px 26px; color: var(--muted); font-size: 9px; line-height: 1.2; }
+.annual-calendar-months span { position: absolute; top: 0; white-space: nowrap; }
+.annual-calendar-body { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 6px; align-items: stretch; }
+.annual-weekday-labels { display: grid; grid-template-rows: repeat(7, minmax(0, 1fr)); color: var(--muted); font-size: 8px; line-height: 1; }
+.annual-weekday-labels span { display: flex; align-items: center; justify-content: flex-start; }
+.annual-week-grid { display: grid; grid-template-columns: repeat(var(--week-count, 53), minmax(0, 1fr)); grid-template-rows: repeat(7, auto); gap: 3px; min-width: 0; }
+.annual-day-cell { display: block; width: 100%; min-width: 0; aspect-ratio: 1; padding: 0; border: 0; border-radius: 0; background: #edf0ed; }
+.annual-day-cell[data-date] { cursor: pointer; transition: transform 100ms ease, box-shadow 100ms ease; }
+.annual-day-cell[data-date]:hover { z-index: 1; transform: scale(1.2); box-shadow: 0 0 0 1px var(--ink); }
+.annual-day-cell[data-date]:focus-visible { z-index: 1; outline: 2px solid var(--ink); outline-offset: 1px; }
+.annual-day-cell.is-outside-year { background: transparent; }
+.annual-day-cell.heat-level-0, .annual-legend-swatch.heat-level-0 { background: #edf0ed; }
+.annual-day-cell.heat-level-1, .annual-legend-swatch.heat-level-1 { background: #e1f1d9; }
+.annual-day-cell.heat-level-2, .annual-legend-swatch.heat-level-2 { background: #c1e5ad; }
+.annual-day-cell.heat-level-3, .annual-legend-swatch.heat-level-3 { background: #98d57b; }
+.annual-day-cell.heat-level-4, .annual-legend-swatch.heat-level-4 { background: #69b849; }
+.annual-day-cell.heat-level-5, .annual-legend-swatch.heat-level-5 { background: #2f7418; }
+.annual-day-cell.is-selected { outline: 2px solid var(--ink); outline-offset: 1px; }
+.annual-day-cell.is-today:not(.is-selected) { box-shadow: inset 0 0 0 1px var(--ink); }
 .calendar-health-pane { min-width: 0; padding-left: 24px; container-type: inline-size; }
 .calendar-health-pane .card-head { margin-bottom: 0; }
+.calendar-health-head { align-items: flex-start; }
+.calendar-health-head .text-btn, .calendar-health-head .tag { flex: 0 0 auto; }
+.calendar-health-head .tag { white-space: nowrap; }
 .calendar-health-pane.day-dashboard { display: block; height: fit-content; min-height: 0; }
 .calendar-health-pane .health-summary-section { padding-top: 0; border-top: 0; }
 .calendar-health-pane .day-summary { gap: 8px; }
 .calendar-health-pane .summary-item { padding: 10px; }
 .calendar-health-summary { grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 14px; }
-.calendar-health-pane .calendar-summary-copy { max-width: 100%; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }
+.calendar-health-summary .summary-item strong { overflow-wrap: anywhere; font-size: 12px; }
+.calendar-health-readonly-summary .summary-item { position: relative; display: flex; min-height: 68px; align-items: center; justify-content: flex-end; }
+.calendar-health-readonly-summary .summary-item small { position: absolute; inset-block-start: 10px; inset-inline-start: 10px; }
+.calendar-health-readonly-summary .summary-item strong { max-width: 100%; margin: 0 0 0 auto; font-size: clamp(15px, 2.8cqi, 20px); line-height: 1.2; text-align: end; }
 .calendar-health-pane .day-section { padding-top: 12px; border-top: 0; }
 .calendar-health-pane .form-grid { gap: 8px; }
 .calendar-health-pane .textarea { min-height: 72px; }
 .calendar-health-pane .health-notes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .calendar-health-pane .health-notes-grid .wide { grid-column: auto; }
+.calendar-health-readonly-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 8px; }
+.health-readonly-note { min-width: 0; }
+.health-readonly-note small { display: block; color: var(--muted); font-size: 10px; }
+.health-readonly-note p { display: -webkit-box; margin: 2px 0 0; overflow: hidden; color: var(--muted); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.health-readonly-note.has-record p { color: var(--ink); }
+.calendar-health-edit-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 @container (max-width: 560px) {
   .calendar-health-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .calendar-health-readonly-notes { grid-template-columns: 1fr; }
 }
 .day-panel-head-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 .day-panel-nav { display: flex; align-items: center; gap: 3px; flex: 0 0 auto; }
@@ -867,8 +905,14 @@ body.modal-open { overflow: hidden; }
   .fitness-calendar-pane { padding-right: 0; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
   .calendar-overview-grid { grid-template-columns: 1fr; }
   .calendar-detail-grid, .calendar-bottom-grid { grid-template-columns: 1fr; }
-  .calendar-compact-pane { padding: 0 0 20px; border-bottom: 1px solid var(--line); }
+  .calendar-annual-pane { padding: 0 0 20px; border-bottom: 1px solid var(--line); }
   .calendar-health-pane { padding: 4px 0 0; }
+}
+
+@container (max-width: 1100px) {
+  .calendar-overview-grid { grid-template-columns: 1fr; gap: 20px; }
+  .calendar-annual-pane { padding: 0 0 20px; border-bottom: 1px solid var(--line); }
+  .calendar-health-pane { padding: 0; }
 }
 
 @media (max-width: 1120px) {
@@ -997,6 +1041,9 @@ body.modal-open { overflow: hidden; }
   .v2-topbar-brand { display: none; }
   .v2-topbar { justify-content: flex-end; }
   .search-field { width: calc(100vw - 138px); }
+  .annual-calendar-head { gap: 6px; }
+  .annual-calendar-head .calendar-month { font-size: 15px; white-space: nowrap; }
+  .annual-calendar-head .date-nav-btn { width: 34px; min-width: 34px; min-height: 34px; height: 34px; }
   .cal-day { width: min(38px, 100%); height: auto; min-height: 0; font-size: 11px; }
   .card { padding: 16px; }
   .trend-grid { grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 3px; }
