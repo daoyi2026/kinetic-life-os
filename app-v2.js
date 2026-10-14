@@ -1,24 +1,13 @@
 (() => {
   "use strict";
 
-  const isDemo = new URLSearchParams(location.search).get("demo") === "1";
-  // A new page gets fresh demo records; trial edits never touch browser storage.
-  const storage = isDemo ? (() => {
-    const records = new Map();
-    return {
-      getItem: (key) => records.get(key) ?? null,
-      setItem: (key, value) => records.set(key, String(value)),
-      removeItem: (key) => records.delete(key)
-    };
-  })() : localStorage;
-
   const STORE = "serene-personal-workspace-v1";
   const RESET_MARKER = `${STORE}:cleared`;
   const APP_VERSION = "v1.4.4";
   const LANGUAGE_STORE = "kinetic-life-os:language";
   const SIDEBAR_COLLAPSED_STORE = "kinetic-life-os:sidebar-collapsed";
-  let currentLanguage = storage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
-  let sidebarCollapsed = storage.getItem(SIDEBAR_COLLAPSED_STORE) === "true";
+  let currentLanguage = localStorage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
+  let sidebarCollapsed = localStorage.getItem(SIDEBAR_COLLAPSED_STORE) === "true";
   const pageScrollPositions = new Map();
   let activePage = "home";
   let internalHistoryDepth = 0;
@@ -88,7 +77,6 @@
     "个人工作台": "Personal Workbench",
     "本地版": "Local edition",
     "本地保存": "Local storage",
-    "演示模式 · 修改仅在本次打开有效": "Demo mode · Edits last only for this visit",
     "修改会自动保存在当前浏览器": "Changes are saved in this browser automatically",
     "搜索项目": "Search projects",
     "搜索项目…": "Search projects…",
@@ -424,9 +412,6 @@
     return `${date.getMonth() + 1}月${date.getDate()}日 周${"日一二三四五六"[date.getDay()]}`;
   };
   const uiText = (zh, en) => currentLanguage === "en" ? en : zh;
-  const storageLabel = () => isDemo
-    ? uiText("演示模式 · 修改仅在本次打开有效", "Demo mode · Edits last only for this visit")
-    : uiText("本地保存", "Local storage");
   const ENGLISH_DEMO_INSPIRATIONS = [
     "A quiet interface needs room to breathe.",
     "The best ideas arrive after the plan leaves some space.",
@@ -581,7 +566,7 @@
           ${pages.map(([id, label, iconName]) => `<a href="#${id}" data-page="${id}" aria-label="${label}">${icon(iconName)}<span>${label}</span></a>`).join("")}
         </nav>
         <div class="sidebar-spacer"></div>
-        <div class="sidebar-save">${isDemo ? "演示模式 · 修改仅在本次打开有效" : "修改会自动保存在当前浏览器"}</div>
+        <div class="sidebar-save">修改会自动保存在当前浏览器</div>
       </aside>
 
       <main class="v2-main${sidebarCollapsed ? " is-sidebar-collapsed" : ""}" id="v2Main">
@@ -788,7 +773,7 @@
             </section>
           </section>
 
-          <p class="v2-footer"${isDemo ? " data-no-translate" : ""}>KINETIC LIFE OS · ${storageLabel()} · ${APP_VERSION}</p>
+          <p class="v2-footer">${uiText(`KINETIC LIFE OS · 本地保存 · ${APP_VERSION}`, `KINETIC LIFE OS · Local storage · ${APP_VERSION}`)}</p>
         </div>
       </main>
     </div>
@@ -886,7 +871,7 @@
       const brandEditionText = currentLanguage === "en" ? "LIFE OS · Local edition" : "LIFE OS · 本地版";
       if (brandEdition && brandEdition.textContent !== brandEditionText) brandEdition.textContent = brandEditionText;
       const footer = document.querySelector(".v2-footer");
-      const footerText = `KINETIC LIFE OS · ${storageLabel()} · ${APP_VERSION}`;
+      const footerText = currentLanguage === "en" ? `KINETIC LIFE OS · Local storage · ${APP_VERSION}` : `KINETIC LIFE OS · 本地保存 · ${APP_VERSION}`;
       if (footer && footer.textContent !== footerText) footer.textContent = footerText;
       const languageToggle = document.getElementById("languageToggle");
       const languageToggleText = currentLanguage === "en" ? "中文" : "EN";
@@ -1892,8 +1877,8 @@
   function loadState() {
     const base = defaultState();
     try {
-      if (storage.getItem(RESET_MARKER) === "true") return clearedState(base);
-      const raw = JSON.parse(storage.getItem(STORE) || "null");
+      if (localStorage.getItem(RESET_MARKER) === "true") return clearedState(base);
+      const raw = JSON.parse(localStorage.getItem(STORE) || "null");
       if (!raw || typeof raw !== "object") return buildDemoState(base, null);
       const resettingNonFitnessData = Number(raw.version) < 5 || raw.nonPersonalDemoDataApplied !== true;
       const input = resettingNonFitnessData
@@ -2015,7 +2000,7 @@
       }
       const removedLegacyPersonalDemoContent = removeLegacyPersonalDemoContent(merged);
       merged.migratedToV2 = true;
-      if (resettingNonFitnessData || appliedDemoLanguageRecords || appliedDemoInspirationTrail || refreshedDemoInspirationTrail || inspirationTrailNeedsRefresh || breezeGuideChanged || removedLegacyPersonalDemoContent) storage.setItem(STORE, JSON.stringify(merged));
+      if (resettingNonFitnessData || appliedDemoLanguageRecords || appliedDemoInspirationTrail || refreshedDemoInspirationTrail || inspirationTrailNeedsRefresh || breezeGuideChanged || removedLegacyPersonalDemoContent) localStorage.setItem(STORE, JSON.stringify(merged));
       return merged;
     } catch {
       return base;
@@ -2249,8 +2234,8 @@
       clearTimeout(saveTimer);
       saveTimer = null;
     }
-    storage.removeItem(RESET_MARKER);
-    storage.setItem(STORE, JSON.stringify(state));
+    localStorage.removeItem(RESET_MARKER);
+    localStorage.setItem(STORE, JSON.stringify(state));
   }
 
   const SAVE_DEBOUNCE_MS = 300;
@@ -2292,7 +2277,7 @@
 
   function toggleSidebar() {
     sidebarCollapsed = !sidebarCollapsed;
-    storage.setItem(SIDEBAR_COLLAPSED_STORE, String(sidebarCollapsed));
+    localStorage.setItem(SIDEBAR_COLLAPSED_STORE, String(sidebarCollapsed));
     syncSidebarToggle();
   }
 
@@ -4178,8 +4163,8 @@
     }
     if (action === "reset") {
       if (!confirm("确定清除当前设备的全部工作台记录吗？此操作无法撤销。")) return;
-      storage.removeItem(STORE);
-      storage.setItem(RESET_MARKER, "true");
+      localStorage.removeItem(STORE);
+      localStorage.setItem(RESET_MARKER, "true");
       location.reload();
     }
   });
@@ -4653,7 +4638,7 @@
 
   document.getElementById("languageToggle").addEventListener("click", () => {
     currentLanguage = currentLanguage === "zh" ? "en" : "zh";
-    storage.setItem(LANGUAGE_STORE, currentLanguage);
+    localStorage.setItem(LANGUAGE_STORE, currentLanguage);
     renderAll();
     switchPage(location.hash.slice(1) || "home", false);
     applyLanguage();
@@ -4672,7 +4657,7 @@
       const data = parsed.data || parsed;
       if (!data || typeof data !== "object" || !Array.isArray(data.projects) || !Array.isArray(data.goals) || !data.days) throw new Error("bad");
       if (!confirm("导入会替换当前设备的工作台记录，是否继续？")) return;
-      storage.setItem(STORE, JSON.stringify(data));
+      localStorage.setItem(STORE, JSON.stringify(data));
       state = loadState();
       save();
       renderAll();
