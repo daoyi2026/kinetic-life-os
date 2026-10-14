@@ -2044,6 +2044,7 @@
   let editingGoals = false;
   let editingPriorities = false;
   let editingMasterTodos = false;
+  let masterTodoDragState = null;
   let editingEventId = null;
   let editingWorkoutDate = null;
   let workoutDraft = null;
@@ -3296,7 +3297,8 @@
       ? `${done} / ${state.milestones.length} done`
       : `已完成 ${done} / 共 ${state.milestones.length}`;
     document.getElementById("masterTodoList").innerHTML = pending.length ? pending.map((item) => `
-      <div class="master-todo-row">
+      <div class="master-todo-row" data-master-todo-row="${item.id}">
+        <button class="master-todo-drag-handle" type="button" draggable="true" data-master-todo-drag="${item.id}" aria-label="${esc(uiText("拖动调整顺序，也可使用上下方向键", "Drag to reorder, or use the arrow keys"))}" title="${esc(uiText("拖动调整顺序，也可使用上下方向键", "Drag to reorder, or use the arrow keys"))}">⠿</button>
         <input class="check" type="checkbox" data-master-done="${item.id}" ${item.done ? "checked" : ""} aria-label="切换待办完成状态" />
         <div class="fields">
           <div class="master-todo-title-line">${editingMasterTodos ? `<input class="inline-input" data-master-title="${item.id}" value="${esc(item.title)}" aria-label="修改待办内容" />` : `<strong>${esc(item.title)}</strong>`}</div>
@@ -3311,6 +3313,24 @@
       const monthLabel = currentLanguage === "en" ? MONTHS_SHORT_EN[date.getMonth()] : `${date.getMonth() + 1}月`;
       return `<div class="event-row" data-action="edit-event" data-id="${event.id}" role="button" tabindex="0" title="${esc(uiText("点击日期编辑", "Click the date to edit"))}"><div class="event-date"><span><small>${monthLabel}</small>${date.getDate()}</span></div><div><strong>${esc(event.title)}</strong><p>${esc(event.copy || "")}</p><small class="event-repeat">${eventRepeatLabel(event.repeat)}</small></div><button class="mini-btn danger" data-action="delete-event" data-id="${event.id}" aria-label="删除重要日期">×</button></div>`;
     }).join("") : '<div class="empty-state">还没有重要日期。</div>';
+  }
+
+  function reorderMasterTodo(sourceId, targetId, insertAfter = false) {
+    const pending = state.milestones.filter((item) => !item.done);
+    const sourceIndex = pending.findIndex((item) => item.id === sourceId);
+    const targetIndex = pending.findIndex((item) => item.id === targetId);
+    if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return false;
+
+    let insertIndex = targetIndex + (insertAfter ? 1 : 0);
+    const [moved] = pending.splice(sourceIndex, 1);
+    if (sourceIndex < insertIndex) insertIndex -= 1;
+    pending.splice(Math.max(0, Math.min(insertIndex, pending.length)), 0, moved);
+
+    let pendingIndex = 0;
+    state.milestones = state.milestones.map((item) => item.done ? item : pending[pendingIndex++]);
+    save();
+    renderMilestones();
+    return true;
   }
 
   function calendarDayNavMarkup() {
@@ -3350,6 +3370,7 @@
     `;
     const waterValue = Math.max(0, Math.min(8, Number(day.water) || 0));
     const weightValue = weight ? String(weight.weight) : "";
+    const caloriesValue = String(day.calories ?? "");
     document.getElementById("calendarWorkoutPanel").innerHTML = `
       <div class="card-head"><div><h3>${uiText("运动安排", "Workout plan")}</h3><small>${esc(dayText(selectedDate))} · ${esc(localizedPlanTitle(planFor(selectedDate).title))}</small></div>${calendarDayNavMarkup()}</div>
       ${workoutMarkup(selectedDate, "calendar")}
@@ -3371,6 +3392,7 @@
           <div class="summary-item editable-summary-item"><small>${uiText("精力", "Energy")}</small>${healthSelect("energy", uiText("编辑精力", "Edit energy"), energyOptions, day.energy)}</div>
           <div class="summary-item editable-summary-item"><small>${uiText("饮水", "Hydration")}</small><div class="summary-control-row"><input class="summary-control summary-number" type="number" min="0" max="8" step="1" inputmode="numeric" data-calendar-health="water" value="${waterValue}" aria-label="${esc(uiText("编辑饮水杯数", "Edit hydration cups"))}" /><span>${cupUnit}</span></div></div>
           <div class="summary-item editable-summary-item"><small>${uiText("体重", "Weight")}</small><div class="summary-control-row"><input class="summary-control summary-number" type="number" min="0" step="0.1" inputmode="decimal" data-calendar-health="weight" value="${esc(weightValue)}" placeholder="${esc(unrecorded)}" aria-label="${esc(uiText("编辑体重", "Edit weight"))}" /><span>kg</span></div></div>
+          <div class="summary-item editable-summary-item"><small>${uiText("热量", "Calories")}</small><div class="summary-control-row"><input class="summary-control summary-number" type="number" min="0" step="1" inputmode="numeric" data-calendar-health="calories" value="${esc(caloriesValue)}" placeholder="${esc(unrecorded)}" aria-label="${esc(uiText("编辑摄入热量", "Edit calorie intake"))}" /><span>kcal</span></div></div>
         </div>
       </section>
 
@@ -4237,6 +4259,14 @@
       if (field === "water") {
         day.water = Math.max(0, Math.min(8, Number(target.value) || 0));
       }
+      if (field === "calories") {
+        const value = target.value.trim();
+        if (value !== "" && (!Number.isFinite(Number(value)) || Number(value) < 0)) {
+          target.value = day.calories || "";
+          return;
+        }
+        day.calories = value === "" ? "" : String(Math.round(Number(value)));
+      }
       if (field === "weight") {
         state.weightHistory = state.weightHistory.filter((entry) => entry.date !== selectedDate);
         const numeric = Number(target.value);
@@ -4367,6 +4397,17 @@
   });
 
   document.addEventListener("dragstart", (event) => {
+    const masterTodoHandle = event.target.closest?.("[data-master-todo-drag]");
+    const masterTodoRow = masterTodoHandle?.closest("[data-master-todo-row]");
+    if (masterTodoHandle && masterTodoRow) {
+      masterTodoDragState = { id: masterTodoHandle.dataset.masterTodoDrag };
+      masterTodoRow.classList.add("is-dragging");
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", masterTodoDragState.id);
+      }
+      return;
+    }
     const row = event.target.closest?.("[data-workout-row-index]");
     const form = row?.closest("[data-workout-editor]");
     if (!row || !form) return;
@@ -4382,6 +4423,14 @@
   });
 
   document.addEventListener("dragover", (event) => {
+    const masterTodoRow = event.target.closest?.("[data-master-todo-row]");
+    if (masterTodoRow && masterTodoDragState) {
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+      document.querySelectorAll(".master-todo-row.is-drag-over").forEach((item) => item.classList.remove("is-drag-over"));
+      masterTodoRow.classList.add("is-drag-over");
+      return;
+    }
     const row = event.target.closest?.("[data-workout-row-index]");
     const form = row?.closest("[data-workout-editor]");
     if (!row || !form || !workoutDragState || form.dataset.workoutEditor !== workoutDragState.key) return;
@@ -4392,6 +4441,18 @@
   });
 
   document.addEventListener("drop", (event) => {
+    const masterTodoRow = event.target.closest?.("[data-master-todo-row]");
+    if (masterTodoRow && masterTodoDragState) {
+      event.preventDefault();
+      const sourceId = masterTodoDragState.id;
+      const targetId = masterTodoRow.dataset.masterTodoRow;
+      const rect = masterTodoRow.getBoundingClientRect();
+      const insertAfter = event.clientY > rect.top + rect.height / 2;
+      masterTodoDragState = null;
+      document.querySelectorAll(".master-todo-row.is-drag-over, .master-todo-row.is-dragging").forEach((item) => item.classList.remove("is-drag-over", "is-dragging"));
+      reorderMasterTodo(sourceId, targetId, insertAfter);
+      return;
+    }
     const row = event.target.closest?.("[data-workout-row-index]");
     const form = row?.closest("[data-workout-editor]");
     if (!row || !form || !workoutDragState || form.dataset.workoutEditor !== workoutDragState.key) return;
@@ -4413,8 +4474,25 @@
   });
 
   document.addEventListener("dragend", () => {
+    masterTodoDragState = null;
+    document.querySelectorAll(".master-todo-row.is-drag-over, .master-todo-row.is-dragging").forEach((item) => item.classList.remove("is-drag-over", "is-dragging"));
     workoutDragState = null;
     document.querySelectorAll(".workout-edit-row.is-drag-over, .workout-edit-row.is-dragging").forEach((item) => item.classList.remove("is-drag-over", "is-dragging"));
+  });
+
+  document.addEventListener("keydown", (event) => {
+    const handle = event.target.closest?.("[data-master-todo-drag]");
+    if (!handle || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
+    const pending = state.milestones.filter((item) => !item.done);
+    const index = pending.findIndex((item) => item.id === handle.dataset.masterTodoDrag);
+    const neighbor = pending[index + (event.key === "ArrowUp" ? -1 : 1)];
+    if (!neighbor) return;
+    event.preventDefault();
+    const id = handle.dataset.masterTodoDrag;
+    if (!reorderMasterTodo(id, neighbor.id, event.key === "ArrowDown")) return;
+    document.querySelectorAll("[data-master-todo-drag]").forEach((nextHandle) => {
+      if (nextHandle.dataset.masterTodoDrag === id) nextHandle.focus();
+    });
   });
 
   document.addEventListener("input", (event) => {
