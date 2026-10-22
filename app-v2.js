@@ -3,7 +3,10 @@
 
   const STORE = "serene-personal-workspace-v1";
   const RESET_MARKER = `${STORE}:cleared`;
-  const APP_VERSION = "v1.4.4";
+  const APP_VERSION = "v1.5.3";
+  const BACKUP_PREFERENCES_STORE = "kinetic-life-os:auto-backup";
+  const BACKUP_DATABASE = "kinetic-life-os-backup-handles";
+  const BACKUP_INTERVALS = ["daily", "weekly", "monthly"];
   const LANGUAGE_STORE = "kinetic-life-os:language";
   const SIDEBAR_COLLAPSED_STORE = "kinetic-life-os:sidebar-collapsed";
   let currentLanguage = localStorage.getItem(LANGUAGE_STORE) === "en" ? "en" : "zh";
@@ -28,6 +31,22 @@
     ...Object.fromEntries(PROJECT_STATUSES.flatMap(([zh, en]) => [[zh, zh], [en, zh]])),
     "待选择": "未开始",
     "To decide": "未开始"
+  };
+  const SEARCH_TYPES = {
+    project: ["项目", "Project"],
+    "project-record": ["项目历史", "Project history"],
+    goal: ["年度目标", "Annual goal"],
+    priority: ["近期重点", "Current priority"],
+    task: ["每日待办", "Daily task"],
+    milestone: ["长期待办", "Long-term task"],
+    event: ["重要日期", "Important date"],
+    inspiration: ["灵感记录", "Inspiration"],
+    health: ["健康与日常记录", "Health & daily records"],
+    routine: ["日常项目", "Daily routine"],
+    workout: ["运动安排", "Workout plan"],
+    training: ["专项训练", "Supplementary training"],
+    breeze: ["微风指南", "Breeze guide"],
+    area: ["领域标签", "Project area"]
   };
   const TRANSLATIONS = {
     "跳到主要内容": "Skip to main content",
@@ -152,6 +171,13 @@
     "所属领域": "Area",
     "回顾日期": "Review date",
     "项目描述": "Project description",
+    "项目共用，不随回顾日期切换": "Shared across all project dates",
+    "新增领域": "New area",
+    "管理领域": "Manage areas",
+    "全局搜索": "Global search",
+    "搜索所有记录…": "Search all records…",
+    "联系作者的小红书主页": "Contact the author on Xiaohongshu",
+    "发送邮件给作者": "Email the author",
     "下一步行动": "Next action",
     "说明项目要解决的问题、目标和范围": "Describe the problem, goals, and scope of the project",
     "填写这个日期的下一步行动": "Enter the next action for this date",
@@ -576,15 +602,17 @@
           <div class="v2-top-actions">
             <button class="back-button" id="backButton" type="button" data-action="go-back" aria-label="返回上一页" title="返回上一页" disabled><span class="back-button-icon" aria-hidden="true">←</span><span class="back-button-label">返回</span></button>
             <button class="lang-switch" id="languageToggle" type="button" aria-label="切换语言">EN</button>
-            <label class="search-field">
-              <span class="sr-only">搜索项目</span>
+            <div class="search-field" id="globalSearchField">
+              <label class="sr-only" for="globalSearch">全局搜索</label>
               ${icon("search")}
-              <input class="input" id="globalSearch" type="search" placeholder="搜索项目…" />
-            </label>
+              <input class="input" id="globalSearch" type="search" placeholder="搜索所有记录…" maxlength="180" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="globalSearchResults" aria-expanded="false" />
+              <div class="global-search-panel" id="globalSearchPanel" data-no-translate="true" hidden><div class="global-search-summary" id="globalSearchSummary" role="status"></div><div class="global-search-results" id="globalSearchResults" role="listbox" aria-label="${uiText("搜索结果", "Search results")}"></div><div id="globalSearchMore"></div></div>
+            </div>
           </div>
         </header>
 
         <div class="v2-content">
+          <aside class="backup-notice" id="backupNotice" role="status" data-no-translate="true" hidden></aside>
           <section class="v2-screen" data-screen="home">
             <div class="compact-banner"><h2 id="homeOverviewTitle" class="home-breeze-title"><span id="homeBreezePeriod"></span><span id="homeBreezeCopy"></span></h2></div>
             <section class="section">
@@ -624,6 +652,7 @@
             <section class="section"><article class="card"><div class="card-head"><div><h3>项目总进度</h3><small>${uiText("与下方项目状态和进度实时同步", "Synced with project status and progress below")}</small></div></div><div class="project-overview" id="projectOverview"></div></article></section>
             <section class="section project-list-section">
               <div class="section-head project-section-head"><div><h3>正在推进</h3><p>状态、进度和下一步会自动保存。</p></div><div class="project-section-actions"><label class="project-filter"><span>状态</span><select class="select" id="projectStatusFilter" aria-label="按状态筛选项目"><option value="all">全部状态</option></select></label><label class="project-filter"><span>领域</span><select class="select" id="projectAreaFilter" aria-label="按领域筛选项目"><option value="all">全部领域</option></select></label><button class="btn green" data-action="add-project">＋ 新项目</button></div></div>
+              <div class="project-area-tools"><button class="text-btn" type="button" data-action="manage-project-areas">管理领域</button></div>
               <div class="project-list" id="projectList"></div>
             </section>
           </section>
@@ -673,13 +702,13 @@
                 </div>
               </article>
             </section>
-            <section class="section grid grid-2">
-              <article class="card">
+            <section class="section grid grid-2 fitness-plan-grid">
+              <article class="card fitness-plan-card">
                 <div class="card-head"><div><h3>每日安排</h3><small>切换日期查看当天训练项目</small></div></div>
                 <div class="date-strip"><button class="date-nav-btn" data-action="fitness-prev-day" aria-label="前一天">‹</button><div class="date-strip-label"><strong id="fitnessDateTitle"></strong><small id="fitnessDateHint"></small></div><button class="date-nav-btn" data-action="fitness-next-day" aria-label="后一天">›</button></div>
                 <div id="fitnessDayPlan"></div>
               </article>
-              <article class="card">
+              <article class="card fitness-routines-card">
                 <div class="card-head"><div><h3>日常项目</h3><small>早上激活，晚上恢复</small></div><button class="text-btn" data-action="toggle-routine-edit">编辑</button></div>
                 <div class="routine-list" id="fitnessRoutines"></div>
               </article>
@@ -706,7 +735,7 @@
                 <button class="btn secondary" data-action="save-inspiration" data-inspiration-source="reminders" style="margin-top:10px">保存今日灵感</button>
               </article>
             </section>
-            <section class="section grid important-layout">
+            <section class="section grid grid-2 important-layout">
               <article class="card">
                 <div class="card-head"><div><h3>长期待办清单</h3><small>不限定某一天的重要事项</small></div><div class="card-head-actions"><span class="tag neutral" id="masterTodoProgress" aria-live="polite"></span><button class="edit-btn" data-action="toggle-master-todo-edit">编辑</button></div></div>
                 <div class="master-todo" id="masterTodoList"></div>
@@ -774,12 +803,13 @@
             <div class="page-heading"><h2 data-i18n-key="设置与备份">设置与备份</h2><p data-i18n-key="管理本地记录的备份与恢复。">管理本地记录的备份与恢复。</p></div>
             <section class="section settings-stack">
               <article class="card settings-card"><h3>数据备份</h3><p>导出 JSON 备份后，可以在另一台设备恢复工作台数据。</p><div class="settings-actions"><button class="btn green" data-action="export">导出备份</button><label class="btn secondary file-btn">导入备份<input id="importInput" type="file" accept="application/json,.json" aria-label="选择备份文件" /></label></div></article>
+              <article class="card settings-card" id="autoBackupSettings" data-no-translate="true"></article>
               <article class="card settings-card"><h3>清除当前设备记录</h3><p>此操作会清除当前浏览器中的工作台记录，且无法撤销。</p><div class="settings-actions"><button class="btn danger" data-action="reset">清除全部记录</button></div></article>
               <article class="card settings-card"><h3 data-i18n-key="隐私与开源许可">隐私与开源许可</h3><p data-i18n-key="了解本地数据如何保存，以及本项目采用的开源许可。">了解本地数据如何保存，以及本项目采用的开源许可。</p><div class="settings-actions"><a class="btn secondary" href="https://github.com/daoyi2026/kinetic-life-os/blob/main/PRIVACY.md" target="_blank" rel="noopener noreferrer" data-i18n-key="查看隐私政策">查看隐私政策</a><a class="btn secondary" href="https://github.com/daoyi2026/kinetic-life-os/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" data-i18n-key="查看 GPL-3.0 许可">查看 GPL-3.0 许可</a></div></article>
             </section>
           </section>
 
-          <p class="v2-footer">${uiText(`KINETIC LIFE OS · 本地保存 · ${APP_VERSION}`, `KINETIC LIFE OS · Local storage · ${APP_VERSION}`)}</p>
+          <footer class="v2-footer"><span class="footer-version" data-no-translate="true">${uiText(`KINETIC LIFE OS · 本地保存 · ${APP_VERSION}`, `KINETIC LIFE OS · Local storage · ${APP_VERSION}`)}</span><span class="footer-contacts"><a class="footer-contact-link" href="https://xhslink.cn/o/3tsw6s41VuJ" target="_blank" rel="noopener noreferrer" aria-label="联系作者的小红书主页" title="联系作者的小红书主页"><img src="assets/xiaohongshu.svg?v=1" width="28" height="14" alt="" /></a><a class="footer-contact-link" href="mailto:spring.naturalee@gmail.com" aria-label="发送邮件给作者" title="spring.naturalee@gmail.com"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg></a></span></footer>
         </div>
       </main>
     </div>
@@ -787,6 +817,12 @@
       ${pages.slice(0, 4).concat([pages[5], pages[6]]).map(([id, label, iconName]) => `<a href="#${id}" data-page="${id}">${icon(iconName)}<span>${label.replace("计划", "")}</span></a>`).join("")}
     </nav>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="modal-backdrop" id="projectAreasModal" hidden>
+      <section class="modal-card project-areas-modal" role="dialog" aria-modal="true" aria-labelledby="projectAreasTitle" data-no-translate="true">
+        <div class="modal-card-head"><h2 id="projectAreasTitle"></h2><button class="icon-button" type="button" data-action="close-project-areas" aria-label="${uiText("关闭", "Close")}">×</button></div>
+        <div class="project-area-manager" id="projectAreasManager"></div>
+      </section>
+    </div>
     <div class="modal-backdrop" id="projectHistoryModal" hidden>
       <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="projectHistoryTitle">
         <div class="modal-card-head">
@@ -876,7 +912,7 @@
       const brandEdition = document.querySelector(".v2-brand > div > span");
       const brandEditionText = currentLanguage === "en" ? "LIFE OS · Local edition" : "LIFE OS · 本地版";
       if (brandEdition && brandEdition.textContent !== brandEditionText) brandEdition.textContent = brandEditionText;
-      const footer = document.querySelector(".v2-footer");
+      const footer = document.querySelector(".footer-version");
       const footerText = currentLanguage === "en" ? `KINETIC LIFE OS · Local storage · ${APP_VERSION}` : `KINETIC LIFE OS · 本地保存 · ${APP_VERSION}`;
       if (footer && footer.textContent !== footerText) footer.textContent = footerText;
       const languageToggle = document.getElementById("languageToggle");
@@ -1175,6 +1211,7 @@
         { id: "priority-next", label: "接下来", text: "整理下一阶段计划", detail: "确认目标、截止日期和下一步。" },
         { id: "priority-later", label: "随后", text: "完成项目的第一个可见版本", detail: "先做出可用初版，再根据实际反馈继续优化。" }
       ],
+      projectAreas: [],
       projects: [
         { id: "p-work", title: "季度项目推进", description: "整理项目目标、行动节奏和阶段成果，持续记录每一次推进。", symbol: "↗", area: "工作与成长", status: "进行中", progress: 25, next: "确定本周需要交付的最小成果。", logs: [], createdAt, completed: false },
         { id: "p-research", title: "专题研究整理", description: "围绕一个感兴趣的主题整理资料、问题和阶段性结论。", symbol: "✉", area: "学习与兴趣", status: "进行中", progress: 25, next: "整理研究框架并完成第一轮资料归档。", logs: [], createdAt, completed: false },
@@ -1217,6 +1254,7 @@
       goals: [],
       priorities: [],
       projects: [],
+      projectAreas: ["其他"],
       milestones: [],
       events: [],
       days: {},
@@ -1901,6 +1939,7 @@
         goals: Array.isArray(input.goals) ? input.goals : base.goals,
         priorities: Array.isArray(input.priorities) ? input.priorities : base.priorities,
         projects: Array.isArray(input.projects) ? input.projects : base.projects,
+        projectAreas: normalizeProjectAreas(input.projectAreas, Array.isArray(input.projects) ? input.projects : base.projects),
         milestones: Array.isArray(input.milestones) ? input.milestones : base.milestones,
         events: Array.isArray(input.events) ? input.events.map((event) => ({ ...event, repeat: ["weekly", "monthly", "yearly"].includes(event?.repeat) ? event.repeat : "none" })) : [],
         days: input.days && typeof input.days === "object" ? input.days : {},
@@ -1966,7 +2005,7 @@
       merged.projects.forEach((project) => {
         project.status = PROJECT_STATUS_ALIASES[project.status] || "未开始";
         project.logs = Array.isArray(project.logs) ? project.logs : [];
-        project.description = String(project.description || project.next || "项目描述待补充。").trim();
+        project.description = String(project.description ?? project.next ?? "").trim();
         project.next = String(project.next || "").trim();
         project.daily = project.daily && typeof project.daily === "object" && !Array.isArray(project.daily) ? project.daily : {};
         Object.entries(project.daily).forEach(([date, record]) => {
@@ -2033,8 +2072,15 @@
   }
 
   let state = loadState();
+  state.projectAreas = normalizeProjectAreas(state.projectAreas, state.projects);
+  let backupPreferences = readBackupPreferences();
+  let backupDirectory = null;
+  let backupInitialized = false;
+  let backupInProgress = false;
+  let backupIssue = "";
   let selectedDate = todayKey();
   let selectedFitnessDate = todayKey();
+  const calendarPanelDates = { workout: selectedDate, work: selectedDate, projects: selectedDate, inspiration: selectedDate };
   let monthCursor = fromKey(todayKey());
   monthCursor.setDate(1);
   let calendarYear = fromKey(todayKey()).getFullYear();
@@ -2045,6 +2091,7 @@
     const date = fromKey(today);
     selectedDate = today;
     selectedFitnessDate = today;
+    resetCalendarPanelDates(today);
     calendarYear = date.getFullYear();
     monthCursor = new Date(date.getFullYear(), date.getMonth(), 1);
     fitnessMonthCursor = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -2080,6 +2127,12 @@
   let homeBreezeRotationTimer = null;
   let breezeEditorId = null;
   let breezeHistoryOpen = false;
+  let projectAreasReturnFocus = null;
+  let globalSearchTimer = null;
+  let globalSearchMatches = [];
+  let globalSearchQuery = "";
+  let globalSearchVisibleCount = 30;
+  let globalSearchActiveIndex = -1;
 
   function ensureDay(key) {
     if (!state.days[key]) state.days[key] = emptyDay();
@@ -2191,7 +2244,7 @@
     history.hidden = !breezeHistoryOpen;
     historyToggle.textContent = breezeHistoryOpen ? uiText("收起", "Collapse") : uiText("展开", "Expand");
     if (breezeHistoryOpen) {
-      history.innerHTML = entries.length ? entries.map((item, index) => `<div class="breeze-history-row ${index === breezeEntryIndex ? "is-current" : ""}"><div class="breeze-history-copy"><small>${esc(item.updatedAt || item.createdAt || "")}</small><p>${esc(breezeEntryText(item))}</p></div><div class="breeze-history-actions"><button class="text-btn" type="button" data-action="breeze-edit" data-breeze-id="${esc(item.id)}">${uiText("修改", "Edit")}</button><button class="text-btn danger-text-btn" type="button" data-action="breeze-delete" data-breeze-id="${esc(item.id)}">${uiText("删除", "Delete")}</button></div></div>`).join("") : `<div class="empty-state">${uiText("还没有记录。", "No entries yet.")}</div>`;
+      history.innerHTML = entries.length ? entries.map((item, index) => `<div class="breeze-history-row ${index === breezeEntryIndex ? "is-current" : ""}" data-breeze-entry="${esc(item.id)}"><div class="breeze-history-copy"><small>${esc(item.updatedAt || item.createdAt || "")}</small><p>${esc(breezeEntryText(item))}</p></div><div class="breeze-history-actions"><button class="text-btn" type="button" data-action="breeze-edit" data-breeze-id="${esc(item.id)}">${uiText("修改", "Edit")}</button><button class="text-btn danger-text-btn" type="button" data-action="breeze-delete" data-breeze-id="${esc(item.id)}">${uiText("删除", "Delete")}</button></div></div>`).join("") : `<div class="empty-state">${uiText("还没有记录。", "No entries yet.")}</div>`;
     } else {
       history.innerHTML = "";
     }
@@ -2264,6 +2317,190 @@
 
   function flushSave() {
     if (saveTimer !== null) save();
+  }
+
+  function readBackupPreferences() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(BACKUP_PREFERENCES_STORE) || "{}") || {}; } catch { /* Use opt-in defaults. */ }
+    const timestamp = (value) => typeof value === "string" && Number.isFinite(Date.parse(value)) ? value : "";
+    return {
+      enabled: saved.enabled === true,
+      interval: BACKUP_INTERVALS.includes(saved.interval) ? saved.interval : "weekly",
+      enabledAt: timestamp(saved.enabledAt),
+      lastSuccessfulAt: timestamp(saved.lastSuccessfulAt),
+      lastExportRequestedAt: timestamp(saved.lastExportRequestedAt),
+      lastFileName: typeof saved.lastFileName === "string" ? saved.lastFileName : ""
+    };
+  }
+
+  function persistBackupPreferences() {
+    localStorage.setItem(BACKUP_PREFERENCES_STORE, JSON.stringify(backupPreferences));
+  }
+
+  function supportsBackupDirectory() {
+    return window.isSecureContext && typeof window.showDirectoryPicker === "function" && Boolean(window.indexedDB);
+  }
+
+  function backupDirectoryStorage(write = false, directory = null) {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(BACKUP_DATABASE, 1);
+      request.onupgradeneeded = () => request.result.createObjectStore("handles");
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const database = request.result;
+        database.onversionchange = () => database.close();
+        const transaction = database.transaction("handles", write ? "readwrite" : "readonly");
+        const store = transaction.objectStore("handles");
+        const operation = write ? (directory ? store.put(directory, "directory") : store.delete("directory")) : store.get("directory");
+        let result = null;
+        operation.onsuccess = () => { result = operation.result; };
+        transaction.oncomplete = () => { database.close(); resolve(result); };
+        transaction.onabort = () => { database.close(); reject(transaction.error); };
+        transaction.onerror = () => { database.close(); reject(transaction.error); };
+      };
+    });
+  }
+
+  function nextBackupAt(preferences = backupPreferences, directoryMode = supportsBackupDirectory()) {
+    // A first directory backup is due immediately; reminder-only mode starts its clock on opt-in.
+    const anchor = directoryMode ? preferences.lastSuccessfulAt : (preferences.lastExportRequestedAt || preferences.lastSuccessfulAt || preferences.enabledAt);
+    if (!anchor) return 0;
+    const next = new Date(anchor);
+    if (preferences.interval === "monthly") {
+      const day = next.getDate();
+      next.setDate(1);
+      next.setMonth(next.getMonth() + 1);
+      const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
+      next.setDate(Math.min(day, lastDay));
+    } else {
+      next.setDate(next.getDate() + (preferences.interval === "daily" ? 1 : 7));
+    }
+    return next.getTime();
+  }
+
+  function backupPayload(exportedAt = new Date().toISOString()) {
+    return JSON.stringify({ app: "kinetic-life-os", exportedAt, data: state }, null, 2);
+  }
+
+  function backupIssueText() {
+    if (backupIssue === "permission") return uiText("文件夹授权已失效，请重新授权后继续备份。", "Folder access has expired. Authorize it again to resume backups.");
+    if (backupIssue === "folder") return uiText("找不到已授权的备份文件夹，请重新选择。", "The backup folder is unavailable. Please choose it again.");
+    if (backupIssue === "settings") return uiText("无法保存备份设置，请检查浏览器存储空间。", "Backup settings could not be saved. Check browser storage space.");
+    if (backupIssue === "write") return uiText("备份写入失败，未更新成功时间。请检查文件夹权限和磁盘空间后重试。", "The backup could not be written. The success time was not advanced. Check folder access and disk space, then retry.");
+    return "";
+  }
+
+  function renderAutoBackupSettings() {
+    const panel = document.getElementById("autoBackupSettings");
+    const notice = document.getElementById("backupNotice");
+    if (!panel || !notice) return;
+    const directoryMode = supportsBackupDirectory();
+    const enabled = backupPreferences.enabled;
+    const disabled = backupInProgress || !backupInitialized ? "disabled" : "";
+    const dateText = (value) => value ? new Date(value).toLocaleString(currentLanguage === "en" ? "en-US" : "zh-CN") : uiText("尚无", "None yet");
+    const issue = backupIssueText();
+    const markup = `
+      <div class="auto-backup-heading"><h3>${uiText("定期自动备份", "Scheduled local backups")}</h3><span class="tag ${enabled ? "green" : "neutral"}">${enabled ? (directoryMode ? uiText("已开启", "Enabled") : uiText("仅提醒", "Reminders only")) : uiText("未开启", "Off")}</span></div>
+      <p class="backup-description">${uiText("按所选周期备份；仅在打开或前台使用时检查，关闭期间到期的备份会在下次打开时补做。", "Back up at your selected interval while the app is open or in the foreground. Overdue backups are handled on the next visit.")}</p>
+      <div class="auto-backup-controls"><label class="field" for="autoBackupInterval"><span>${uiText("备份频率", "Backup frequency")}</span><select class="select" id="autoBackupInterval" ${disabled}>${[["daily", "每天", "Daily"], ["weekly", "每周", "Weekly"], ["monthly", "每月", "Monthly"]].map(([value, zh, en]) => `<option value="${value}" ${value === backupPreferences.interval ? "selected" : ""}>${uiText(zh, en)}</option>`).join("")}</select></label><dl class="auto-backup-status">
+        <div><dt>${uiText("最近成功自动备份", "Last automatic backup")}</dt><dd>${esc(dateText(backupPreferences.lastSuccessfulAt))}</dd></div>
+        ${backupDirectory ? `<div><dt>${uiText("备份文件夹", "Backup folder")}</dt><dd>${esc(backupDirectory.name)}</dd></div>` : ""}
+        ${!directoryMode && backupPreferences.lastExportRequestedAt ? `<div><dt>${uiText("最近手动下载请求", "Last manual download request")}</dt><dd>${esc(dateText(backupPreferences.lastExportRequestedAt))}</dd></div>` : ""}
+      </dl></div>
+      ${backupPreferences.lastFileName ? `<details class="backup-file-details"><summary>${uiText("查看最近备份文件名", "View latest backup filename")}</summary><code class="backup-file-name">${esc(backupPreferences.lastFileName)}</code></details>` : ""}
+      ${directoryMode && !enabled ? `<p class="backup-setup-hint">${uiText("首次开启请选择并授权一个备份文件夹。", "Choose and authorize a backup folder when enabling for the first time.")}</p>` : ""}
+      <p class="backup-storage-note">${directoryMode ? uiText("JSON 仅保存在本地，不上传云端；每次生成新文件，不覆盖旧备份。", "JSON files stay local and are never uploaded. Each backup is a new file; earlier backups are not overwritten.") : uiText("当前浏览器仅支持到期提醒，不能自动写入文件夹。请手动导出，并在下载目录确认文件已保存。", "This browser supports reminders only, not automatic folder writes. Export manually and confirm the file in your downloads.")}</p>
+      ${issue ? `<p class="backup-error" role="alert">${esc(issue)}</p>` : ""}
+      ${backupInProgress ? `<p role="status">${uiText("正在保存备份，请保持此页面打开…", "Saving a backup. Keep this page open…")}</p>` : ""}
+      <div class="settings-actions">${!enabled
+        ? `<button class="btn green" type="button" data-action="enable-auto-backup" ${disabled}>${directoryMode ? uiText("开启并选择文件夹", "Enable and choose folder") : uiText("开启备份提醒", "Enable reminders")}</button>`
+        : `${directoryMode ? `<button class="btn green" type="button" data-action="${backupIssue === "permission" ? "authorize-backup" : backupDirectory ? "backup-now" : "choose-backup-folder"}" ${disabled}>${backupIssue === "permission" ? uiText("重新授权并备份", "Authorize and back up") : uiText("立即备份", "Back up now")}</button><button class="btn secondary" type="button" data-action="choose-backup-folder" ${disabled}>${uiText("更换文件夹", "Change folder")}</button>` : `<button class="btn green" type="button" data-action="export">${uiText("导出备份", "Export backup")}</button>`}<button class="btn secondary" type="button" data-action="disable-auto-backup" ${disabled}>${uiText("关闭自动备份", "Turn off scheduled backups")}</button>`}
+      </div>`;
+    if (panel.innerHTML !== markup) panel.innerHTML = markup;
+    const overdueReminder = enabled && !directoryMode && Date.now() >= nextBackupAt();
+    const noticeText = enabled ? (issue || (overdueReminder ? uiText("备份已到期：请导出一份 JSON，并确认文件已保存。", "Backup due: export a JSON file and confirm it was saved.") : "")) : "";
+    notice.hidden = !noticeText;
+    const noticeMarkup = noticeText ? `<span>${esc(noticeText)}</span><button class="text-btn" type="button" data-page="settings">${uiText("设置与备份", "Settings & backup")} →</button>` : "";
+    if (notice.innerHTML !== noticeMarkup) notice.innerHTML = noticeMarkup;
+  }
+
+  async function runAutomaticBackup(force = false) {
+    if (!backupInitialized || !backupPreferences.enabled || backupInProgress || (!force && document.visibilityState === "hidden")) return false;
+    if (!supportsBackupDirectory()) { renderAutoBackupSettings(); return false; }
+    if (!force && (backupIssue || Date.now() < nextBackupAt())) return false;
+    if (!backupDirectory) { backupIssue = "folder"; renderAutoBackupSettings(); return false; }
+    backupInProgress = true;
+    backupIssue = "";
+    renderAutoBackupSettings();
+    let writer;
+    try {
+      if (await backupDirectory.queryPermission({ mode: "readwrite" }) !== "granted") {
+        backupIssue = "permission";
+        return false;
+      }
+      flushSave();
+      const exportedAt = new Date().toISOString();
+      const fileName = `life-workbench-backup-${exportedAt.replace(/[:.]/g, "-")}-${crypto.randomUUID()}.json`;
+      const file = await backupDirectory.getFileHandle(fileName, { create: true });
+      writer = await file.createWritable();
+      await writer.write(backupPayload(exportedAt));
+      await writer.close();
+      writer = null;
+      backupPreferences.lastSuccessfulAt = new Date().toISOString();
+      backupPreferences.lastFileName = fileName;
+      try { persistBackupPreferences(); } catch { backupIssue = "settings"; }
+      if (force) notify(uiText("备份文件已保存", "Backup file saved"));
+      return true;
+    } catch (error) {
+      if (writer) { try { await writer.abort(); } catch { /* The failed stream may already be closed. */ } }
+      backupIssue = error?.name === "NotAllowedError" || error?.name === "SecurityError" ? "permission" : "write";
+      return false;
+    } finally {
+      backupInProgress = false;
+      renderAutoBackupSettings();
+    }
+  }
+
+  async function chooseBackupFolder() {
+    try {
+      const directory = await window.showDirectoryPicker({ mode: "readwrite", id: "kinetic-life-os-backups" });
+      await backupDirectoryStorage(true, directory);
+      backupDirectory = directory;
+      backupPreferences.enabled = true;
+      backupPreferences.enabledAt = new Date().toISOString();
+      persistBackupPreferences();
+      backupIssue = "";
+      await runAutomaticBackup(true);
+    } catch (error) {
+      if (error?.name !== "AbortError") backupIssue = "settings";
+      renderAutoBackupSettings();
+    }
+  }
+
+  async function initializeAutoBackup() {
+    try {
+      if (backupPreferences.enabled && supportsBackupDirectory()) backupDirectory = await backupDirectoryStorage();
+    } catch { backupIssue = "folder"; }
+    backupInitialized = true;
+    renderAutoBackupSettings();
+    await runAutomaticBackup();
+  }
+
+  function exportBackup() {
+    flushSave();
+    const blob = new Blob([backupPayload()], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `life-workbench-backup-${todayKey()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    backupPreferences.lastExportRequestedAt = new Date().toISOString();
+    try { persistBackupPreferences(); } catch { backupIssue = "settings"; }
+    renderAutoBackupSettings();
+    notify(uiText("已发起备份下载，请在下载目录确认文件。", "Backup download started. Confirm the file in your downloads."));
   }
 
   function notify(message) {
@@ -2746,7 +2983,7 @@
     homeGoals.setAttribute("aria-label", uiText("年度目标列表", "Annual goals list"));
     homeGoals.innerHTML = editingGoals
       ? `<div class="editable-list">${state.goals.map((goal) => `
-          <div class="editable-row">
+          <div class="editable-row" data-search-goal="${esc(goal.id)}">
             <div class="goal-edit-grid">
               <label class="field"><span class="sr-only">目标名称</span><input class="inline-input" data-goal-title="${goal.id}" value="${esc(goal.title)}" /></label>
               <label class="goal-progress-control"><span class="sr-only">目标进度</span><input class="goal-progress-input" data-goal-progress="${goal.id}" type="range" min="0" max="100" value="${goalProgress(goal)}" ${linkedProjectsForGoal(goal).length ? "disabled" : ""} /><output data-goal-progress-value="${goal.id}">${goalProgress(goal)}%</output></label>
@@ -2758,7 +2995,7 @@
         `).join("")}
         <button class="btn secondary goal-add-btn" data-action="add-goal">＋ 添加年度目标</button></div>`
       : `<div class="editable-list">${state.goals.map((goal) => `
-          <div class="editable-row">
+          <div class="editable-row" data-search-goal="${esc(goal.id)}">
             <div class="editable-row-top"><div><strong>${esc(goal.title)}</strong><br><small>${esc(goal.area || "")}</small></div><b>${goalProgress(goal)}%</b></div>
             <div class="progress-track"><span style="width:${goalProgress(goal)}%"></span></div>
           </div>
@@ -2794,8 +3031,8 @@
       }
       if (priorityEdit) priorityEdit.hidden = false;
       document.getElementById("homePriorities").innerHTML = editingPriorities
-        ? `<div class="editable-list">${state.priorities.map((item) => `<div class="field"><span>${esc(item.label)}</span><input class="inline-input" data-priority-text="${item.id}" value="${esc(item.text)}" /><textarea class="textarea compact-textarea" data-priority-detail="${item.id}" placeholder="补充目的、背景或下一步">${esc(item.detail || "")}</textarea></div>`).join("")}</div>`
-        : `<div class="priority-view">${state.priorities.map((item) => `<div class="priority-item"><small>${esc(item.label)}</small><span>${esc(item.text)}</span><p>${esc(item.detail || "")}</p></div>`).join("")}</div>`;
+        ? `<div class="editable-list">${state.priorities.map((item) => `<div class="field" data-search-priority="${esc(item.id)}"><span>${esc(item.label)}</span><input class="inline-input" data-priority-text="${item.id}" value="${esc(item.text)}" /><textarea class="textarea compact-textarea" data-priority-detail="${item.id}" placeholder="补充目的、背景或下一步">${esc(item.detail || "")}</textarea></div>`).join("")}</div>`
+        : `<div class="priority-view">${state.priorities.map((item) => `<div class="priority-item" data-search-priority="${esc(item.id)}"><small>${esc(item.label)}</small><span>${esc(item.text)}</span><p>${esc(item.detail || "")}</p></div>`).join("")}</div>`;
     }
 
     // Keep the overview aligned with the same day's reminder data. The overview
@@ -2845,9 +3082,288 @@
     return true;
   }
 
-  function projectAreaOptions(projects) {
-    return [...new Set(projects.map((project) => String(project.area || "其他").trim()).filter(Boolean))]
+  function projectAreaOptions(projects, registeredAreas = []) {
+    return [...new Set([...registeredAreas, ...projects.map((project) => String(project.area || "其他"))].map((area) => String(area).trim()).filter(Boolean))]
       .sort((a, b) => a.localeCompare(b, "zh-CN"));
+  }
+
+  function normalizeProjectAreas(areas, projects) {
+    const registered = Array.isArray(areas) ? areas.filter((area) => typeof area === "string") : [];
+    return projectAreaOptions(projects, [...registered, "其他"]);
+  }
+
+  function addProjectArea(name, projectId = "") {
+    const area = String(name || "").trim();
+    if (!area) return false;
+    state.projectAreas = normalizeProjectAreas([...(state.projectAreas || []), area], state.projects);
+    const project = state.projects.find((item) => item.id === projectId);
+    if (project) project.area = area;
+    return true;
+  }
+
+  function renameProjectArea(previous, name) {
+    const area = String(name || "").trim();
+    if (!area || previous === "其他") return false;
+    state.projects.forEach((project) => {
+      if (String(project.area || "其他").trim() === previous) project.area = area;
+    });
+    state.projectAreas = normalizeProjectAreas((state.projectAreas || []).map((item) => item === previous ? area : item), state.projects);
+    if (projectAreaFilter === previous) projectAreaFilter = area;
+    return true;
+  }
+
+  function deleteProjectArea(area) {
+    if (area === "其他") return false;
+    state.projects.forEach((project) => {
+      if (String(project.area || "其他").trim() === area) project.area = "其他";
+    });
+    state.projectAreas = normalizeProjectAreas((state.projectAreas || []).filter((item) => item !== area), state.projects);
+    if (projectAreaFilter === area) projectAreaFilter = "all";
+    return true;
+  }
+
+  function renderProjectAreasManager() {
+    const panel = document.getElementById("projectAreasManager");
+    document.getElementById("projectAreasTitle").textContent = uiText("管理领域标签", "Manage project areas");
+    panel.innerHTML = `<p class="muted">${uiText("标签独立保存，暂时没有项目使用也会保留。重命名会同步所有关联项目。", "Areas are saved independently, even when unused. Renaming updates every linked project.")}</p><form class="form-row project-area-add-form" id="projectAreaAddForm"><label class="sr-only" for="projectAreaName">${uiText("新领域名称", "New area name")}</label><input class="input" id="projectAreaName" maxlength="60" placeholder="${uiText("输入新领域名称", "Enter a new area name")}" required /><button class="btn green" type="submit">${uiText("新增", "Add")}</button></form><div class="project-area-manager-list">${normalizeProjectAreas(state.projectAreas, state.projects).map((area, index) => {
+      const count = state.projects.filter((project) => String(project.area || "其他").trim() === area).length;
+      return `<form class="project-area-manager-row" data-area-rename="${esc(area)}"><label class="sr-only" for="project-area-name-${index}">${esc(uiText("标签名称", "Area name"))}</label><input class="input" id="project-area-name-${index}" value="${esc(area)}" maxlength="60" ${area === "其他" ? "readonly" : ""} required /><span>${count} ${uiText("个项目", "projects")}</span>${area === "其他" ? `<small>${uiText("默认标签", "Default area")}</small>` : `<button class="text-btn" type="submit">${uiText("重命名", "Rename")}</button><button class="text-btn danger-text-btn" type="button" data-action="delete-project-area" data-area="${esc(area)}">${uiText("删除", "Delete")}</button>`}</form>`;
+    }).join("")}</div>`;
+  }
+
+  function openProjectAreasManager() {
+    projectAreasReturnFocus = document.activeElement;
+    renderProjectAreasManager();
+    document.getElementById("projectAreasModal").hidden = false;
+    document.body.classList.add("modal-open");
+    document.getElementById("projectAreaName").focus();
+  }
+
+  function closeProjectAreasManager() {
+    const modal = document.getElementById("projectAreasModal");
+    if (modal.hidden) return;
+    modal.hidden = true;
+    document.body.classList.remove("modal-open");
+    if (projectAreasReturnFocus?.isConnected) projectAreasReturnFocus.focus();
+  }
+
+  function refreshProjectAreas() {
+    save();
+    renderProjects();
+    renderHome();
+    renderCalendar();
+    if (!document.getElementById("projectAreasModal").hidden) renderProjectAreasManager();
+  }
+
+  function collectSearchEntries(data = state) {
+    const entries = [];
+    const add = (type, id, title, text, date = "", extra = {}) => entries.push({ type, id, title: String(title || ""), text: String(text || ""), date, ...extra });
+    (data.projects || []).forEach((project) => {
+      add("project", project.id, project.title, [project.description, project.next, project.area, project.status, isCompletedProject(project) ? "已完成 Completed" : ""].filter(Boolean).join(" · "));
+      const daily = Object.entries(project.daily || {}).filter(([date]) => isDateKey(date));
+      daily.forEach(([date, record]) => {
+        if (String(record.next || "").trim()) add("project-record", project.id, project.title, record.next, date);
+      });
+      (project.logs || []).forEach((log) => {
+        if (!daily.some(([date, record]) => date === log.date && record.logId === log.id && record.next === log.text)) {
+          add("project-record", project.id, project.title, log.text, log.date || "", { logId: log.id });
+        }
+      });
+    });
+    (data.goals || []).forEach((goal) => add("goal", goal.id, goal.title, goal.area));
+    (data.priorities || []).forEach((item) => add("priority", item.id, item.text, [item.label, item.detail].filter(Boolean).join(" · ")));
+    (data.milestones || []).forEach((item) => add("milestone", item.id, item.title, [item.note, item.done ? "已完成 Completed" : ""].filter(Boolean).join(" · ")));
+    (data.events || []).forEach((event) => add("event", event.id, event.title, event.copy, event.date));
+    const weights = new Map((data.weightHistory || []).map((item) => [item.date, item.weight]));
+    const routineNames = new Map((data.routineItems || []).map((item) => [item.id, item.title]));
+    const dates = new Set([...Object.keys(data.days || {}), ...weights.keys()]);
+    dates.forEach((date) => {
+      if (!isDateKey(date)) return;
+      const day = data.days?.[date] || {};
+      (day.tasks || []).forEach((task) => add("task", task.id, task.text, [task.area, task.done ? "已完成 Completed" : "待完成 Pending"].filter(Boolean).join(" · "), date));
+      const inspiration = [...new Set([day.inspiration, day.inspirationEn].filter(Boolean))].join("\n");
+      if (inspiration.trim()) add("inspiration", date, "", inspiration, date);
+      const health = [];
+      if (day.mood) health.push(`心情 Mood: ${day.mood}`);
+      if (day.energy) health.push(`精力 Energy: ${day.energy}`);
+      if (Number(day.water) > 0) health.push(`饮水 Hydration: ${day.water} 杯 cups`);
+      if (weights.has(date)) health.push(`体重 Weight: ${weights.get(date)} kg`);
+      if (String(day.calories ?? "").trim()) health.push(`热量 Calories: ${day.calories} kcal`);
+      if (day.food) health.push(`饮食 Food: ${day.food}`);
+      if (day.notes) health.push(`复盘 Review: ${day.notes}`);
+      if (day.fitness) health.push(`运动已完成 Workout completed: ${planFor(date, data).title}`);
+      Object.entries(day.routines || {}).forEach(([id, done]) => {
+        if (done && routineNames.has(id)) health.push(`日常项目已完成 Routine completed: ${routineNames.get(id)}`);
+      });
+      if (health.length) add("health", date, "", health.join(" · "), date);
+    });
+    (data.routineItems || []).forEach((item) => add("routine", item.id, item.title, item.detail));
+    (data.supplementaryTraining || []).forEach((panel) => add("training", panel.id, panel.title, [panel.note, ...(panel.rows || []).map((row) => `${row.action || ""} ${row.frequency || ""}`)].filter(Boolean).join(" · ")));
+    const workouts = new Map();
+    const addWorkout = (date, plan) => {
+      if (!plan) return;
+      const text = [plan.subtitle, ...(plan.items || []).map((item) => item.slice(1).join(" "))].filter(Boolean).join(" · ");
+      workouts.set(`${date}:${plan.title}:${text}`, { date, plan, text });
+    };
+    weekKeys(fromKey(todayKey())).forEach((date) => addWorkout(date, planFor(date, data)));
+    (data.workoutPlanChanges || []).forEach((change) => {
+      if (isDateKey(change.effectiveFrom)) {
+        const offset = (Number(change.weekday) - fromKey(change.effectiveFrom).getDay() + 7) % 7;
+        addWorkout(addDays(change.effectiveFrom, offset), change.plan);
+      }
+    });
+    workouts.forEach(({ date, plan, text }) => add("workout", date, plan.title, text, date));
+    (data.breezeGuide?.entries || []).forEach((entry) => {
+      const title = entry.text || (currentLanguage === "en" ? entry.en || entry.zh : entry.zh || entry.en);
+      add("breeze", entry.id, title, [...new Set([entry.text, entry.zh, entry.en].filter(Boolean))].join(" · "));
+    });
+    (data.projectAreas || []).forEach((area) => add("area", area, area, ""));
+    return entries;
+  }
+
+  function normalizedSearchText(value) {
+    return String(value || "").normalize("NFKC").toLocaleLowerCase().trim();
+  }
+
+  function searchWorkbench(query, data = state) {
+    const normalized = normalizedSearchText(query);
+    const terms = normalized.split(/\s+/).filter(Boolean);
+    if (!terms.length) return [];
+    return collectSearchEntries(data).filter((entry) => {
+      const content = normalizedSearchText([entry.title, entry.text, entry.date, ...(SEARCH_TYPES[entry.type] || [])].join(" "));
+      return terms.every((term) => content.includes(term));
+    }).map((entry) => {
+      const title = normalizedSearchText(entry.title);
+      return { ...entry, rank: title === normalized ? 0 : title.startsWith(normalized) ? 1 : title.includes(normalized) ? 2 : 3 };
+    }).sort((a, b) => a.rank - b.rank || String(b.date).localeCompare(String(a.date)));
+  }
+
+  function searchTextMarkup(value, query, excerpt = false) {
+    let text = String(value || "");
+    const terms = normalizedSearchText(query).split(/\s+/).filter(Boolean);
+    const indices = terms.map((term) => text.toLocaleLowerCase().indexOf(term)).filter((index) => index >= 0);
+    if (excerpt && text.length > 140) {
+      const start = Math.max(0, (indices.length ? Math.min(...indices) : 0) - 36);
+      text = `${start ? "…" : ""}${text.slice(start, start + 140)}${start + 140 < text.length ? "…" : ""}`;
+    }
+    const term = terms.find((item) => text.toLocaleLowerCase().includes(item));
+    if (!term) return esc(text);
+    const index = text.toLocaleLowerCase().indexOf(term);
+    return `${esc(text.slice(0, index))}<mark>${esc(text.slice(index, index + term.length))}</mark>${esc(text.slice(index + term.length))}`;
+  }
+
+  function closeGlobalSearch() {
+    clearTimeout(globalSearchTimer);
+    globalSearchTimer = null;
+    document.getElementById("globalSearchPanel").hidden = true;
+    const input = document.getElementById("globalSearch");
+    input.setAttribute("aria-expanded", "false");
+    input.removeAttribute("aria-activedescendant");
+  }
+
+  function renderGlobalSearch(reset = true) {
+    const input = document.getElementById("globalSearch");
+    if (reset) {
+      globalSearchQuery = input.value.trim();
+      globalSearchMatches = searchWorkbench(globalSearchQuery);
+      globalSearchVisibleCount = 30;
+      globalSearchActiveIndex = -1;
+    }
+    if (!globalSearchQuery) { closeGlobalSearch(); return; }
+    document.getElementById("globalSearchPanel").hidden = false;
+    input.setAttribute("aria-expanded", "true");
+    document.getElementById("globalSearchSummary").textContent = uiText(`找到 ${globalSearchMatches.length} 条结果 · 搜索全部日期与已完成记录`, `${globalSearchMatches.length} results · All dates and completed records`);
+    document.getElementById("globalSearchResults").setAttribute("aria-label", uiText("搜索结果", "Search results"));
+    document.getElementById("globalSearchResults").innerHTML = globalSearchMatches.length ? globalSearchMatches.slice(0, globalSearchVisibleCount).map((entry, index) => {
+      const category = uiText(...SEARCH_TYPES[entry.type]);
+      return `<button class="global-search-result ${index === globalSearchActiveIndex ? "is-active" : ""}" id="global-search-result-${index}" type="button" role="option" aria-selected="${index === globalSearchActiveIndex}" tabindex="-1" data-action="open-search-result" data-search-index="${index}"><span class="search-result-meta"><span>${esc(category)}</span><time>${esc(entry.date)}</time></span><strong>${searchTextMarkup(entry.title || category, globalSearchQuery)}</strong>${entry.text ? `<span class="search-result-excerpt">${searchTextMarkup(entry.text, globalSearchQuery, true)}</span>` : ""}</button>`;
+    }).join("") : `<div class="empty-state">${uiText("没有找到匹配的记录。试试更短的关键词。", "No matching records. Try a shorter keyword.")}</div>`;
+    document.getElementById("globalSearchMore").innerHTML = globalSearchMatches.length > globalSearchVisibleCount ? `<button class="text-btn search-more-btn" type="button" data-action="more-search-results">${uiText(`显示更多（还有 ${globalSearchMatches.length - globalSearchVisibleCount} 条）`, `Show more (${globalSearchMatches.length - globalSearchVisibleCount} remaining)`)}</button>` : "";
+    if (globalSearchActiveIndex >= 0) input.setAttribute("aria-activedescendant", `global-search-result-${globalSearchActiveIndex}`);
+    else input.removeAttribute("aria-activedescendant");
+  }
+
+  function highlightSearchTarget(element) {
+    if (!element) return;
+    element.closest("details")?.setAttribute("open", "");
+    element.scrollIntoView({ block: "center" });
+    element.classList.add("search-target");
+    setTimeout(() => element.classList.remove("search-target"), 1800);
+  }
+
+  function openGlobalSearchResult(index) {
+    const entry = globalSearchMatches[index];
+    if (!entry) return;
+    if (entry.date && isDateKey(entry.date) && !updateSelectedDate(entry.date)) return;
+    closeGlobalSearch();
+    let target;
+    const find = (selector, key, value, root = document) => [...(root?.querySelectorAll(selector) || [])].find((element) => element.dataset[key] === value);
+    if (entry.type === "project" || entry.type === "project-record") {
+      const project = state.projects.find((item) => item.id === entry.id);
+      if (!project) return;
+      if (isCompletedProject(project)) {
+        completedProjectFilter = "全部";
+        switchPage("footprints");
+        const completed = completedItems().find((item) => item.id === project.id && item.type === "工作项目");
+        if (completed) openProjectHistory(completed);
+        target = document.getElementById("projectHistoryModal");
+      } else {
+        if (entry.type === "project-record" && isDateKey(entry.date)) project.reviewDate = entry.date;
+        projectStatusFilter = "all";
+        projectAreaFilter = "all";
+        switchPage("work");
+        const card = document.getElementById(`project-card-${entry.id}`);
+        target = entry.logId ? find("[data-project-log]", "projectLog", entry.logId, card) : card;
+        if (target) {
+          let ancestor = target.parentElement;
+          while (ancestor && ancestor !== card) { if (ancestor.matches("details")) ancestor.open = true; ancestor = ancestor.parentElement; }
+        }
+      }
+    } else if (entry.type === "task" || entry.type === "event" || entry.type === "milestone" || entry.type === "breeze") {
+      const milestone = entry.type === "milestone" && state.milestones.find((item) => item.id === entry.id);
+      if (milestone?.done) {
+        completedProjectFilter = "全部";
+        switchPage("footprints");
+        target = find(".completed-project-row", "historyId", entry.id);
+      } else {
+        if (entry.type === "breeze") {
+          breezeHistoryOpen = true;
+          breezeEntryIndex = currentBreezeEntries().findIndex((item) => item.id === entry.id);
+          if (breezeEntryIndex < 0) breezeEntryIndex = 0;
+        }
+        switchPage("reminders");
+        renderReminders();
+        renderMilestones();
+        if (entry.type === "task") target = find("#reminderList [data-task-text]", "taskText", entry.id)?.closest(".todo-row");
+        if (entry.type === "milestone") target = find("[data-master-todo-row]", "masterTodoRow", entry.id);
+        if (entry.type === "event") target = find(".event-row", "id", entry.id);
+        if (entry.type === "breeze") target = find(".breeze-history-row", "breezeEntry", entry.id);
+      }
+    } else if (entry.type === "inspiration") {
+      switchPage("calendar");
+      openInspirationRecord(entry.date);
+      target = document.getElementById("inspirationModalText");
+    } else if (entry.type === "health") {
+      switchPage("calendar");
+      target = document.getElementById("calendarHealthPanel");
+    } else if (entry.type === "goal" || entry.type === "priority") {
+      if (entry.type === "priority") viewingHomeInspiration = false;
+      switchPage("home");
+      target = find(entry.type === "goal" ? "[data-search-goal]" : "[data-search-priority]", entry.type === "goal" ? "searchGoal" : "searchPriority", entry.id);
+    } else if (["routine", "training", "workout"].includes(entry.type)) {
+      if (entry.type === "workout") {
+        selectedFitnessDate = entry.date;
+        fitnessMonthCursor = fromKey(entry.date);
+        fitnessMonthCursor.setDate(1);
+      }
+      switchPage("fitness");
+      target = entry.type === "workout" ? document.querySelector(".fitness-plan-card") : entry.type === "training" ? find("[data-search-training]", "searchTraining", entry.id) : find("#fitnessRoutines [data-routine]", "routine", entry.id)?.closest(".routine-row, .routine-edit-row");
+    } else if (entry.type === "area") {
+      switchPage("work");
+      openProjectAreasManager();
+      target = find("[data-area-rename]", "areaRename", entry.id);
+    }
+    requestAnimationFrame(() => highlightSearchTarget(target));
   }
 
   function projectMatchesFilter(project) {
@@ -2862,13 +3378,13 @@
     const fallbackLog = latestProjectLogOn(project, date);
     if (saved) {
       return {
-        description: String(saved.description || ""),
+        description: String(project.description || ""),
         next: String(saved.next || ""),
         logId: saved.logId || fallbackLog?.id || ""
       };
     }
     return {
-      description: "",
+      description: String(project.description || ""),
       next: String(fallbackLog?.text || ""),
       logId: fallbackLog?.id || ""
     };
@@ -2878,23 +3394,23 @@
     const cleanDescription = String(description || "").trim();
     const cleanNext = String(next || "").trim();
     project.daily = project.daily && typeof project.daily === "object" && !Array.isArray(project.daily) ? project.daily : {};
+    const previous = projectDayRecord(project, date);
     const currentLog = latestProjectLogOn(project, date);
-    const summary = cleanNext || cleanDescription;
-    if (summary) {
+    const actionChanged = cleanNext !== previous.next.trim();
+    if (actionChanged && cleanNext) {
       if (currentLog) {
-        currentLog.text = summary;
+        currentLog.text = cleanNext;
       } else {
-        addProjectHistory(project, date, summary);
+        addProjectHistory(project, date, cleanNext);
       }
-    } else if (currentLog) {
+    } else if (actionChanged && currentLog) {
       project.logs = project.logs.filter((log) => log.id !== currentLog.id);
     }
-    const linkedLog = summary ? latestProjectLogOn(project, date) : null;
-    project.daily[date] = { description: cleanDescription, next: cleanNext, logId: linkedLog?.id || "" };
-    if (date === todayKey()) {
-      project.description = cleanDescription || project.description;
-      project.next = cleanNext;
-    }
+    const linkedLog = cleanNext ? latestProjectLogOn(project, date) : null;
+    // Keep legacy dated descriptions intact; new descriptions belong to the project.
+    project.daily[date] = { ...project.daily[date], next: cleanNext, logId: linkedLog?.id || "" };
+    project.description = cleanDescription;
+    if (date === todayKey()) project.next = cleanNext;
     project.updatedAt = date;
   }
 
@@ -2912,9 +3428,9 @@
   }
 
   function renderProjects() {
-    const query = (document.getElementById("globalSearch").value || "").trim().toLowerCase();
     const activeProjects = state.projects.filter((project) => !isCompletedProject(project));
     const areas = projectAreaOptions(activeProjects);
+    const editableAreas = normalizeProjectAreas(state.projectAreas, state.projects);
     if (projectStatusFilter !== "all" && !PROJECT_STATUSES.some(([status]) => status === projectStatusFilter)) projectStatusFilter = "all";
     if (projectAreaFilter !== "all" && !areas.includes(projectAreaFilter)) projectAreaFilter = "all";
     const statusFilter = document.getElementById("projectStatusFilter");
@@ -2925,7 +3441,7 @@
     if (areaFilter) {
       areaFilter.innerHTML = `<option value="all">${uiText("全部领域", "All areas")}</option>${areas.map((area) => `<option value="${esc(area)}" ${area === projectAreaFilter ? "selected" : ""}>${esc(area)}</option>`).join("")}`;
     }
-    const list = activeProjects.filter((project) => projectMatchesFilter(project) && (!query || `${project.title}${project.area}${project.description}${project.next}`.toLowerCase().includes(query)));
+    const list = activeProjects.filter(projectMatchesFilter);
     const overview = document.getElementById("projectOverview");
     if (overview) {
       overview.innerHTML = activeProjects.length ? activeProjects.map((project) => `
@@ -2952,12 +3468,12 @@
           </div>
           <div class="project-progress"><label><span>当前进度</span><b>${Number(project.progress) || 0}%</b></label><input type="range" min="0" max="100" value="${Number(project.progress) || 0}" data-project-progress="${project.id}" aria-label="${esc(project.title)}的进度" /></div>
           <div class="form-grid project-fields project-meta-fields">
-            <label class="field"><span>所属领域</span><input class="input" data-project-area="${project.id}" value="${esc(project.area || "")}" /></label>
+            <div class="field"><label for="project-area-${esc(project.id)}">所属领域</label><div class="project-area-control"><select class="select" id="project-area-${esc(project.id)}" data-project-area="${esc(project.id)}">${editableAreas.map((area) => `<option value="${esc(area)}" ${area === (String(project.area || "其他").trim() || "其他") ? "selected" : ""}>${esc(area)}</option>`).join("")}</select><button class="text-btn" type="button" data-action="add-project-area" data-id="${esc(project.id)}">新增领域</button></div></div>
             <label class="field"><span>年度目标</span><select class="select" data-project-goal="${project.id}"><option value="">未关联年度目标</option>${state.goals.map((goal) => `<option value="${esc(goal.id)}" ${goal.id === project.goalId ? "selected" : ""}>${esc(goal.title)}</option>`).join("")}</select></label>
           </div>
           <form class="project-day-form" data-project-update="${project.id}" data-project-update-date="${recordDate}">
             <div class="form-grid project-fields project-day-fields">
-              <label class="field wide"><span>项目描述</span><textarea class="textarea" data-project-description="${project.id}" maxlength="260" placeholder="说明项目要解决的问题、目标和范围">${esc(dayRecord.description)}</textarea></label>
+              <label class="field wide"><span>项目描述 <small class="field-hint">项目共用，不随回顾日期切换</small></span><textarea class="textarea" data-project-description="${project.id}" maxlength="260" placeholder="说明项目要解决的问题、目标和范围">${esc(project.description || "")}</textarea></label>
               <label class="field wide"><span>下一步行动</span><textarea class="textarea" data-project-next="${project.id}" maxlength="260" placeholder="填写这个日期的下一步行动">${esc(dayRecord.next)}</textarea></label>
             </div>
             <div class="project-update-actions">
@@ -2971,11 +3487,11 @@
           </form>
           <details class="history" open>
             <summary>历史记录（${logs.length}）</summary>
-            ${logs.length ? `<div class="history-scroll">${logs.slice(0, 2).map((log) => `<div class="history-item"><time>${esc(log.date || "")}</time><span>${esc(log.text || "")}</span><button class="mini-btn danger" data-action="delete-project-log" data-project="${project.id}" data-id="${log.id}" aria-label="删除这条项目记录">×</button></div>`).join("")}${logs.length > 2 ? `<details class="history-more"><summary>展开更多记录（${logs.length - 2}）</summary><div class="history-more-list">${logs.slice(2).map((log) => `<div class="history-item"><time>${esc(log.date || "")}</time><span>${esc(log.text || "")}</span><button class="mini-btn danger" data-action="delete-project-log" data-project="${project.id}" data-id="${log.id}" aria-label="删除这条项目记录">×</button></div>`).join("")}</div></details>` : ""}</div>` : '<div class="empty-state">还没有推进记录。</div>'}
+            ${logs.length ? `<div class="history-scroll">${logs.slice(0, 2).map((log) => `<div class="history-item" data-project-log="${esc(log.id)}"><time>${esc(log.date || "")}</time><span>${esc(log.text || "")}</span><button class="mini-btn danger" data-action="delete-project-log" data-project="${project.id}" data-id="${log.id}" aria-label="删除这条项目记录">×</button></div>`).join("")}${logs.length > 2 ? `<details class="history-more"><summary>展开更多记录（${logs.length - 2}）</summary><div class="history-more-list">${logs.slice(2).map((log) => `<div class="history-item" data-project-log="${esc(log.id)}"><time>${esc(log.date || "")}</time><span>${esc(log.text || "")}</span><button class="mini-btn danger" data-action="delete-project-log" data-project="${project.id}" data-id="${log.id}" aria-label="删除这条项目记录">×</button></div>`).join("")}</div></details>` : ""}</div>` : '<div class="empty-state">还没有推进记录。</div>'}
           </details>
         </article>
       `;
-    }).join("") : (query || projectStatusFilter !== "all" || projectAreaFilter !== "all") ? '<div class="empty-state">没有找到匹配的未完成项目。</div>' : '<div class="empty-state">目前没有正在推进的项目，已完成项目已归档到日历看板。</div>';
+    }).join("") : (projectStatusFilter !== "all" || projectAreaFilter !== "all") ? '<div class="empty-state">没有找到匹配的未完成项目。</div>' : '<div class="empty-state">目前没有正在推进的项目，已完成项目已归档到日历看板。</div>';
   }
 
   function chartSummary(data) {
@@ -3165,9 +3681,9 @@
     renderHealthTrendPanel();
   }
 
-  function planFor(key) {
+  function planFor(key, data = state) {
     const weekday = fromKey(key).getDay();
-    const change = (state.workoutPlanChanges || [])
+    const change = (data.workoutPlanChanges || [])
       .filter((item) => item.weekday === weekday && item.effectiveFrom <= key)
       .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
     return change?.plan || workoutPlans[weekday];
@@ -3278,14 +3794,13 @@
   function routineMarkup(key, context = "fitness") {
     const day = ensureDay(key);
     const items = currentRoutineItems();
-    const scrollClass = items.length > 6 ? " routine-list-scroll" : "";
     if (!editingRoutines) {
-      return `<div class="routine-list${scrollClass}">${items.map((item) => `
+      return `<div class="routine-list">${items.map((item) => `
         <label class="routine-row"><input class="check" type="checkbox" data-routine="${esc(item.id)}" data-routine-date="${key}" ${day.routines[item.id] ? "checked" : ""} /><span><strong data-no-translate="true">${esc(item.title)}</strong><small data-no-translate="true">${esc(item.detail)}</small></span></label>
       `).join("")}</div>`;
     }
     return `
-      <div class="routine-list routine-edit-list${scrollClass}">
+      <div class="routine-list routine-edit-list">
         ${items.map((item) => `
           <div class="routine-edit-row">
             <input class="check" type="checkbox" data-routine="${esc(item.id)}" data-routine-date="${key}" ${day.routines[item.id] ? "checked" : ""} aria-label="${esc(`完成${item.title}`)}" />
@@ -3307,7 +3822,7 @@
 
   function supplementaryTrainingPanelMarkup(panel) {
     return `
-      <article class="card training-panel">
+      <article class="card training-panel" data-search-training="${esc(panel.id)}">
         <div class="card-head"><div><h3>${esc(panel.title)}</h3><small>${esc(panel.note || "")}</small></div></div>
         <div class="training-row-list">
           ${panel.rows.length ? panel.rows.map((row) => `<div class="training-row"><strong data-no-translate="true">${esc(row.action || "未命名动作")}</strong><span data-no-translate="true">${esc(row.frequency || "未设置频次")}</span></div>`).join("") : '<div class="empty-state">还没有动作。</div>'}
@@ -3318,7 +3833,7 @@
 
   function supplementaryTrainingEditorMarkup(panel) {
     return `
-      <article class="card training-panel training-panel-editor" data-supplementary-panel="${esc(panel.id)}">
+      <article class="card training-panel training-panel-editor" data-supplementary-panel="${esc(panel.id)}" data-search-training="${esc(panel.id)}">
         <div class="card-head"><div><span class="tag neutral">专项训练</span></div></div>
         <div class="form-grid training-panel-editor-fields">
           <label class="field"><span>面板名称</span><input class="input" data-supplementary-title="${esc(panel.id)}" maxlength="50" value="${esc(panel.title)}" required /></label>
@@ -3483,20 +3998,33 @@
     return true;
   }
 
-  function calendarDayNavMarkup() {
-    return `<div class="day-panel-nav" role="group" aria-label="切换日历日期"><button class="mini-btn" type="button" data-action="calendar-prev-day" aria-label="前一天" title="前一天">‹</button><button class="mini-btn" type="button" data-action="calendar-next-day" aria-label="后一天" title="后一天">›</button></div>`;
+  function resetCalendarPanelDates(date) {
+    Object.keys(calendarPanelDates).forEach((panel) => { calendarPanelDates[panel] = date; });
   }
 
-  function renderDayDashboard() {
+  function shiftCalendarPanelDate(panel, offset) {
+    if (!Object.hasOwn(calendarPanelDates, panel)) return false;
+    calendarPanelDates[panel] = addDays(calendarPanelDates[panel], offset);
+    return true;
+  }
+
+  function calendarDayNavMarkup(panel) {
+    return `<div class="day-panel-nav" role="group" aria-label="${uiText("切换当前面板日期", "Change this panel's date")}"><button class="mini-btn" type="button" data-action="calendar-prev-day" data-calendar-panel="${panel}" aria-label="${uiText("前一天", "Previous day")}" title="${uiText("前一天", "Previous day")}">‹</button><button class="mini-btn" type="button" data-action="calendar-next-day" data-calendar-panel="${panel}" aria-label="${uiText("后一天", "Next day")}" title="${uiText("后一天", "Next day")}">›</button></div>`;
+  }
+
+  function renderDayDashboard(panel = "") {
+    const workoutDate = calendarPanelDates.workout;
+    const workDate = calendarPanelDates.work;
+    const projectDate = calendarPanelDates.projects;
+    const inspirationDate = calendarPanelDates.inspiration;
     const day = ensureDay(selectedDate);
     const healthEditing = editingCalendarHealthDate === selectedDate && calendarHealthDraft;
-    const stats = completionFor(selectedDate);
+    const stats = completionFor(workDate);
     const weight = weightOn(selectedDate);
-    const logs = projectLogsOn(selectedDate);
-    const events = eventsOn(selectedDate);
+    const logs = projectLogsOn(projectDate);
     const dateHint = currentLanguage === "en"
-      ? (selectedDate === todayKey() ? "Today · changes save automatically" : selectedDate < todayKey() ? "History · you can add a record" : "Future plan · you can plan ahead")
-      : (selectedDate === todayKey() ? "今天 · 修改会自动保存" : selectedDate < todayKey() ? "历史记录 · 可以补记" : "未来计划 · 可以提前安排");
+      ? (workDate === todayKey() ? "Today · changes save automatically" : workDate < todayKey() ? "History · you can add a record" : "Future plan · you can plan ahead")
+      : (workDate === todayKey() ? "今天 · 修改会自动保存" : workDate < todayKey() ? "历史记录 · 可以补记" : "未来计划 · 可以提前安排");
     const unrecorded = uiText("未记录", "Not recorded");
     const cupUnit = uiText("杯", "cups");
     const itemUnit = uiText("项", "items");
@@ -3524,20 +4052,20 @@
     const caloriesValue = String(day.calories ?? "");
     const moodLabel = (value) => moodOptions.find(([optionValue]) => optionValue === value)?.[1] || value || unrecorded;
     const energyLabel = (value) => energyOptions.find(([optionValue]) => optionValue === value)?.[1] || value || unrecorded;
-    document.getElementById("calendarWorkoutPanel").innerHTML = `
-      <div class="card-head"><div><h3>${uiText("运动安排", "Workout plan")}</h3><small>${esc(dayText(selectedDate))} · ${esc(localizedPlanTitle(planFor(selectedDate).title))}</small></div>${calendarDayNavMarkup()}</div>
-      ${workoutMarkup(selectedDate, "calendar")}
+    if (!panel || panel === "workout") document.getElementById("calendarWorkoutPanel").innerHTML = `
+      <div class="card-head"><div><h3>${uiText("运动安排", "Workout plan")}</h3><small>${esc(dayText(workoutDate))} · ${esc(localizedPlanTitle(planFor(workoutDate).title))}</small></div>${calendarDayNavMarkup("workout")}</div>
+      ${workoutMarkup(workoutDate, "calendar")}
     `;
-    document.getElementById("calendarWorkPanel").innerHTML = `
-      <div class="card-head"><div><h3>${uiText("事务工作", "Work tasks")}</h3><small>${esc(dayText(selectedDate))} · ${esc(dateHint)}</small></div><div class="day-panel-head-actions"><span class="tag">${currentLanguage === "en" ? `${stats.rate}% complete` : `${stats.rate}% 完成`}</span>${calendarDayNavMarkup()}</div></div>
+    if (!panel || panel === "work") document.getElementById("calendarWorkPanel").innerHTML = `
+      <div class="card-head"><div><h3>${uiText("事务工作", "Work tasks")}</h3><small>${esc(dayText(workDate))} · ${esc(dateHint)}</small></div><div class="day-panel-head-actions"><span class="tag">${currentLanguage === "en" ? `${stats.rate}% complete` : `${stats.rate}% 完成`}</span>${calendarDayNavMarkup("work")}</div></div>
       <section class="day-section">
         <div class="subhead"><h4>${uiText("待办事项", "Tasks")}</h4><span class="tag neutral">${stats.done} / ${stats.total}</span></div>
-        <div class="todo-list">${taskRows(selectedDate, "calendar")}</div>
-        <form class="form-row" id="calendarTaskForm" style="margin-top:10px"><label class="sr-only" for="calendarTaskInput">添加当天待办</label><input class="input" id="calendarTaskInput" maxlength="120" placeholder="添加当天待办" required /><button class="btn green" type="submit">添加</button></form>
+        <div class="todo-list">${taskRows(workDate, "calendar")}</div>
+        <form class="form-row" id="calendarTaskForm" data-task-date="${workDate}" style="margin-top:10px"><label class="sr-only" for="calendarTaskInput">添加当天待办</label><input class="input" id="calendarTaskInput" maxlength="120" placeholder="添加当天待办" required /><button class="btn green" type="submit">添加</button></form>
       </section>
     `;
 
-    document.getElementById("calendarHealthPanel").innerHTML = `
+    if (!panel) document.getElementById("calendarHealthPanel").innerHTML = `
       <div class="card-head calendar-health-head"><div><h3>${uiText("生活健康", "Life & health")}</h3></div>${healthEditing ? `<span class="tag neutral">${uiText("编辑中", "Editing")}</span>` : `<button class="text-btn" type="button" data-action="edit-calendar-health">${uiText("编辑", "Edit")}</button>`}</div>
       ${healthEditing ? `
         <section class="day-section health-summary-section">
@@ -3573,17 +4101,18 @@
       `}
     `;
 
-    document.getElementById("calendarProjectLogPanel").innerHTML = `
-      <div class="card-head"><div><h3>${uiText("项目推进记录", "Project updates")}</h3><small>${esc(dayText(selectedDate))} · ${uiText("当天的项目更新", "Project updates for this day")}</small></div><div class="day-panel-head-actions"><span class="tag neutral">${logs.length} ${currentLanguage === "en" ? "updates" : "条"}</span>${calendarDayNavMarkup()}</div></div>
+    if (!panel || panel === "projects") document.getElementById("calendarProjectLogPanel").innerHTML = `
+      <div class="card-head"><div><h3>${uiText("项目推进记录", "Project updates")}</h3><small>${esc(dayText(projectDate))} · ${uiText("当天的项目更新", "Project updates for this day")}</small></div><div class="day-panel-head-actions"><span class="tag neutral">${logs.length} ${currentLanguage === "en" ? "updates" : "条"}</span>${calendarDayNavMarkup("projects")}</div></div>
       ${logs.length ? `<div class="calendar-project-log-list">${logs.map((log) => `<div class="history-item"><time>${esc(log.project)}</time><span>${esc(log.text)}</span><span></span></div>`).join("")}</div>` : '<div class="empty-state">当天没有项目推进记录。</div>'}
     `;
 
-    document.getElementById("calendarInspirationPanel").innerHTML = `
-      <div class="card-head"><div><h3>${uiText("今日灵感", "Today's inspiration")}</h3><small>${esc(dayText(selectedDate))} · ${uiText("与日常提醒同步", "Synced with daily reminders")}</small></div>${calendarDayNavMarkup()}</div>
-      <textarea class="textarea inspiration-textarea" data-inspiration-input="calendar" placeholder="${esc(uiText("记录今天捕捉到的灵感、片段或想继续观察的方向", "Capture an idea, fragment, or direction to keep exploring today"))}">${esc(localizedInspiration(day))}</textarea>
+    if (!panel || panel === "inspiration") document.getElementById("calendarInspirationPanel").innerHTML = `
+      <div class="card-head"><div><h3>${uiText("今日灵感", "Today's inspiration")}</h3><small>${esc(dayText(inspirationDate))} · ${uiText("与日常提醒同步", "Synced with daily reminders")}</small></div>${calendarDayNavMarkup("inspiration")}</div>
+      <textarea class="textarea inspiration-textarea" data-inspiration-input="calendar" data-inspiration-date="${inspirationDate}" placeholder="${esc(uiText("记录今天捕捉到的灵感、片段或想继续观察的方向", "Capture an idea, fragment, or direction to keep exploring today"))}">${esc(localizedInspiration(ensureDay(inspirationDate)))}</textarea>
       <button class="btn secondary" data-action="save-inspiration" data-inspiration-source="calendar" style="margin-top:10px">${uiText("保存今日灵感", "Save today's inspiration")}</button>
     `;
 
+    if (panel) return;
     const completed = completedItems();
     const filterOptions = completedProjectFilterOptions();
     if (!filterOptions.includes(completedProjectFilter)) completedProjectFilter = "全部";
@@ -3684,6 +4213,7 @@
     renderReminders();
     renderMilestones();
     renderCalendar();
+    renderAutoBackupSettings();
   }
 
   function setScrollPosition(top) {
@@ -3749,6 +4279,7 @@
     }
     if (valid === "work") renderProjects();
     if (valid === "fitness") renderFitness();
+    if (valid === "settings") renderAutoBackupSettings();
     updateBackButton();
     if (restoreScroll) restorePageScroll(valid);
     else if (pageChanged) setScrollPosition(0);
@@ -3763,6 +4294,7 @@
       calendarHealthDraftDirty = false;
     }
     selectedDate = key;
+    resetCalendarPanelDates(key);
     const date = fromKey(key);
     calendarYear = date.getFullYear();
     monthCursor = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -3865,7 +4397,12 @@
     return true;
   }
 
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", async (event) => {
+    if (!event.target.closest("#globalSearchField")) closeGlobalSearch();
+    if (event.target.id === "projectAreasModal") {
+      closeProjectAreasManager();
+      return;
+    }
     if (event.target.id === "projectHistoryModal") {
       closeProjectHistory();
       return;
@@ -3901,6 +4438,71 @@
     const action = actionButton.dataset.action;
     const id = actionButton.dataset.id;
 
+    if (action === "open-search-result") {
+      openGlobalSearchResult(Number(actionButton.dataset.searchIndex));
+      return;
+    }
+    if (action === "more-search-results") {
+      globalSearchVisibleCount += 30;
+      renderGlobalSearch(false);
+      return;
+    }
+    if (action === "manage-project-areas") {
+      openProjectAreasManager();
+      return;
+    }
+    if (action === "close-project-areas") {
+      closeProjectAreasManager();
+      return;
+    }
+    if (action === "delete-project-area") {
+      const area = actionButton.dataset.area;
+      const count = state.projects.filter((project) => String(project.area || "其他").trim() === area).length;
+      const message = count
+        ? uiText(`删除标签「${area}」后，${count} 个项目会改归“其他”。项目和历史记录不会删除。是否继续？`, `Delete area “${area}” and move ${count} projects to Other? Projects and history will not be deleted.`)
+        : uiText(`删除领域标签「${area}」吗？`, `Delete project area “${area}”?`);
+      if (confirm(message) && deleteProjectArea(area)) refreshProjectAreas();
+      return;
+    }
+    if (action === "enable-auto-backup" || action === "choose-backup-folder") {
+      if (backupInProgress) return;
+      if (supportsBackupDirectory()) {
+        await chooseBackupFolder();
+      } else {
+        backupPreferences.enabled = true;
+        backupPreferences.enabledAt = new Date().toISOString();
+        try { persistBackupPreferences(); backupIssue = ""; } catch { backupIssue = "settings"; }
+        renderAutoBackupSettings();
+      }
+      return;
+    }
+    if (action === "authorize-backup") {
+      if (backupInProgress || !backupDirectory) return;
+      try {
+        const permission = await backupDirectory.requestPermission({ mode: "readwrite" });
+        if (permission === "granted") await runAutomaticBackup(true);
+        else { backupIssue = "permission"; renderAutoBackupSettings(); }
+      } catch { backupIssue = "permission"; renderAutoBackupSettings(); }
+      return;
+    }
+    if (action === "backup-now") {
+      await runAutomaticBackup(true);
+      return;
+    }
+    if (action === "disable-auto-backup") {
+      if (backupInProgress) return;
+      backupPreferences.enabled = false;
+      try { persistBackupPreferences(); backupIssue = ""; } catch { backupIssue = "settings"; }
+      renderAutoBackupSettings();
+      return;
+    }
+    if (action === "add-project-area") {
+      const project = state.projects.find((item) => item.id === id);
+      if (!project) return;
+      const area = prompt(uiText("输入新的项目领域", "Enter a new project area"));
+      if (addProjectArea(area, project.id)) refreshProjectAreas();
+      return;
+    }
     if (action === "go-back") {
       goBack();
       return;
@@ -4247,7 +4849,8 @@
       updateSelectedDate(addDays(selectedDate, 1));
     }
     if (action === "calendar-prev-day" || action === "calendar-next-day") {
-      updateSelectedDate(addDays(selectedDate, action === "calendar-prev-day" ? -1 : 1));
+      const panel = actionButton.dataset.calendarPanel;
+      if (shiftCalendarPanelDate(panel, action === "calendar-prev-day" ? -1 : 1)) renderDayDashboard(panel);
       return;
     }
     if (action === "defer-task") {
@@ -4436,7 +5039,7 @@
       const source = actionButton.dataset.inspirationSource || "reminders";
       const input = document.querySelector(`[data-inspiration-input="${source}"]`);
       if (!input) return;
-      const day = ensureDay(source === "home" ? todayKey() : selectedDate);
+      const day = ensureDay(source === "home" ? todayKey() : source === "calendar" ? input.dataset.inspirationDate : selectedDate);
       day.inspiration = input.value;
       day.inspirationEn = "";
       save();
@@ -4458,19 +5061,19 @@
       notify("当天记录已保存");
     }
     if (action === "export") {
-      const blob = new Blob([JSON.stringify({ app: "kinetic-life-os", exportedAt: new Date().toISOString(), data: state }, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `life-workbench-backup-${todayKey()}.json`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      notify("备份已导出");
+      exportBackup();
     }
     if (action === "reset") {
+      if (backupInProgress) {
+        notify(uiText("正在备份，请完成后再清除记录。", "A backup is being saved. Wait for it to finish before clearing records."));
+        return;
+      }
       if (!confirm("确定清除当前设备的全部工作台记录吗？此操作无法撤销。")) return;
+      backupPreferences.enabled = false;
+      localStorage.removeItem(BACKUP_PREFERENCES_STORE);
+      if (window.indexedDB) {
+        try { await backupDirectoryStorage(true, null); } catch { /* Disabled preferences prevent further writes. */ }
+      }
       localStorage.removeItem(STORE);
       localStorage.setItem(RESET_MARKER, "true");
       location.reload();
@@ -4478,6 +5081,31 @@
   });
 
   document.addEventListener("keydown", (event) => {
+    const areasModal = document.getElementById("projectAreasModal");
+    if (!areasModal.hidden && event.key === "Tab") {
+      const controls = [...areasModal.querySelectorAll("button:not([disabled]), input:not([disabled])")].filter((element) => element.getClientRects().length);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    }
+    if (event.target.id === "globalSearch" && !event.isComposing) {
+      if (["ArrowDown", "ArrowUp", "Enter"].includes(event.key)) {
+        event.preventDefault();
+        clearTimeout(globalSearchTimer);
+        globalSearchTimer = null;
+        if (globalSearchQuery !== event.target.value.trim() || document.getElementById("globalSearchPanel").hidden) renderGlobalSearch();
+        if (!globalSearchMatches.length || !event.target.value.trim()) return;
+        if (event.key === "Enter") { openGlobalSearchResult(Math.max(0, globalSearchActiveIndex)); return; }
+        const direction = event.key === "ArrowDown" ? 1 : -1;
+        globalSearchActiveIndex = globalSearchActiveIndex < 0 ? (direction > 0 ? 0 : globalSearchMatches.length - 1) : (globalSearchActiveIndex + direction + globalSearchMatches.length) % globalSearchMatches.length;
+        globalSearchVisibleCount = Math.max(globalSearchVisibleCount, globalSearchActiveIndex + 1);
+        renderGlobalSearch(false);
+        document.getElementById(`global-search-result-${globalSearchActiveIndex}`)?.scrollIntoView({ block: "nearest" });
+        return;
+      }
+      if (event.key === "Escape") { event.preventDefault(); closeGlobalSearch(); return; }
+    }
     const annualCell = event.target.closest?.("#calendarYearGrid .annual-day-cell[data-date]");
     const dayOffset = {
       ArrowUp: -1,
@@ -4492,6 +5120,8 @@
       return;
     }
     if (event.key === "Escape") {
+      closeGlobalSearch();
+      closeProjectAreasManager();
       closeProjectHistory();
       closeInspirationRecord();
     }
@@ -4635,6 +5265,9 @@
       renderHome();
     }
     if (target.matches("[data-project-area]")) {
+      const project = state.projects.find((item) => item.id === target.dataset.projectArea);
+      if (project) project.area = target.value;
+      save();
       renderProjects();
       renderHome();
       renderCalendar();
@@ -4862,6 +5495,19 @@
   document.addEventListener("submit", (event) => {
     event.preventDefault();
     const form = event.target;
+    if (form.id === "projectAreaAddForm") {
+      if (addProjectArea(document.getElementById("projectAreaName").value)) refreshProjectAreas();
+      document.getElementById("projectAreaName").focus();
+      return;
+    }
+    if (form.matches("[data-area-rename]")) {
+      const previous = form.dataset.areaRename;
+      const name = form.querySelector("input").value.trim();
+      if (name === previous) return;
+      if ((state.projectAreas || []).includes(name) && !confirm(uiText(`「${name}」已经存在，是否将两个标签合并？`, `“${name}” already exists. Merge these areas?`))) return;
+      if (renameProjectArea(previous, name)) refreshProjectAreas();
+      return;
+    }
     if (form.matches("[data-workout-editor]")) {
       const key = form.dataset.workoutEditor;
       const draft = syncWorkoutDraftFromForm(form) || workoutDraftFor(key);
@@ -4906,7 +5552,7 @@
     }
     if (form.id === "calendarTaskForm") {
       const input = document.getElementById("calendarTaskInput");
-      addDayTask(selectedDate, input.value);
+      addDayTask(form.dataset.taskDate, input.value);
       save();
       renderHome();
       renderReminders();
@@ -4977,9 +5623,21 @@
     }
   });
 
-  document.getElementById("globalSearch").addEventListener("input", () => {
-    if (location.hash !== "#work") switchPage("work");
-    renderProjects();
+  document.getElementById("globalSearch").addEventListener("input", (event) => {
+    clearTimeout(globalSearchTimer);
+    if (!event.target.value.trim()) { closeGlobalSearch(); return; }
+    if (event.isComposing) return;
+    globalSearchTimer = setTimeout(() => { globalSearchTimer = null; renderGlobalSearch(); }, 150);
+  });
+  document.getElementById("globalSearch").addEventListener("focus", () => {
+    if (document.getElementById("globalSearch").value.trim()) renderGlobalSearch();
+  });
+  document.getElementById("globalSearch").addEventListener("compositionend", () => {
+    clearTimeout(globalSearchTimer);
+    globalSearchTimer = setTimeout(() => { globalSearchTimer = null; renderGlobalSearch(); }, 150);
+  });
+  document.getElementById("globalSearchField").addEventListener("focusout", (event) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) closeGlobalSearch();
   });
 
   document.getElementById("languageToggle").addEventListener("click", () => {
@@ -4988,6 +5646,15 @@
     renderAll();
     switchPage(location.hash.slice(1) || "home", false);
     applyLanguage();
+    if (!document.getElementById("projectAreasModal").hidden) renderProjectAreasManager();
+  });
+
+  document.addEventListener("change", (event) => {
+    if (event.target.id !== "autoBackupInterval" || backupInProgress) return;
+    backupPreferences.interval = BACKUP_INTERVALS.includes(event.target.value) ? event.target.value : "weekly";
+    try { persistBackupPreferences(); } catch { backupIssue = "settings"; }
+    renderAutoBackupSettings();
+    void runAutomaticBackup();
   });
 
   document.getElementById("importInput").addEventListener("change", async (event) => {
@@ -5016,7 +5683,9 @@
   window.addEventListener("pagehide", flushSave);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") flushSave();
+    else void runAutomaticBackup();
   });
+  window.addEventListener("focus", () => { void runAutomaticBackup(); });
 
   window.addEventListener("popstate", (event) => {
     internalHistoryDepth = Number.isInteger(event.state?.kineticDepth) ? event.state.kineticDepth : 0;
@@ -5027,6 +5696,7 @@
     renderAll();
     switchPage(location.hash.slice(1) || "home", false);
     applyLanguage();
+    void runAutomaticBackup();
   });
   resetDateContextToToday();
   save();
@@ -5037,4 +5707,6 @@
   switchPage(initialPage, false);
   applyLanguage();
   scheduleHomeBreezeRotation();
+  void initializeAutoBackup();
+  setInterval(() => { void runAutomaticBackup(); }, 60_000);
 })();

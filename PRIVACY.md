@@ -1,6 +1,6 @@
 # Kinetic Life OS Privacy Policy / 隐私政策
 
-Effective date / 生效日期：2026-09-30
+Effective date / 生效日期：2026-10-22
 
 This policy explains how Kinetic Life OS handles information when you use the public Progressive Web App hosted at `https://daoyi2026.github.io/kinetic-life-os/`.
 
@@ -43,6 +43,8 @@ Kinetic Life OS 是一个本地优先的个人工作台。应用不要求注册�
 - 您可以导入 JSON 备份，以替换当前浏览器中的工作台记录；
 - 您可以在“设置与备份”中清除当前设备记录；
 - 您也可以通过浏览器设置清除此网站的存储数据。
+
+定期自动备份默认关闭。仅当您主动开启并授权备份文件夹后，支持的浏览器才会在应用打开或前台使用时，按您选择的周期把 JSON 保存到该文件夹；关闭期间不会运行，下次打开后处理到期备份。文件夹句柄保存在本地 IndexedDB，频率和备份状态保存在本地偏好中，不会上传。权限失效时需重新授权，不支持文件夹写入的浏览器只提供到期提醒和手动导出。手动下载请求不代表文件已经保存，请在下载目录确认。清除应用记录会停止自动备份并移除保存的文件夹句柄，但不会删除已导出的文件；这些文件需要您自行管理。每份备份使用独立文件名，不会自动覆盖或删除旧备份。
 
 卸载 PWA 不一定会同时删除浏览器存储。若要删除记录，请优先使用应用内的“清除全部记录”，或在浏览器中清除该网站的数据。
 
@@ -99,6 +101,8 @@ The public version is hosted by GitHub Pages. The app itself does not receive yo
 - You can import a JSON backup to replace the workbench records in the current browser;
 - You can clear current-device records from Settings & backup;
 - You can also clear this website's stored data through your browser settings.
+
+Scheduled local backups are off by default. Only after you enable them and authorize a folder can a supported browser save JSON snapshots there at your selected interval when the app opens or is used in the foreground. Nothing runs while the app is closed; overdue backups are handled on the next visit. The folder handle is stored locally in IndexedDB, and scheduling preferences and status are stored locally; neither is uploaded. Expired access requires renewed permission. Browsers without folder-write support offer reminders and manual exports only. A manual download request does not confirm that a file was saved; check your downloads. Clearing app records stops scheduled backups and removes the stored folder handle, but does not delete exported files; manage those separately. Each backup has a unique filename, and earlier backups are not automatically overwritten or deleted.
 
 Uninstalling the PWA may not remove its browser storage. To delete records, use “Clear all records” in the app or clear the site's data in your browser.
 
