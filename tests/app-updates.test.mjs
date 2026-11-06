@@ -4,8 +4,142 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import vm from "node:vm";
 
+test("monthly reports count completed records in their own month without changing data", () => {
+  const { context: app } = harness();
+  const data = {
+    routineItems: [{ id: "walk", title: "Walking" }],
+    days: {
+      "2026-10-01": { tasks: [{ text: "Write", done: true }, { text: "Plan", done: false }], routines: { walk: true }, fitness: true, food: "Lunch" },
+      "2026-10-02": { tasks: [{ text: "Write", done: true }], routines: { walk: true, removed: true }, inspiration: "An idea" },
+      "2026-10-03": { notes: "Review without a health entry" },
+      "2026-11-01": { fitness: true, tasks: [{ text: "Next month", done: true }] }
+    },
+    weightHistory: [{ date: "2026-10-04", weight: 65 }, { date: "2026-11-01", weight: 66 }],
+    projects: [
+      { id: "active", title: "Active", logs: [{ date: "2026-10-02", text: "Prototype" }, { date: "2026-11-01", text: "Next" }] },
+      { id: "done", title: "Done", completed: true, logs: [{ date: "2026-10-01", text: "Launched" }] },
+      { id: "planned", title: "Planned", daily: { "2026-10-03": { next: "Not a progress record" } } }
+    ]
+  };
+  const before = JSON.stringify(data);
+  const report = app.monthlyActivityFor("2026-10", data);
+  assert.equal(report.tasks.length, 2);
+  assert.equal(report.routines.reduce((sum, item) => sum + item.dates.length, 0), 3);
+  assert.equal(report.workouts.join(), "2026-10-01");
+  assert.equal(report.projects.length, 2);
+  assert.equal(report.projects.flatMap((item) => item.updates).length, 2);
+  assert.equal(report.health.map((item) => item.date).join(), "2026-10-01,2026-10-04");
+  assert.equal(report.reviews.length, 1);
+  assert.equal(report.reviews[0].date, "2026-10-03");
+  assert.equal(report.reviews[0].text, "Review without a health entry");
+  assert.equal(report.inspirationCount, 1);
+  assert.equal(app.monthlyActivityFor("2025-10", data).tasks.length, 0);
+  assert.equal(JSON.stringify(data), before);
+});
+
+test("monthly tasks include dated long-term completions with a source marker and preserve separate tasks", () => {
+  const { context: app } = harness();
+  const data = {
+    days: { "2026-11-05": { tasks: [{ text: "Shared title", done: true }] } },
+    milestones: [
+      { id: "earlier", title: "Earlier completion", done: true, completedAt: "2026-11-01" },
+      { id: "same", title: "Shared title", done: true, completedAt: "2026-11-05" },
+      { id: "previous", title: "Previous month", done: true, completedAt: "2026-10-31" },
+      { id: "future", title: "Next month", done: true, completedAt: "2026-12-01" },
+      { id: "pending", title: "Reopened", done: false, completedAt: "2026-11-02" },
+      { id: "undated", title: "No date", done: true, completedAt: "" }
+    ]
+  };
+  const before = JSON.stringify(data);
+  const report = app.monthlyActivityFor("2026-11", data);
+  assert.equal(report.tasks.length, 3);
+  assert.equal(report.tasks.filter((item) => item.source === "long-term").length, 2);
+  assert.equal(report.tasks.map((item) => item.date).join(), "2026-11-01,2026-11-05,2026-11-05");
+  assert.equal(report.tasks.filter((item) => item.text === "Shared title").length, 2);
+  assert.equal(app.monthlyActivityFor("2026-10", data).tasks.length, 1);
+  assert.equal(JSON.stringify(data), before);
+  data.milestones[1].done = false;
+  data.milestones[1].completedAt = "";
+  assert.equal(app.monthlyActivityFor("2026-11", data).tasks.length, 2);
+});
+
+test("routine reordering persists the order while retaining identities and historical completion", () => {
+  const { context: app } = harness();
+  app.state.routineItems = [{ id: "a", title: "A" }, { id: "b", title: "B" }, { id: "c", title: "C" }];
+  app.state.days["2026-10-01"] = { routines: { a: true, b: false, c: true } };
+  app.currentRoutineItems = () => app.state.routineItems;
+  let saves = 0;
+  app.save = () => { saves += 1; };
+  app.renderFitness = () => {};
+  assert.equal(app.reorderRoutine("a", "c", true), true);
+  assert.equal(app.state.routineItems.map((item) => item.id).join(), "b,c,a");
+  assert.equal(app.reorderRoutine("a", "b"), true);
+  assert.equal(app.state.routineItems.map((item) => item.id).join(), "a,b,c");
+  assert.equal(app.reorderRoutine("missing", "c"), false);
+  assert.equal(saves, 2);
+  assert.equal(app.state.days["2026-10-01"].routines.a, true);
+  assert.equal(app.state.days["2026-10-01"].routines.b, false);
+});
+
+test("global search includes exercises in historical workout snapshots", () => {
+  const { context: app } = harness();
+  app.state.days["2025-01-01"] = { workoutPlan: { title: "Archived plan", items: [["1", "Historical exercise", "12 reps"]] } };
+  const results = app.searchWorkbench("Historical exercise");
+  assert.ok(results.some((item) => item.type === "workout" && item.date === "2025-01-01"));
+});
+
 const source = readFileSync(new URL("../app-v2.js", import.meta.url), "utf8");
 const names = ["readBackupPreferences", "persistBackupPreferences", "supportsBackupDirectory", "nextBackupAt", "backupPayload", "backupIssueText", "renderAutoBackupSettings", "runAutomaticBackup", "addProjectHistory", "latestProjectLogOn", "projectDayRecord", "updateProjectDayRecord", "projectAreaOptions", "normalizeProjectAreas", "addProjectArea", "renameProjectArea", "deleteProjectArea", "isCompletedProject", "planFor", "collectSearchEntries", "normalizedSearchText", "searchWorkbench", "searchTextMarkup", "resetCalendarPanelDates", "shiftCalendarPanelDate", "calendarDayNavMarkup", "renderDayDashboard"];
+
+names.push("monthlyActivityFor", "reorderRoutine", "reorderProject", "dailyActivitySummary");
+names.push("backupDataContent", "parseBackupText", "backupRelation", "backupVersionKey", "checkExternalBackups", "renderBackupSync", "applyReviewedBackup", "closeBackupReview", "updateCalendarPanelPreviews", "save");
+
+test("daily summaries show compact counts, unique projects, and honest inspiration status", () => {
+  const { context: app } = harness();
+  const date = "2026-10-22";
+  app.state.days[date] = { tasks: [{ text: "Private task", done: true }, { done: false }], fitness: true, inspiration: "Private idea" };
+  app.state.projects = [
+    { logs: [{ date, text: "First" }, { date, text: "Second" }] },
+    { logs: [{ date, text: "Another project" }] },
+    { logs: [{ date, text: " " }] }
+  ];
+  assert.equal(app.dailyActivitySummary(date), "完成待办1/2项｜完成运动1/1项｜项目推进2项｜今日灵感已记录");
+  app.state.days[date].fitness = false;
+  app.state.days[date].inspiration = "";
+  assert.equal(app.dailyActivitySummary(date), "完成待办1/2项｜完成运动0/1项｜项目推进2项｜今日灵感未记录");
+  app.workoutPlans[4].items = [];
+  assert.match(app.dailyActivitySummary(date), /完成运动0\/0项/);
+});
+
+test("new saved project actions automatically enter their dated monthly report", () => {
+  const { context: app } = harness();
+  const project = { id: "new", title: "New project", logs: [] };
+  app.state.projects = [project];
+  app.updateProjectDayRecord(project, "2026-10-22", "Shared description", "A newly saved action");
+  assert.equal(app.monthlyActivityFor("2026-10").projects[0].updates[0].text, "A newly saved action");
+  assert.equal(app.monthlyActivityFor("2026-11").projects.length, 0);
+});
+
+test("project sorting changes active order without moving archives or changing records", () => {
+  const { context: app } = harness();
+  const archived = { id: "archived", completed: true, logs: [{ date: "2026-01-01", text: "Keep archive" }] };
+  const first = { id: "a", description: "Keep description", daily: { "2026-10-01": { next: "Keep dated action" } } };
+  app.state.projects = [first, archived, { id: "b" }, { id: "c" }];
+  let saved = 0;
+  app.save = () => { saved += 1; };
+  app.renderProjects = () => {};
+  app.renderHome = () => {};
+  assert.equal(app.reorderProject("a", "c"), true);
+  assert.equal(app.state.projects.map((item) => item.id).join(), "b,archived,c,a");
+  assert.equal(app.state.projects[1], archived);
+  assert.equal(app.state.projects[3], first);
+  assert.equal(first.daily["2026-10-01"].next, "Keep dated action");
+  assert.equal(app.reorderProject("a", "b"), true);
+  assert.equal(app.state.projects.map((item) => item.id).join(), "a,archived,b,c");
+  assert.equal(app.reorderProject("archived", "b"), false);
+  assert.equal(app.reorderProject("missing", "b"), false);
+  assert.equal(saved, 2);
+});
 
 function functionSource(name) {
   const start = source.search(new RegExp(`^  (?:async )?function ${name}\\(`, "m"));
@@ -14,9 +148,146 @@ function functionSource(name) {
   return source.slice(start, end < 0 ? undefined : start + 1 + end);
 }
 
+function syncData(revision, ancestors = []) {
+  return { version: 5, nonPersonalDemoDataApplied: true, projects: [{ id: revision, title: revision }], goals: [], days: {}, _sync: { revision, ancestors, modifiedAt: "2026-11-05T10:00:00Z", deviceId: "other-device" } };
+}
+
+function backupFile(data, name = "backup.json") {
+  const text = JSON.stringify({ app: "kinetic-life-os", exportedAt: "2026-11-05T11:00:00Z", sync: data._sync, data });
+  return { kind: "file", name, getFile: async () => ({ size: text.length, text: async () => text }) };
+}
+
+test("data revisions change only after edits, not repeated saves or fresh export times", () => {
+  const { context: app } = harness();
+  app.save();
+  const first = app.state._sync.revision;
+  app.save();
+  assert.equal(app.state._sync.revision, first);
+  app.state.projects.push({ id: "edit" });
+  app.save();
+  assert.notEqual(app.state._sync.revision, first);
+  assert.ok(app.state._sync.ancestors.includes(first));
+  const revision = app.state._sync.revision;
+  app.backupPayload("2026-11-06T00:00:00Z");
+  assert.equal(app.state._sync.revision, revision);
+});
+
+test("backup classification uses lineage rather than export time and flags legacy or divergent data", () => {
+  const { context: app } = harness();
+  app.state = syncData("b", ["a"]);
+  assert.equal(app.backupRelation({ data: app.state, sync: app.state._sync }), "same");
+  const older = syncData("a");
+  assert.equal(app.backupRelation({ data: older, sync: older._sync, exportedAt: "2099-01-01" }), "older");
+  const newer = syncData("c", ["b", "a"]);
+  assert.equal(app.backupRelation({ data: newer, sync: newer._sync }), "newer");
+  const divergent = syncData("fork", ["a"]);
+  assert.equal(app.backupRelation({ data: divergent, sync: divergent._sync }), "conflict");
+  assert.equal(app.backupRelation({ data: older, sync: null }), "unverified");
+  assert.throws(() => app.parseBackupText('{"app":"another-app","data":{}}'));
+  assert.throws(() => app.parseBackupText('{"projects":[],"goals":[],"days":{},"version":4}'));
+  assert.equal(app.parseBackupText(JSON.stringify({ app: "kinetic-life-os", data: newer })).sync.revision, "c");
+});
+
+test("external updates pause automatic writes even before the next scheduled backup", async () => {
+  const { context: app } = harness();
+  app.state = syncData("a");
+  app.backupPreferences.lastSuccessfulAt = "2026-10-22T09:59:00Z";
+  let writes = 0;
+  app.backupDirectory = {
+    queryPermission: async () => "granted",
+    async *values() { yield backupFile(syncData("b", ["a"])); },
+    getFileHandle() { writes += 1; }
+  };
+  assert.equal(await app.runAutomaticBackup(), false);
+  assert.equal(writes, 0);
+  assert.equal(app.externalBackup.sync.revision, "b");
+  assert.equal(app.externalBackup.relation, "newer");
+  assert.equal(await app.runAutomaticBackup(true), false);
+  assert.equal(app.backupPreferences.lastSuccessfulAt, "2026-10-22T09:59:00Z");
+});
+
+test("folder scans ignore matching, ancestral and malformed files and fail closed on unreadable files", async () => {
+  const { context: app } = harness();
+  app.state = syncData("b", ["a"]);
+  app.backupDirectory = {
+    queryPermission: async () => "granted",
+    async *values() {
+      yield backupFile(app.state);
+      yield backupFile(syncData("a"), "older.json");
+      yield { kind: "file", name: "broken.json", getFile: async () => ({ size: 1, text: async () => "{" }) };
+    }
+  };
+  assert.equal(await app.checkExternalBackups(true), false);
+  app.backupDirectory.values = async function* () { yield { kind: "file", name: "offline.json", getFile: async () => { throw new Error("offline"); } }; };
+  assert.equal(await app.checkExternalBackups(true), true);
+  assert.equal(app.externalCheckFailed, true);
+  assert.equal(await app.checkExternalBackups(), true);
+  assert.equal(app.externalChecking, false);
+});
+
+test("observed ancestral backups stay acknowledged after the short lineage has aged out", async () => {
+  const { context: app } = harness();
+  app.state = syncData("b", ["a"]);
+  app.backupDirectory = { queryPermission: async () => "granted", async *values() { yield backupFile(syncData("a")); } };
+  assert.equal(await app.checkExternalBackups(true), false);
+  assert.ok(app.backupPreferences.ignoredVersions.includes("a"));
+  app.state = syncData("far-future", ["recent"]);
+  assert.equal(await app.checkExternalBackups(true), false);
+  assert.equal(app.externalBackup, null);
+});
+
+test("a backup stream writes the captured revision even if edits occur while opening the destination", async () => {
+  const { context: app } = harness();
+  app.state = syncData("a");
+  let captured;
+  app.backupDirectory = {
+    queryPermission: async () => "granted",
+    getFileHandle: async () => {
+      app.state.projects[0].title = "An edit after capture";
+      app.save();
+      return { createWritable: async () => ({ write: async (value) => { captured = JSON.parse(value); }, close: async () => {} }) };
+    }
+  };
+  assert.equal(await app.runAutomaticBackup(true), true);
+  assert.equal(captured.data.projects[0].title, "a");
+  assert.notEqual(captured.sync.revision, app.state._sync.revision);
+});
+
+test("imports preserve a full recovery copy and only replace data after explicit application", () => {
+  const { context: app, stored } = harness();
+  app.state = syncData("a");
+  app.save();
+  const before = JSON.stringify(app.state);
+  app.externalBackup = { data: syncData("b", ["a"]), sync: syncData("b", ["a"])._sync };
+  assert.equal(JSON.stringify(app.state), before);
+  assert.equal(app.applyReviewedBackup(), true);
+  assert.equal(JSON.parse(stored.get("test:recovery")).data.projects[0].id, "a");
+  assert.equal(app.state.projects[0].id, "b");
+  assert.equal(app.externalBackup, null);
+});
+
+test("recovery storage or normalization failure leaves the original records and reset marker intact", () => {
+  const { context: app, stored } = harness();
+  app.state = syncData("a");
+  app.save();
+  const before = stored.get("test:state");
+  app.externalBackup = { data: syncData("b"), sync: syncData("b")._sync };
+  const write = app.localStorage.setItem;
+  app.localStorage.setItem = (key, value) => { if (key === "test:recovery") throw new Error("quota"); write(key, value); };
+  assert.equal(app.applyReviewedBackup(), false);
+  assert.equal(stored.get("test:state"), before);
+  assert.equal(app.state.projects[0].id, "a");
+  app.localStorage.setItem = write;
+  stored.set("test:cleared", "true");
+  app.loadState = () => { throw new Error("normalize"); };
+  assert.equal(app.applyReviewedBackup(), false);
+  assert.equal(stored.get("test:state"), before);
+  assert.equal(stored.get("test:cleared"), "true");
+});
+
 function harness() {
   const stored = new Map();
-  const elements = new Map(["autoBackupSettings", "backupNotice", "calendarWorkoutPanel", "calendarWorkPanel", "calendarHealthPanel", "calendarProjectLogPanel", "calendarInspirationPanel", "calendarCompletedPanel"].map((id) => [id, { innerHTML: "", hidden: true }]));
+  const elements = new Map(["autoBackupSettings", "backupNotice", "backupSyncSettings", "backupSyncNotice", "backupImportDialog", "calendarWorkoutPanel", "calendarWorkPanel", "calendarHealthPanel", "calendarProjectLogPanel", "calendarInspirationPanel", "calendarCompletedPanel"].map((id) => [id, { innerHTML: "", hidden: true, close() {}, focus() {} }]));
   const clock = { now: Date.parse("2026-10-22T10:00:00Z") };
   class ClockDate extends Date {
     constructor(...args) { super(...(args.length ? args : [clock.now])); }
@@ -28,7 +299,12 @@ function harness() {
     BACKUP_PREFERENCES_STORE: "test:backup",
     BACKUP_INTERVALS: ["daily", "weekly", "monthly"],
     STORE: "test:state",
-    localStorage: { getItem: (key) => stored.get(key) ?? null, setItem: (key, value) => stored.set(key, value) },
+    RESET_MARKER: "test:cleared",
+    RECOVERY_STORE: "test:recovery",
+    deviceId: "test-device",
+    lastSavedContent: "",
+    clearTimeout() {},
+    localStorage: { getItem: (key) => stored.get(key) ?? null, setItem: (key, value) => stored.set(key, value), removeItem: (key) => stored.delete(key) },
     window: { isSecureContext: true, showDirectoryPicker() {}, indexedDB: {} },
     document: { visibilityState: "visible", getElementById: (id) => elements.get(id) },
     state: { projects: [], goals: [], days: {} },
@@ -37,6 +313,18 @@ function harness() {
     backupInitialized: true,
     backupInProgress: false,
     backupIssue: "",
+    externalBackup: null,
+    externalCheckAt: 0,
+    externalCheckFailed: false,
+    externalChecking: false,
+    ignoredBackupVersions: new Set(),
+    backupReviewButton: null,
+    editingProjectIds: new Set(),
+    projectTextDrafts: new Map(),
+    expandedCalendarPanels: new Set(),
+    editingWorkoutDate: null,
+    renderAll() {},
+    loadState: () => JSON.parse(stored.get("test:state")),
     selectedDate: "2026-10-22",
     calendarPanelDates: { workout: "2026-10-22", work: "2026-10-22", projects: "2026-10-22", inspiration: "2026-10-22" },
     editingCalendarHealthDate: null,

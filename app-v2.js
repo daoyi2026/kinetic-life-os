@@ -3,7 +3,9 @@
 
   const STORE = "serene-personal-workspace-v1";
   const RESET_MARKER = `${STORE}:cleared`;
-  const APP_VERSION = "v1.5.3";
+  const DEVICE_STORE = "kinetic-life-os:device";
+  const RECOVERY_STORE = "kinetic-life-os:before-import";
+  const APP_VERSION = "v1.6.0";
   const BACKUP_PREFERENCES_STORE = "kinetic-life-os:auto-backup";
   const BACKUP_DATABASE = "kinetic-life-os-backup-handles";
   const BACKUP_INTERVALS = ["daily", "weekly", "monthly"];
@@ -536,7 +538,13 @@
     { id: "home", legacy: ["⌂"], paths: '<path d="m4 10 8-6 8 6v10H4zM9 20v-6h6v6"/>' },
     { id: "pencil", legacy: ["✎"], paths: '<path d="m5 16-1 4 4-1L19 8a2.1 2.1 0 0 0-3-3L5 16Z"/><path d="m14.5 6.5 3 3"/>' },
     { id: "mail", legacy: ["✉"], paths: '<rect x="4" y="6" width="16" height="12" rx="2"/><path d="m5 8 7 5 7-5"/>' },
-    { id: "clock", legacy: ["◎"], paths: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>' }
+    { id: "clock", legacy: ["◎"], paths: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>' },
+    { id: "book", legacy: [], paths: '<path d="M12 5v15M12 5C9 3 5 3 3 4v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-2-1-6-1-9 1Z"/>' },
+    { id: "leaf", legacy: [], paths: '<path d="M5 19c-5-8 3-14 15-15 0 12-6 20-15 15ZM5 19 16 8"/>' },
+    { id: "camera", legacy: [], paths: '<rect x="3" y="6" width="18" height="14" rx="2"/><path d="m8 6 1-3h6l1 3"/><circle cx="12" cy="13" r="4"/>' },
+    { id: "compass", legacy: [], paths: '<circle cx="12" cy="12" r="9"/><path d="m16 8-2 6-6 2 2-6 6-2Z"/>' },
+    { id: "heart", legacy: [], paths: '<path d="M12 20 4 12C-2 5 7-1 12 6c5-7 14-1 8 6l-8 8Z"/>' },
+    { id: "spark", legacy: [], paths: '<path d="m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z"/>' }
   ];
 
   function projectIcon(project) {
@@ -547,9 +555,9 @@
     return `<svg viewBox="0 0 24 24" aria-hidden="true">${projectIcon(project).paths}</svg>`;
   }
 
-  function nextProjectSymbol(project) {
-    const currentIndex = PROJECT_ICONS.findIndex((item) => item.id === project.symbol || item.legacy.includes(project.symbol));
-    project.symbol = PROJECT_ICONS[(currentIndex + 1 + PROJECT_ICONS.length) % PROJECT_ICONS.length].id;
+  function projectIconPickerMarkup(project) {
+    const names = { hourglass: ["沙漏", "Hourglass"], arrow: ["箭头", "Arrow"], home: ["房屋", "Home"], pencil: ["铅笔", "Pencil"], mail: ["信封", "Mail"], clock: ["时钟", "Clock"], book: ["书本", "Book"], leaf: ["叶子", "Leaf"], camera: ["相机", "Camera"], compass: ["指南针", "Compass"], heart: ["爱心", "Heart"], spark: ["星光", "Spark"] };
+    return `<details class="project-icon-picker"><summary class="project-reading-icon" aria-label="${esc(uiText("选择项目图标", "Choose project icon"))}" title="${esc(uiText("选择项目图标", "Choose project icon"))}">${projectIconMarkup(project)}</summary><div class="project-icon-options" role="group" aria-label="${esc(uiText("默认图标", "Default icons"))}">${PROJECT_ICONS.map((item) => `<button type="button" class="project-icon-option" data-action="select-project-symbol" data-id="${esc(project.id)}" data-symbol="${item.id}" aria-label="${esc(uiText(...names[item.id]))}" aria-pressed="${projectIcon(project).id === item.id}" title="${esc(uiText(...names[item.id]))}">${projectIconMarkup({ symbol: item.id })}</button>`).join("")}</div></details>`;
   }
 
   function icon(name) {
@@ -613,9 +621,10 @@
 
         <div class="v2-content">
           <aside class="backup-notice" id="backupNotice" role="status" data-no-translate="true" hidden></aside>
+          <aside class="backup-notice" id="backupSyncNotice" role="status" data-no-translate="true" hidden></aside>
           <section class="v2-screen" data-screen="home">
             <div class="compact-banner"><h2 id="homeOverviewTitle" class="home-breeze-title"><span id="homeBreezePeriod"></span><span id="homeBreezeCopy"></span></h2></div>
-            <section class="section">
+            <section class="section home-overview-section">
               <article class="card home-stats-card">
                 <div class="card-head"><div><h3>完成概览</h3><small>工作、待办和年度目标的当前状态</small></div></div>
                 <div class="home-stats-grid" id="homeStats"></div>
@@ -795,6 +804,7 @@
             <section class="section footprints-stack">
               <article class="card footprints-card" id="footprintsPanel"></article>
               <article class="card footprints-metrics-card" id="footprintsMetricsPanel"></article>
+              <article class="card monthly-activity-card" id="monthlyActivityPanel" data-no-translate="true"></article>
               <article class="card day-dashboard calendar-completed-panel" id="calendarCompletedPanel"></article>
             </section>
           </section>
@@ -804,6 +814,7 @@
             <section class="section settings-stack">
               <article class="card settings-card"><h3>数据备份</h3><p>导出 JSON 备份后，可以在另一台设备恢复工作台数据。</p><div class="settings-actions"><button class="btn green" data-action="export">导出备份</button><label class="btn secondary file-btn">导入备份<input id="importInput" type="file" accept="application/json,.json" aria-label="选择备份文件" /></label></div></article>
               <article class="card settings-card" id="autoBackupSettings" data-no-translate="true"></article>
+              <article class="card settings-card" id="backupSyncSettings" data-no-translate="true"></article>
               <article class="card settings-card"><h3>清除当前设备记录</h3><p>此操作会清除当前浏览器中的工作台记录，且无法撤销。</p><div class="settings-actions"><button class="btn danger" data-action="reset">清除全部记录</button></div></article>
               <article class="card settings-card"><h3 data-i18n-key="隐私与开源许可">隐私与开源许可</h3><p data-i18n-key="了解本地数据如何保存，以及本项目采用的开源许可。">了解本地数据如何保存，以及本项目采用的开源许可。</p><div class="settings-actions"><a class="btn secondary" href="https://github.com/daoyi2026/kinetic-life-os/blob/main/PRIVACY.md" target="_blank" rel="noopener noreferrer" data-i18n-key="查看隐私政策">查看隐私政策</a><a class="btn secondary" href="https://github.com/daoyi2026/kinetic-life-os/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" data-i18n-key="查看 GPL-3.0 许可">查看 GPL-3.0 许可</a></div></article>
             </section>
@@ -817,6 +828,12 @@
       ${pages.slice(0, 4).concat([pages[5], pages[6]]).map(([id, label, iconName]) => `<a href="#${id}" data-page="${id}">${icon(iconName)}<span>${label.replace("计划", "")}</span></a>`).join("")}
     </nav>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <dialog class="backup-import-dialog" id="backupImportDialog" aria-labelledby="backupImportTitle" data-no-translate="true">
+      <h2 id="backupImportTitle">${uiText("确认导入备份", "Review backup import")}</h2>
+      <p id="backupImportSummary"></p><details><summary>${uiText("备份文件", "Backup file")}</summary><p class="backup-file-name" id="backupImportFile"></p></details>
+      <p>${uiText("导入将替换本机全部记录，不会合并。操作前会先保存一份本机快照；你可以在设置中下载它。", "Import replaces all local records without merging. A local recovery snapshot must be saved first and can be downloaded from Settings.")}</p>
+      <div class="settings-actions"><button class="btn secondary" id="backupImportCancel" type="button" data-action="close-backup-review">${uiText("稍后处理", "Later")}</button><button class="text-btn" type="button" data-action="keep-local-backup">${uiText("保留本机，忽略此版本", "Keep local; ignore this version")}</button><button class="btn green" type="button" data-action="apply-backup-import">${uiText("保存快照并替换导入", "Save snapshot & replace")}</button></div>
+    </dialog>
     <div class="modal-backdrop" id="projectAreasModal" hidden>
       <section class="modal-card project-areas-modal" role="dialog" aria-modal="true" aria-labelledby="projectAreasTitle" data-no-translate="true">
         <div class="modal-card-head"><h2 id="projectAreasTitle"></h2><button class="icon-button" type="button" data-action="close-project-areas" aria-label="${uiText("关闭", "Close")}">×</button></div>
@@ -1918,7 +1935,7 @@
     };
   }
 
-  function loadState() {
+  function loadState(strict = false) {
     const base = defaultState();
     try {
       if (localStorage.getItem(RESET_MARKER) === "true") return clearedState(base);
@@ -2047,7 +2064,8 @@
       merged.migratedToV2 = true;
       if (resettingNonFitnessData || appliedDemoLanguageRecords || appliedDemoInspirationTrail || refreshedDemoInspirationTrail || inspirationTrailNeedsRefresh || breezeGuideChanged || removedLegacyPersonalDemoContent) localStorage.setItem(STORE, JSON.stringify(merged));
       return merged;
-    } catch {
+    } catch (error) {
+      if (strict) throw error;
       return base;
     }
   }
@@ -2072,12 +2090,21 @@
   }
 
   let state = loadState();
+  let lastSavedContent = backupDataContent(state);
+  let deviceId = localStorage.getItem(DEVICE_STORE) || crypto.randomUUID();
+  localStorage.setItem(DEVICE_STORE, deviceId);
   state.projectAreas = normalizeProjectAreas(state.projectAreas, state.projects);
   let backupPreferences = readBackupPreferences();
   let backupDirectory = null;
   let backupInitialized = false;
   let backupInProgress = false;
   let backupIssue = "";
+  let externalBackup = null;
+  let externalCheckAt = 0;
+  let externalCheckFailed = false;
+  let externalChecking = false;
+  let ignoredBackupVersions = new Set(backupPreferences.ignoredVersions || []);
+  let backupReviewButton = null;
   let selectedDate = todayKey();
   let selectedFitnessDate = todayKey();
   const calendarPanelDates = { workout: selectedDate, work: selectedDate, projects: selectedDate, inspiration: selectedDate };
@@ -2098,6 +2125,9 @@
   }
   let editingGoals = false;
   let editingPriorities = false;
+  const editingProjectIds = new Set();
+  const projectTextDrafts = new Map();
+  let projectDragState = null;
   let editingMasterTodos = false;
   let masterTodoDragState = null;
   let editingEventId = null;
@@ -2105,10 +2135,14 @@
   let workoutDraft = null;
   let workoutDragState = null;
   let editingCalendarHealthDate = null;
+  const expandedCalendarPanels = new Set();
   let calendarHealthDraft = null;
   let calendarHealthInitialDraft = null;
   let calendarHealthDraftDirty = false;
   let editingRoutines = false;
+  let routineDragState = null;
+  let monthlyActivityMonth = todayKey().slice(0, 7);
+  let monthlyActivityExpanded = false;
   let editingSupplementaryTraining = false;
   let completedProjectFilter = "全部";
   let projectStatusFilter = "all";
@@ -2300,8 +2334,14 @@
       clearTimeout(saveTimer);
       saveTimer = null;
     }
+    const content = backupDataContent(state);
+    if (!state._sync?.revision || content !== lastSavedContent) {
+      const previous = state._sync || {};
+      state._sync = { revision: crypto.randomUUID(), ancestors: [...new Set([previous.revision, ...(previous.ancestors || [])].filter(Boolean))].slice(0, 128), modifiedAt: new Date().toISOString(), deviceId };
+    }
     localStorage.removeItem(RESET_MARKER);
     localStorage.setItem(STORE, JSON.stringify(state));
+    lastSavedContent = content;
   }
 
   const SAVE_DEBOUNCE_MS = 300;
@@ -2329,6 +2369,7 @@
       enabledAt: timestamp(saved.enabledAt),
       lastSuccessfulAt: timestamp(saved.lastSuccessfulAt),
       lastExportRequestedAt: timestamp(saved.lastExportRequestedAt),
+      ignoredVersions: Array.isArray(saved.ignoredVersions) ? saved.ignoredVersions.filter((id) => typeof id === "string").slice(-10000) : [],
       lastFileName: typeof saved.lastFileName === "string" ? saved.lastFileName : ""
     };
   }
@@ -2379,7 +2420,151 @@
   }
 
   function backupPayload(exportedAt = new Date().toISOString()) {
-    return JSON.stringify({ app: "kinetic-life-os", exportedAt, data: state }, null, 2);
+    return JSON.stringify({ app: "kinetic-life-os", exportedAt, sync: state._sync || null, data: state }, null, 2);
+  }
+
+  function backupDataContent(data) {
+    const { _sync, ...content } = data;
+    return JSON.stringify(content);
+  }
+
+  function parseBackupText(text) {
+    const parsed = JSON.parse(text);
+    const data = parsed.data || parsed;
+    if (parsed.app && parsed.app !== "kinetic-life-os") throw new Error("foreign-backup");
+    if (!data || typeof data !== "object" || Array.isArray(data) || !Array.isArray(data.projects) || !Array.isArray(data.goals) || !data.days || typeof data.days !== "object" || Array.isArray(data.days)) throw new Error("invalid-backup");
+    if (data.version !== 5 || data.nonPersonalDemoDataApplied !== true) throw new Error("unsupported-backup-version");
+    const sync = parsed.sync || data._sync || null;
+    if (sync && (typeof sync.revision !== "string" || !Array.isArray(sync.ancestors) || !sync.ancestors.every((id) => typeof id === "string") || !Number.isFinite(Date.parse(sync.modifiedAt)))) throw new Error("invalid-backup-version");
+    return { app: "kinetic-life-os", data, sync, exportedAt: typeof parsed.exportedAt === "string" ? parsed.exportedAt : "" };
+  }
+
+  function backupRelation(backup, local = state) {
+    if (backupDataContent(backup.data) === backupDataContent(local)) return "same";
+    const remote = backup.sync;
+    const current = local._sync;
+    if (!remote?.revision || !current?.revision) return "unverified";
+    if (remote.revision === current.revision) return "conflict";
+    if (current.ancestors?.includes(remote.revision)) return "older";
+    if (remote.ancestors?.includes(current.revision)) return "newer";
+    return "conflict";
+  }
+
+  function backupVersionKey(backup) {
+    return backup.sync?.revision || `legacy:${backup.exportedAt}:${backup.name || ""}`;
+  }
+
+  async function checkExternalBackups(force = false) {
+    if (!backupDirectory || typeof backupDirectory.values !== "function") return false;
+    if (externalBackup || externalChecking) return true;
+    if (!force && Date.now() - externalCheckAt < 60_000) return Boolean(externalBackup || externalCheckFailed);
+    externalCheckAt = Date.now();
+    externalCheckFailed = false;
+    externalChecking = true;
+    const candidates = [];
+    let acknowledged = false;
+    try {
+      if (await backupDirectory.queryPermission({ mode: "read" }) !== "granted") throw new Error("permission");
+      for await (const handle of backupDirectory.values()) {
+        if (handle.kind !== "file" || !handle.name.endsWith(".json")) continue;
+        const file = await handle.getFile();
+        if (file.size > 2e6) continue;
+        let candidate;
+        try { candidate = { ...parseBackupText(await file.text()), name: handle.name }; } catch { continue; }
+        const relation = backupRelation(candidate);
+        if (["same", "older"].includes(relation)) {
+          // Remember observed ancestors before the bounded lineage ages out.
+          if (candidate.sync?.revision && !ignoredBackupVersions.has(candidate.sync.revision)) {
+            ignoredBackupVersions.add(candidate.sync.revision);
+            acknowledged = true;
+          }
+          continue;
+        }
+        if (ignoredBackupVersions.has(backupVersionKey(candidate))) continue;
+        candidates.push({ ...candidate, name: handle.name, relation });
+      }
+      candidates.sort((a, b) => (Date.parse(b.sync?.modifiedAt || b.exportedAt) || 0) - (Date.parse(a.sync?.modifiedAt || a.exportedAt) || 0));
+      if (acknowledged) {
+        backupPreferences.ignoredVersions = [...ignoredBackupVersions].slice(-10000);
+        persistBackupPreferences();
+      }
+      externalBackup ||= candidates[0] || null;
+      renderBackupSync();
+      return Boolean(externalBackup);
+    } catch {
+      externalCheckFailed = true;
+      renderBackupSync();
+      return true;
+    } finally {
+      externalChecking = false;
+    }
+  }
+
+  function renderBackupSync() {
+    const panel = document.getElementById("backupSyncSettings");
+    const notice = document.getElementById("backupSyncNotice");
+    if (!panel || !notice) return;
+    panel.innerHTML = `<h3>${uiText("云盘文件接力", "Cloud-folder handoff")}</h3><p>${uiText("电脑端随已开启的自动备份检查文件夹更新；手机请从“文件”选择 iCloud 备份。导入会替换本机记录，不会自动合并两端修改。", "Desktop checks the authorized folder with scheduled backups. On mobile, choose an iCloud file. Import replaces local records; edits are not automatically merged.")}</p><div class="settings-actions">${supportsBackupDirectory() ? `<button class="btn secondary" type="button" data-action="check-backup-updates">${uiText("检查文件夹更新", "Check folder updates")}</button>` : ""}<label class="btn secondary file-btn">${uiText("从 iCloud / 文件选择备份", "Choose backup from Files / iCloud")}<input id="cloudImportInput" type="file" accept="application/json,.json" aria-label="${uiText("选择云盘备份", "Choose cloud backup")}" /></label>${localStorage.getItem(RECOVERY_STORE) ? `<button class="text-btn" type="button" data-action="download-import-recovery">${uiText("下载导入前快照", "Download pre-import snapshot")}</button>` : ""}</div>${externalCheckFailed ? `<p class="backup-error" role="status">${uiText("暂时无法检查文件夹，自动写入已暂停。请确认云盘文件已下载、文件夹授权有效，再点击检查。", "Folder check failed. Automatic writes are paused. Download cloud files, confirm folder access, and retry.")}</p>` : ""}`;
+    notice.hidden = !externalBackup;
+    notice.innerHTML = externalBackup ? `<span>${uiText("备份文件夹有不同版本，请确认是否导入。自动备份已暂停。", "A different backup version is available. Automatic backups are paused pending your choice.")}</span><button class="text-btn" type="button" data-action="review-external-backup">${uiText("查看备份", "Review backup")}</button>` : "";
+  }
+
+  function reviewBackup(backup, name = "") {
+    flushSave();
+    externalBackup = { ...backup, name, relation: backupRelation(backup) };
+    const dialog = document.getElementById("backupImportDialog");
+    const date = backup.sync?.modifiedAt || backup.exportedAt;
+    const status = { same: uiText("内容与本机相同", "Same data as this device"), older: uiText("这是较旧的数据版本", "This is an older data version"), newer: uiText("包含本机版本之后的更新", "Contains updates after this device's version"), conflict: uiText("两端存在不同修改，导入将覆盖本机版本", "Different edits exist. Import will replace this device's version."), unverified: uiText("旧格式备份，无法核实版本先后", "Legacy backup: version order cannot be verified") }[externalBackup.relation];
+    document.getElementById("backupImportSummary").textContent = `${status}。 ${date ? new Date(date).toLocaleString() : uiText("时间未知", "Unknown date")} · ${backup.data.projects.length} ${uiText("个项目", "projects")} · ${Object.keys(backup.data.days).length} ${uiText("天记录", "recorded days")}`;
+    document.getElementById("backupImportFile").textContent = name;
+    backupReviewButton = document.activeElement;
+    if (!dialog.open) dialog.showModal();
+    document.getElementById("backupImportCancel").focus();
+    renderBackupSync();
+  }
+
+  function closeBackupReview() {
+    document.getElementById("backupImportDialog").close();
+    backupReviewButton?.focus?.({ preventScroll: true });
+  }
+
+  function applyReviewedBackup() {
+    if (!externalBackup || backupInProgress) return false;
+    flushSave();
+    const candidate = externalBackup;
+    const before = { data: localStorage.getItem(STORE), reset: localStorage.getItem(RESET_MARKER), state, content: lastSavedContent };
+    // Persist a complete recovery copy before replacing any user data.
+    try {
+      localStorage.setItem(RECOVERY_STORE, backupPayload());
+      const incoming = { ...candidate.data };
+      if (candidate.sync) incoming._sync = candidate.sync;
+      localStorage.removeItem(RESET_MARKER);
+      localStorage.setItem(STORE, JSON.stringify(incoming));
+      state = loadState(true);
+      lastSavedContent = backupDataContent(incoming);
+      save();
+    } catch {
+      state = before.state;
+      lastSavedContent = before.content;
+      try {
+        if (before.data === null) localStorage.removeItem(STORE); else localStorage.setItem(STORE, before.data);
+        if (before.reset === null) localStorage.removeItem(RESET_MARKER); else localStorage.setItem(RESET_MARKER, before.reset);
+      } catch { /* The in-memory data remains intact if storage is unavailable. */ }
+      const message = uiText("无法安全保存导入前快照或新数据，未完成导入。请先手动导出并检查存储空间。", "Import could not be saved safely. Export your data and check storage space.");
+      const summary = document.getElementById("backupImportSummary");
+      if (summary) summary.textContent = message;
+      notify(message);
+      return false;
+    }
+    editingProjectIds.clear();
+    projectTextDrafts.clear();
+    externalBackup = null;
+    externalCheckAt = 0;
+    closeBackupReview();
+    renderAll();
+    renderBackupSync();
+    notify(uiText("备份已导入，导入前快照已保留", "Backup imported. The previous snapshot was retained."));
+    return true;
   }
 
   function backupIssueText() {
@@ -2409,7 +2594,7 @@
       </dl></div>
       ${backupPreferences.lastFileName ? `<details class="backup-file-details"><summary>${uiText("查看最近备份文件名", "View latest backup filename")}</summary><code class="backup-file-name">${esc(backupPreferences.lastFileName)}</code></details>` : ""}
       ${directoryMode && !enabled ? `<p class="backup-setup-hint">${uiText("首次开启请选择并授权一个备份文件夹。", "Choose and authorize a backup folder when enabling for the first time.")}</p>` : ""}
-      <p class="backup-storage-note">${directoryMode ? uiText("JSON 仅保存在本地，不上传云端；每次生成新文件，不覆盖旧备份。", "JSON files stay local and are never uploaded. Each backup is a new file; earlier backups are not overwritten.") : uiText("当前浏览器仅支持到期提醒，不能自动写入文件夹。请手动导出，并在下载目录确认文件已保存。", "This browser supports reminders only, not automatic folder writes. Export manually and confirm the file in your downloads.")}</p>
+      <p class="backup-storage-note">${directoryMode ? uiText("JSON 写入你选择的文件夹；若选择 iCloud 等云盘目录，将由云盘服务同步。每次生成新文件，不覆盖旧备份。", "JSON files are written to your selected folder. Your cloud service syncs cloud folders such as iCloud. Each backup is a new file; earlier backups are not overwritten.") : uiText("当前浏览器仅支持到期提醒，不能自动写入文件夹。请手动导出，并在下载目录确认文件已保存。", "This browser supports reminders only, not automatic folder writes. Export manually and confirm the file in your downloads.")}</p>
       ${issue ? `<p class="backup-error" role="alert">${esc(issue)}</p>` : ""}
       ${backupInProgress ? `<p role="status">${uiText("正在保存备份，请保持此页面打开…", "Saving a backup. Keep this page open…")}</p>` : ""}
       <div class="settings-actions">${!enabled
@@ -2422,28 +2607,32 @@
     notice.hidden = !noticeText;
     const noticeMarkup = noticeText ? `<span>${esc(noticeText)}</span><button class="text-btn" type="button" data-page="settings">${uiText("设置与备份", "Settings & backup")} →</button>` : "";
     if (notice.innerHTML !== noticeMarkup) notice.innerHTML = noticeMarkup;
+    renderBackupSync();
   }
 
   async function runAutomaticBackup(force = false) {
     if (!backupInitialized || !backupPreferences.enabled || backupInProgress || (!force && document.visibilityState === "hidden")) return false;
     if (!supportsBackupDirectory()) { renderAutoBackupSettings(); return false; }
-    if (!force && (backupIssue || Date.now() < nextBackupAt())) return false;
     if (!backupDirectory) { backupIssue = "folder"; renderAutoBackupSettings(); return false; }
     backupInProgress = true;
     backupIssue = "";
     renderAutoBackupSettings();
     let writer;
     try {
+      flushSave();
+      if (await checkExternalBackups(force)) return false;
+      if (!force && (backupIssue || Date.now() < nextBackupAt())) return false;
       if (await backupDirectory.queryPermission({ mode: "readwrite" }) !== "granted") {
         backupIssue = "permission";
         return false;
       }
-      flushSave();
+      save();
       const exportedAt = new Date().toISOString();
+      const payload = backupPayload(exportedAt);
       const fileName = `life-workbench-backup-${exportedAt.replace(/[:.]/g, "-")}-${crypto.randomUUID()}.json`;
       const file = await backupDirectory.getFileHandle(fileName, { create: true });
       writer = await file.createWritable();
-      await writer.write(backupPayload(exportedAt));
+      await writer.write(payload);
       await writer.close();
       writer = null;
       backupPreferences.lastSuccessfulAt = new Date().toISOString();
@@ -2488,6 +2677,7 @@
 
   function exportBackup() {
     flushSave();
+    save();
     const blob = new Blob([backupPayload()], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -2863,6 +3053,18 @@
 
     grid.style.setProperty("--week-count", String(weekCount));
     grid.innerHTML = cells.join("");
+    if (window.matchMedia("(max-width: 760px)").matches) {
+      requestAnimationFrame(() => {
+        const plot = grid.closest(".annual-calendar-plot");
+        const cell = grid.querySelector(".is-selected");
+        if (!plot || !cell || !plot.clientWidth) return;
+        const bounds = plot.getBoundingClientRect();
+        const selected = cell.getBoundingClientRect();
+        if (selected.left < bounds.left || selected.right > bounds.right) {
+          plot.scrollLeft += selected.left - bounds.left - (plot.clientWidth - selected.width) / 2;
+        }
+      });
+    }
     if (meta) meta.textContent = currentLanguage === "en" ? `${activeDays} active days · ${daysInYear} days` : `${activeDays} 天有记录 · 全年 ${daysInYear} 天`;
     if (legend) {
       legend.innerHTML = `<span>${uiText("少", "Less")}</span>${Array.from({ length: 6 }, (_, level) => `<i class="annual-legend-swatch heat-level-${level}" aria-hidden="true"></i>`).join("")}<span>${uiText("多", "More")}</span>`;
@@ -2884,74 +3086,25 @@
     const activity = dailyActivityFor(key);
     const summaryCopy = showSummary
       ? `${completionCopy} · ${esc(summary)}`
-      : `<span class="calendar-activity-copy">${uiText("活动热度", "Activity level")} ${activity.score}%${currentLanguage === "en" ? ": " : "："}${esc(dailyActivitySummary(key))}</span>`;
-    return `<strong>${esc(dayText(key))}${important}</strong>${summaryCopy}`;
+      : `<span class="calendar-activity-copy">${uiText("活动热度", "Activity level")} ${activity.score}%｜${esc(dailyActivitySummary(key))}</span>`;
+    const dateTitle = `<strong>${esc(dayText(key))}${important}</strong>`;
+    const editButton = editingCalendarHealthDate === key && calendarHealthDraft ? "" : `<button class="text-btn" type="button" data-action="edit-calendar-health">${uiText("编辑", "Edit")}</button>`;
+    return showSummary ? `${dateTitle}${summaryCopy}` : `<div class="calendar-caption-head">${dateTitle}${editButton}</div>${summaryCopy}`;
   }
 
   function dailyActivitySummary(key) {
     const day = state.days[key] || {};
     const tasks = Array.isArray(day.tasks) ? day.tasks : [];
-    const completedTasks = tasks.filter((task) => task.done);
-    const parts = [];
-    const compactText = (value, limit) => {
-      const text = String(value || "").trim().replace(/\s+/g, " ");
-      const characters = Array.from(text);
-      return characters.length > limit ? `${characters.slice(0, limit).join("")}…` : text;
-    };
-
-    if (!tasks.length) {
-      parts.push(uiText("今天没有待办事项", "No tasks today"));
-    } else if (!completedTasks.length) {
-      parts.push(currentLanguage === "en" ? `Tasks ${completedTasks.length}/${tasks.length} completed` : `待办完成${completedTasks.length}/${tasks.length}项`);
-    } else {
-      const completedNames = completedTasks.slice(0, 2).map((task) => `“${compactText(task.text, 24)}”`);
-      const more = completedTasks.length > completedNames.length
-        ? (currentLanguage === "en" ? ` and ${completedTasks.length - completedNames.length} more` : `等${completedTasks.length}项`)
-        : "";
-      parts.push(currentLanguage === "en"
-        ? `Completed ${completedTasks.length}/${tasks.length} tasks: ${completedNames.join(", ")}${more}`
-        : `完成待办${completedTasks.length}/${tasks.length}项：${completedNames.join("、")}${more}`);
-    }
-
-    const projectLogs = projectLogsOn(key);
-    if (projectLogs.length) {
-      const updates = projectLogs.slice(0, 2).map((log) => `${compactText(log.project, 16)}：${compactText(log.text, 28)}`);
-      const more = projectLogs.length > updates.length
-        ? (currentLanguage === "en" ? ` and ${projectLogs.length - updates.length} more updates` : `等${projectLogs.length}条推进`)
-        : "";
-      parts.push(currentLanguage === "en" ? `Project updates: ${updates.join("; ")}${more}` : `项目推进：${updates.join("；")}${more}`);
-    } else {
-      parts.push(uiText("暂无项目推进", "No project updates"));
-    }
-
-    const plan = planFor(key);
-    const scheduledWorkout = TRAINING_WEEKDAYS.includes(fromKey(key).getDay()) && plan.items.length > 0;
-    const planTitle = localizedPlanTitle(plan.title);
-    if (scheduledWorkout) {
-      parts.push(currentLanguage === "en"
-        ? (day.fitness ? `Completed ${planTitle} workout` : `${planTitle} workout not completed`)
-        : (day.fitness ? `完成${plan.title}训练` : `${plan.title}训练待完成`));
-    } else {
-      parts.push(day.fitness ? uiText("完成了额外运动", "Extra workout completed") : uiText("今日无计划训练", "No workout scheduled"));
-    }
-
-    const routines = currentRoutineItems();
-    const routineCount = routines.filter((item) => day.routines?.[item.id]).length;
-    if (routineCount) parts.push(currentLanguage === "en" ? `${routineCount} daily routines completed` : `完成${routineCount}项日常项目`);
-
-    const water = Math.max(0, Math.min(8, Number(day.water) || 0));
-    if (water) parts.push(currentLanguage === "en" ? `Hydration ${water} cups` : `饮水${water}杯`);
-    const weight = weightOn(key);
-    if (weight) parts.push(currentLanguage === "en" ? `Weight ${weight.weight} kg recorded` : `记录体重${weight.weight}kg`);
-    const calories = String(day.calories ?? "").trim();
-    if (calories) parts.push(currentLanguage === "en" ? `${calories} kcal recorded` : `记录热量${calories}kcal`);
-    if (String(day.food || "").trim()) parts.push(uiText("记录了饮食", "Diet recorded"));
-    if (day.mood) parts.push(currentLanguage === "en" ? `Mood ${day.mood}` : `心情${day.mood}`);
-    if (day.energy) parts.push(currentLanguage === "en" ? `Energy ${day.energy}` : `精力${day.energy}`);
-    if (String(day.notes || "").trim()) parts.push(uiText("记录了当天复盘", "Daily reflection recorded"));
-    if (localizedInspiration(day)) parts.push(uiText("记录了今日灵感", "Inspiration recorded"));
-
-    return parts.join(currentLanguage === "en" ? "; " : "；");
+    const done = tasks.filter((task) => task.done).length;
+    const workoutTotal = planFor(key).items.length;
+    const workoutDone = day.fitness ? workoutTotal : 0;
+    const projects = state.projects.filter((project) => (project.logs || []).some((log) => log.date === key && String(log.text || "").trim())).length;
+    return [
+      uiText(`完成待办${done}/${tasks.length}项`, `Tasks ${done}/${tasks.length}`),
+      uiText(`完成运动${workoutDone}/${workoutTotal}项`, `Exercises ${workoutDone}/${workoutTotal}`),
+      uiText(`项目推进${projects}项`, `Projects advanced ${projects}`),
+      localizedInspiration(day) ? uiText("今日灵感已记录", "Inspiration recorded") : uiText("今日灵感未记录", "No inspiration recorded")
+    ].join("｜");
   }
 
   function summaryText(key) {
@@ -3162,7 +3315,8 @@
       add("project", project.id, project.title, [project.description, project.next, project.area, project.status, isCompletedProject(project) ? "已完成 Completed" : ""].filter(Boolean).join(" · "));
       const daily = Object.entries(project.daily || {}).filter(([date]) => isDateKey(date));
       daily.forEach(([date, record]) => {
-        if (String(record.next || "").trim()) add("project-record", project.id, project.title, record.next, date);
+        const text = [record.next, record.description].filter(Boolean).join(" · ");
+        if (text.trim()) add("project-record", project.id, project.title, text, date);
       });
       (project.logs || []).forEach((log) => {
         if (!daily.some(([date, record]) => date === log.date && record.logId === log.id && record.next === log.text)) {
@@ -3206,6 +3360,9 @@
       workouts.set(`${date}:${plan.title}:${text}`, { date, plan, text });
     };
     weekKeys(fromKey(todayKey())).forEach((date) => addWorkout(date, planFor(date, data)));
+    Object.entries(data.days || {}).forEach(([date, day]) => {
+      if (isDateKey(date) && day?.workoutPlan) addWorkout(date, day.workoutPlan);
+    });
     (data.workoutPlanChanges || []).forEach((change) => {
       if (isDateKey(change.effectiveFrom)) {
         const offset = (Number(change.weekday) - fromKey(change.effectiveFrom).getDay() + 7) % 7;
@@ -3427,6 +3584,45 @@
     project.progress = 100;
   }
 
+  function projectDragHandleMarkup(id) {
+    const label = uiText("拖动调整项目顺序，也可使用方向键", "Drag to reorder projects, or use the arrow keys");
+    return `<button class="project-drag-handle" type="button" draggable="true" data-project-drag="${esc(id)}" aria-label="${esc(label)}" title="${esc(label)}">⠿</button>`;
+  }
+
+  function reorderProject(sourceId, targetId) {
+    const active = state.projects.filter((project) => !isCompletedProject(project));
+    const from = active.findIndex((project) => project.id === sourceId);
+    const to = active.findIndex((project) => project.id === targetId);
+    if (from < 0 || to < 0 || from === to) return false;
+    const [project] = active.splice(from, 1);
+    active.splice(to, 0, project);
+    let index = 0;
+    state.projects = state.projects.map((item) => isCompletedProject(item) ? item : active[index++]);
+    save();
+    renderProjects();
+    renderHome();
+    return true;
+  }
+
+  function projectReadingMarkup(project, recordDate, dayRecord, logs) {
+    const status = uiText(project.status, PROJECT_STATUSES.find(([value]) => value === project.status)?.[1] || project.status);
+    const goal = state.goals.find((item) => item.id === project.goalId);
+    const dates = projectRecordDates(project);
+    const index = dates.indexOf(recordDate);
+    const visible = state.projects.filter((item) => !isCompletedProject(item) && projectMatchesFilter(item));
+    const position = visible.findIndex((item) => item.id === project.id);
+    return `<article class="card project-card project-reading-card" id="project-card-${esc(project.id)}" data-project-row="${esc(project.id)}">
+      <div class="project-reading-meta">${projectDragHandleMarkup(project.id)}${projectIconPickerMarkup(project)}<span class="tag neutral">${esc(project.area || "其他")}</span><span class="project-reading-status">${esc(status)}</span><details class="project-actions-menu"><summary aria-label="${esc(uiText("项目操作", "Project actions"))}">⋯</summary><div><button class="text-btn" type="button" data-action="move-project-up" data-id="${esc(project.id)}" ${position <= 0 ? "disabled" : ""}>↑ ${uiText("上移", "Move up")}</button><button class="text-btn" type="button" data-action="move-project-down" data-id="${esc(project.id)}" ${position >= visible.length - 1 ? "disabled" : ""}>↓ ${uiText("下移", "Move down")}</button><button class="text-btn danger-text-btn" type="button" data-action="delete-project" data-id="${esc(project.id)}">${uiText("删除项目", "Delete project")}</button></div></details></div>
+      <h3 class="project-reading-title">${esc(project.title)}</h3>
+      <div class="project-reading-progress"><span>${uiText("当前进度", "Progress")}</span><strong>${Number(project.progress) || 0}%</strong><div class="progress-track" role="progressbar" aria-label="${esc(project.title)}" aria-valuenow="${Number(project.progress) || 0}" aria-valuemin="0" aria-valuemax="100"><span style="width:${Number(project.progress) || 0}%"></span></div></div>
+      ${goal ? `<p class="project-reading-goal">${uiText("年度目标", "Annual goal")} · ${esc(goal.title)}</p>` : ""}
+      <div class="project-reading-description"><small>${uiText("项目描述", "Description")}</small><p>${esc(project.description || uiText("尚未填写项目描述", "No description yet"))}</p></div>
+      <div class="project-reading-next"><small>${uiText("下一步行动", "Next action")}</small><p>${esc(dayRecord.next || uiText("为这个日期留下一步行动", "Add a next action for this date"))}</p></div>
+      <div class="project-reading-footer"><div class="project-review-bottom"><button class="mini-btn project-date-nav" type="button" data-action="project-prev-record" data-id="${esc(project.id)}" aria-label="${uiText("上一个记录日", "Previous record")}" ${index <= 0 ? "disabled" : ""}>‹</button><label class="field project-review-field"><span class="sr-only">${uiText("回顾日期", "Record date")}</span><input class="input project-review-input" type="date" data-project-review="${esc(project.id)}" value="${esc(recordDate)}" aria-label="${uiText("回顾日期", "Record date")}" /></label><button class="mini-btn project-date-nav" type="button" data-action="project-next-record" data-id="${esc(project.id)}" aria-label="${uiText("下一个记录日", "Next record")}" ${index < 0 || index >= dates.length - 1 ? "disabled" : ""}>›</button></div><button class="edit-btn" type="button" data-action="edit-project" data-id="${esc(project.id)}">${uiText("编辑", "Edit")}</button></div>
+      <details class="history"><summary>${uiText("历史记录", "History")} · ${logs.length}</summary><div class="history-scroll">${logs.length ? logs.map((log) => `<div class="history-item" data-project-log="${esc(log.id)}"><time>${esc(log.date || "")}</time><span>${esc(log.text || "")}</span></div>`).join("") : `<p class="muted">${uiText("还没有推进记录。", "No updates yet.")}</p>`}</div></details>
+    </article>`;
+  }
+
   function renderProjects() {
     const activeProjects = state.projects.filter((project) => !isCompletedProject(project));
     const areas = projectAreaOptions(activeProjects);
@@ -3455,11 +3651,13 @@
       const logs = [...(project.logs || [])].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
       const recordDate = projectRecordDate(project);
       const dayRecord = projectDayRecord(project, recordDate);
+      if (!editingProjectIds.has(project.id)) return projectReadingMarkup(project, recordDate, dayRecord, logs);
+      const draft = projectTextDrafts.get(project.id);
       return `
-        <article class="card project-card" id="project-card-${esc(project.id)}">
-          <button class="mini-btn danger project-delete-btn" data-action="delete-project" data-id="${project.id}" aria-label="删除项目 ${esc(project.title)}">×</button>
+        <article class="card project-card is-editing" id="project-card-${esc(project.id)}" data-project-row="${esc(project.id)}">
+          <div class="project-edit-toolbar">${projectDragHandleMarkup(project.id)}<span>${uiText("编辑项目", "Edit project")}</span><button class="btn green" type="submit" form="project-update-${esc(project.id)}">${uiText("保存并收起", "Save & close")}</button></div>
           <div class="project-head">
-            <div class="project-title"><div class="project-title-top"><button class="project-symbol" type="button" data-action="cycle-project-symbol" data-id="${project.id}" aria-label="切换项目图标" title="切换项目图标">${projectIconMarkup(project)}</button><span class="tag neutral project-area-tag">${esc(project.area || "其他")}</span></div><textarea class="project-title-input" data-project-title="${project.id}" maxlength="120" rows="2" aria-label="项目标题">${esc(project.title)}</textarea></div>
+            <div class="project-title"><div class="project-title-top">${projectIconPickerMarkup(project)}<span class="tag neutral project-area-tag">${esc(project.area || "其他")}</span></div><textarea class="project-title-input" data-project-title="${project.id}" maxlength="120" rows="2" aria-label="项目标题">${esc(project.title)}</textarea></div>
             <div class="project-status-control">
               <select class="select" data-project-status="${project.id}" aria-label="${esc(project.title)}的状态">
                 ${PROJECT_STATUSES.map(([status, label]) => `<option value="${esc(status)}" ${status === project.status ? "selected" : ""}>${esc(uiText(status, label))}</option>`).join("")}
@@ -3471,10 +3669,10 @@
             <div class="field"><label for="project-area-${esc(project.id)}">所属领域</label><div class="project-area-control"><select class="select" id="project-area-${esc(project.id)}" data-project-area="${esc(project.id)}">${editableAreas.map((area) => `<option value="${esc(area)}" ${area === (String(project.area || "其他").trim() || "其他") ? "selected" : ""}>${esc(area)}</option>`).join("")}</select><button class="text-btn" type="button" data-action="add-project-area" data-id="${esc(project.id)}">新增领域</button></div></div>
             <label class="field"><span>年度目标</span><select class="select" data-project-goal="${project.id}"><option value="">未关联年度目标</option>${state.goals.map((goal) => `<option value="${esc(goal.id)}" ${goal.id === project.goalId ? "selected" : ""}>${esc(goal.title)}</option>`).join("")}</select></label>
           </div>
-          <form class="project-day-form" data-project-update="${project.id}" data-project-update-date="${recordDate}">
+          <form class="project-day-form" id="project-update-${esc(project.id)}" data-project-update="${project.id}" data-project-update-date="${recordDate}">
             <div class="form-grid project-fields project-day-fields">
-              <label class="field wide"><span>项目描述 <small class="field-hint">项目共用，不随回顾日期切换</small></span><textarea class="textarea" data-project-description="${project.id}" maxlength="260" placeholder="说明项目要解决的问题、目标和范围">${esc(project.description || "")}</textarea></label>
-              <label class="field wide"><span>下一步行动</span><textarea class="textarea" data-project-next="${project.id}" maxlength="260" placeholder="填写这个日期的下一步行动">${esc(dayRecord.next)}</textarea></label>
+              <label class="field wide"><span>项目描述 <small class="field-hint">项目共用，不随回顾日期切换</small></span><textarea class="textarea" data-project-description="${project.id}" maxlength="260" placeholder="说明项目要解决的问题、目标和范围">${esc(draft?.description ?? project.description ?? "")}</textarea></label>
+              <label class="field wide"><span>下一步行动</span><textarea class="textarea" data-project-next="${project.id}" maxlength="260" placeholder="填写这个日期的下一步行动">${esc(draft?.actions?.get(recordDate) ?? dayRecord.next)}</textarea></label>
             </div>
             <div class="project-update-actions">
               <div class="project-review-bottom">
@@ -3482,7 +3680,7 @@
                 <label class="field project-review-field"><span class="sr-only">回顾日期</span><input class="input project-review-input" type="date" data-project-review="${project.id}" value="${esc(recordDate)}" aria-label="回顾日期" /></label>
                 <button class="mini-btn project-date-nav" type="button" data-action="project-next-record" data-id="${project.id}" aria-label="下一个记录日" title="下一个记录日" ${(() => { const dates = projectRecordDates(project); const index = dates.indexOf(recordDate); return !dates.length || index < 0 || index >= dates.length - 1 ? "disabled" : ""; })()}>›</button>
               </div>
-              <button class="btn secondary" type="submit">更新记录</button>
+              <button class="btn green" type="submit">${uiText("保存并收起", "Save & close")}</button>
             </div>
           </form>
           <details class="history" open>
@@ -3536,6 +3734,7 @@
       const yy = top + (index / 3) * (height - top - bottom);
       return `<line class="chart-grid" x1="${left}" y1="${yy}" x2="${width - right}" y2="${yy}"/>`;
     }).join("");
+    const labelStep = Math.max(1, Math.ceil((data.length - 1) / 4));
     const pointNodes = data.map((entry, index) => {
       const anchor = index === 0 ? "start" : index === data.length - 1 ? "end" : "middle";
       const labelX = index === 0 ? x(index) + 5 : index === data.length - 1 ? x(index) - 5 : x(index);
@@ -3544,11 +3743,16 @@
       <g class="chart-record-point" tabindex="0" aria-label="${esc(entry.date)}, ${entry.weight} kg">
         <circle class="chart-point" cx="${x(index)}" cy="${y(Number(entry.weight))}" r="5"></circle>
         <text class="chart-hover-label" x="${labelX}" y="${labelY}" text-anchor="${anchor}" aria-hidden="true">${esc(`${entry.date.slice(5)} · ${entry.weight} kg`)}</text>
-        <text class="chart-label" x="${x(index)}" y="${height - 12}" text-anchor="middle">${esc(entry.date.slice(5))}</text>
+        ${index % labelStep === 0 || index === data.length - 1 ? `<text class="chart-label" x="${x(index)}" y="${height - 12}" text-anchor="middle">${esc(entry.date.slice(5))}</text>` : ""}
       </g>
     `;
     }).join("");
+    const latest = data[data.length - 1];
+    const previous = data[data.length - 2];
+    const difference = previous ? Math.round((Number(latest.weight) - Number(previous.weight)) * 10) / 10 : null;
+    const differenceLabel = difference == null ? uiText("第一条记录", "First record") : uiText(`较上次 ${difference > 0 ? "+" : ""}${difference.toFixed(1)} kg`, `${difference > 0 ? "+" : ""}${difference.toFixed(1)} kg since previous record`);
     target.innerHTML = `
+      <div class="trend-insight"><div><small>${uiText("最近一次体重", "Latest weight")}</small><strong>${esc(latest.weight)} <span>kg</span></strong></div><div><span>${esc(differenceLabel)}</span><time datetime="${esc(latest.date)}">${esc(latest.date)}</time></div></div>
       <svg class="line-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${uiText("体重折线图。", "Weight trend chart. ")}${esc(chartSummary(data))}">
         ${gridLines}
         ${data.length > 1 ? `<polyline class="chart-line" points="${points}"/>` : ""}
@@ -3677,7 +3881,7 @@
     document.getElementById("foodInput").value = day.food;
     const water = Math.max(0, Math.min(8, Number(day.water) || 0));
     document.getElementById("waterLabel").textContent = `${water} / 8 杯`;
-    document.getElementById("waterMeter").innerHTML = Array.from({ length: 8 }, (_, index) => `<span class="water-cup ${index < water ? "full" : ""}" aria-hidden="true"></span>`).join("");
+    document.getElementById("waterMeter").innerHTML = Array.from({ length: 8 }, (_, index) => `<span class="water-cup ${index < water ? "full" : ""}" aria-hidden="true"><svg viewBox="0 0 28 34"><path d="M14 1C12 6 3 15 3 22a11 11 0 0 0 22 0C25 15 16 6 14 1Z"/></svg></span>`).join("");
     renderHealthTrendPanel();
   }
 
@@ -3791,18 +3995,38 @@
     `;
   }
 
+  function routineDragHandleMarkup(id) {
+    const label = uiText("拖动调整顺序，也可使用上下方向键", "Drag to reorder, or use the arrow keys");
+    return `<button class="routine-drag-handle" type="button" draggable="true" data-routine-drag="${esc(id)}" aria-label="${esc(label)}" title="${esc(label)}">⠿</button>`;
+  }
+
+  function reorderRoutine(sourceId, targetId, insertAfter = false) {
+    const items = currentRoutineItems();
+    const from = items.findIndex((item) => item.id === sourceId);
+    const target = items.findIndex((item) => item.id === targetId);
+    if (from < 0 || target < 0 || from === target) return false;
+    let destination = target + (insertAfter ? 1 : 0);
+    const [item] = items.splice(from, 1);
+    if (from < destination) destination -= 1;
+    items.splice(destination, 0, item);
+    save();
+    renderFitness();
+    return true;
+  }
+
   function routineMarkup(key, context = "fitness") {
     const day = ensureDay(key);
     const items = currentRoutineItems();
     if (!editingRoutines) {
       return `<div class="routine-list">${items.map((item) => `
-        <label class="routine-row"><input class="check" type="checkbox" data-routine="${esc(item.id)}" data-routine-date="${key}" ${day.routines[item.id] ? "checked" : ""} /><span><strong data-no-translate="true">${esc(item.title)}</strong><small data-no-translate="true">${esc(item.detail)}</small></span></label>
+        <div class="routine-row" data-routine-row="${esc(item.id)}">${routineDragHandleMarkup(item.id)}<label class="routine-row-content"><input class="check" type="checkbox" data-routine="${esc(item.id)}" data-routine-date="${key}" ${day.routines[item.id] ? "checked" : ""} /><span><strong data-no-translate="true">${esc(item.title)}</strong><small data-no-translate="true">${esc(item.detail)}</small></span></label></div>
       `).join("")}</div>`;
     }
     return `
       <div class="routine-list routine-edit-list">
         ${items.map((item) => `
-          <div class="routine-edit-row">
+          <div class="routine-edit-row" data-routine-row="${esc(item.id)}">
+            ${routineDragHandleMarkup(item.id)}
             <input class="check" type="checkbox" data-routine="${esc(item.id)}" data-routine-date="${key}" ${day.routines[item.id] ? "checked" : ""} aria-label="${esc(`完成${item.title}`)}" />
             <div class="routine-edit-fields">
               <label class="field"><span>项目名称</span><input class="input" data-routine-title="${esc(item.id)}" value="${esc(item.title)}" maxlength="60" required /></label>
@@ -3837,12 +4061,12 @@
         <div class="card-head"><div><span class="tag neutral">专项训练</span></div></div>
         <div class="form-grid training-panel-editor-fields">
           <label class="field"><span>面板名称</span><input class="input" data-supplementary-title="${esc(panel.id)}" maxlength="50" value="${esc(panel.title)}" required /></label>
-          <label class="field"><span>补充说明</span><input class="input" data-supplementary-note="${esc(panel.id)}" maxlength="100" value="${esc(panel.note)}" /></label>
+          <label class="field"><span>补充说明</span><textarea class="textarea" data-supplementary-note="${esc(panel.id)}" maxlength="100" rows="2">${esc(panel.note)}</textarea></label>
         </div>
         <div class="supplementary-row-editor-list">
           ${panel.rows.length ? panel.rows.map((row) => `
             <div class="supplementary-row-editor">
-              <label class="field"><span>动作</span><input class="input" data-supplementary-action="${esc(row.id)}" data-supplementary-panel-id="${esc(panel.id)}" maxlength="80" value="${esc(row.action)}" placeholder="动作名称" /></label>
+              <label class="field"><span>动作</span><textarea class="textarea" data-supplementary-action="${esc(row.id)}" data-supplementary-panel-id="${esc(panel.id)}" maxlength="80" rows="2" placeholder="动作名称">${esc(row.action)}</textarea></label>
               <label class="field"><span>频次 / 时长</span><input class="input" data-supplementary-frequency="${esc(row.id)}" data-supplementary-panel-id="${esc(panel.id)}" maxlength="100" value="${esc(row.frequency)}" placeholder="例如：每周 2 次 · 10 分钟" /></label>
               <button class="mini-btn danger supplementary-row-remove" data-action="delete-supplementary-row" data-panel-id="${esc(panel.id)}" data-row-id="${esc(row.id)}" aria-label="删除动作 ${esc(row.action || "未命名动作")}">×</button>
             </div>
@@ -3879,6 +4103,7 @@
     if (panelActions) {
       panelActions.innerHTML = `${editingSupplementaryTraining ? '<button class="btn green" data-action="add-supplementary-panel">＋ 增加面板</button>' : ""}<button class="text-btn" data-action="toggle-supplementary-edit">${editingSupplementaryTraining ? uiText("完成", "Done") : uiText("编辑", "Edit")}</button>`;
     }
+    document.getElementById("supplementTrainingPanels").classList.toggle("is-editing", editingSupplementaryTraining);
     document.getElementById("supplementTrainingPanels").innerHTML = panels.map((panel) => editingSupplementaryTraining ? supplementaryTrainingEditorMarkup(panel) : supplementaryTrainingPanelMarkup(panel)).join("");
   }
 
@@ -4012,6 +4237,30 @@
     return `<div class="day-panel-nav" role="group" aria-label="${uiText("切换当前面板日期", "Change this panel's date")}"><button class="mini-btn" type="button" data-action="calendar-prev-day" data-calendar-panel="${panel}" aria-label="${uiText("前一天", "Previous day")}" title="${uiText("前一天", "Previous day")}">‹</button><button class="mini-btn" type="button" data-action="calendar-next-day" data-calendar-panel="${panel}" aria-label="${uiText("后一天", "Next day")}" title="${uiText("后一天", "Next day")}">›</button></div>`;
   }
 
+  function updateCalendarPanelPreviews(panel = "") {
+    const ids = { workout: "calendarWorkoutPanel", work: "calendarWorkPanel", projects: "calendarProjectLogPanel" };
+    Object.entries(ids).forEach(([key, id]) => {
+      if (panel && panel !== key) return;
+      const card = document.getElementById(id);
+      if (!card?.classList) return;
+      card.classList.add("calendar-preview-panel");
+      const expanded = expandedCalendarPanels.has(key) || (key === "workout" && editingWorkoutDate === calendarPanelDates.workout);
+      card.classList.toggle("is-expanded", expanded);
+      const button = card.querySelector(".calendar-panel-toggle");
+      if (button) {
+        button.textContent = expanded ? uiText("收起", "Show less") : uiText("展开查看", "Show all");
+        button.setAttribute("aria-expanded", String(expanded));
+        const content = card.querySelector(".calendar-panel-content");
+        content.id = `${id}Content`;
+        button.setAttribute("aria-controls", content.id);
+        button.hidden = false;
+        requestAnimationFrame(() => {
+          if (!expanded && content.clientHeight > 0) button.hidden = content.scrollHeight <= content.clientHeight + 1;
+        });
+      }
+    });
+  }
+
   function renderDayDashboard(panel = "") {
     const workoutDate = calendarPanelDates.workout;
     const workDate = calendarPanelDates.work;
@@ -4022,9 +4271,6 @@
     const stats = completionFor(workDate);
     const weight = weightOn(selectedDate);
     const logs = projectLogsOn(projectDate);
-    const dateHint = currentLanguage === "en"
-      ? (workDate === todayKey() ? "Today · changes save automatically" : workDate < todayKey() ? "History · you can add a record" : "Future plan · you can plan ahead")
-      : (workDate === todayKey() ? "今天 · 修改会自动保存" : workDate < todayKey() ? "历史记录 · 可以补记" : "未来计划 · 可以提前安排");
     const unrecorded = uiText("未记录", "Not recorded");
     const cupUnit = uiText("杯", "cups");
     const itemUnit = uiText("项", "items");
@@ -4054,19 +4300,19 @@
     const energyLabel = (value) => energyOptions.find(([optionValue]) => optionValue === value)?.[1] || value || unrecorded;
     if (!panel || panel === "workout") document.getElementById("calendarWorkoutPanel").innerHTML = `
       <div class="card-head"><div><h3>${uiText("运动安排", "Workout plan")}</h3><small>${esc(dayText(workoutDate))} · ${esc(localizedPlanTitle(planFor(workoutDate).title))}</small></div>${calendarDayNavMarkup("workout")}</div>
-      ${workoutMarkup(workoutDate, "calendar")}
+      <div class="calendar-panel-content">${workoutMarkup(workoutDate, "calendar")}</div>
+      <button class="text-btn calendar-panel-toggle" type="button" data-action="toggle-calendar-panel" data-calendar-panel="workout">${uiText("展开查看", "Show all")}</button>
     `;
     if (!panel || panel === "work") document.getElementById("calendarWorkPanel").innerHTML = `
-      <div class="card-head"><div><h3>${uiText("事务工作", "Work tasks")}</h3><small>${esc(dayText(workDate))} · ${esc(dateHint)}</small></div><div class="day-panel-head-actions"><span class="tag">${currentLanguage === "en" ? `${stats.rate}% complete` : `${stats.rate}% 完成`}</span>${calendarDayNavMarkup("work")}</div></div>
-      <section class="day-section">
-        <div class="subhead"><h4>${uiText("待办事项", "Tasks")}</h4><span class="tag neutral">${stats.done} / ${stats.total}</span></div>
+      <div class="card-head"><div><h3>${uiText("待办事项", "Tasks")}</h3><small>${esc(dayText(workDate))}</small></div><div class="day-panel-head-actions"><span class="tag neutral">${stats.done} / ${stats.total}</span>${calendarDayNavMarkup("work")}</div></div>
+      <div class="calendar-panel-content">
         <div class="todo-list">${taskRows(workDate, "calendar")}</div>
+      </div>
         <form class="form-row" id="calendarTaskForm" data-task-date="${workDate}" style="margin-top:10px"><label class="sr-only" for="calendarTaskInput">添加当天待办</label><input class="input" id="calendarTaskInput" maxlength="120" placeholder="添加当天待办" required /><button class="btn green" type="submit">添加</button></form>
-      </section>
+      <button class="text-btn calendar-panel-toggle" type="button" data-action="toggle-calendar-panel" data-calendar-panel="work">${uiText("展开查看", "Show all")}</button>
     `;
 
     if (!panel) document.getElementById("calendarHealthPanel").innerHTML = `
-      <div class="card-head calendar-health-head"><div><h3>${uiText("生活健康", "Life & health")}</h3></div>${healthEditing ? `<span class="tag neutral">${uiText("编辑中", "Editing")}</span>` : `<button class="text-btn" type="button" data-action="edit-calendar-health">${uiText("编辑", "Edit")}</button>`}</div>
       ${healthEditing ? `
         <section class="day-section health-summary-section">
           <div class="day-summary calendar-health-summary">
@@ -4103,7 +4349,8 @@
 
     if (!panel || panel === "projects") document.getElementById("calendarProjectLogPanel").innerHTML = `
       <div class="card-head"><div><h3>${uiText("项目推进记录", "Project updates")}</h3><small>${esc(dayText(projectDate))} · ${uiText("当天的项目更新", "Project updates for this day")}</small></div><div class="day-panel-head-actions"><span class="tag neutral">${logs.length} ${currentLanguage === "en" ? "updates" : "条"}</span>${calendarDayNavMarkup("projects")}</div></div>
-      ${logs.length ? `<div class="calendar-project-log-list">${logs.map((log) => `<div class="history-item"><time>${esc(log.project)}</time><span>${esc(log.text)}</span><span></span></div>`).join("")}</div>` : '<div class="empty-state">当天没有项目推进记录。</div>'}
+      <div class="calendar-panel-content">${logs.length ? `<div class="calendar-project-log-list">${logs.map((log) => `<div class="history-item"><time>${esc(log.project)}</time><span>${esc(log.text)}</span><span></span></div>`).join("")}</div>` : '<div class="empty-state">当天没有项目推进记录。</div>'}</div>
+      <button class="text-btn calendar-panel-toggle" type="button" data-action="toggle-calendar-panel" data-calendar-panel="projects">${uiText("展开查看", "Show all")}</button>
     `;
 
     if (!panel || panel === "inspiration") document.getElementById("calendarInspirationPanel").innerHTML = `
@@ -4112,6 +4359,7 @@
       <button class="btn secondary" data-action="save-inspiration" data-inspiration-source="calendar" style="margin-top:10px">${uiText("保存今日灵感", "Save today's inspiration")}</button>
     `;
 
+    updateCalendarPanelPreviews(panel);
     if (panel) return;
     const completed = completedItems();
     const filterOptions = completedProjectFilterOptions();
@@ -4138,10 +4386,102 @@
     return `<div class="footprint-metric"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></div>`;
   }
 
+  function monthlyActivityFor(month, data = state) {
+    const inMonth = (date) => isDateKey(date) && date.slice(0, 7) === month;
+    const tasks = [];
+    const workouts = [];
+    const health = [];
+    const reviews = [];
+    const routines = new Map();
+    const names = new Map((data.routineItems || []).map((item) => [item.id, item.title]));
+    const weights = new Map((data.weightHistory || []).filter((item) => inMonth(item.date) && Number(item.weight) > 0).map((item) => [item.date, item.weight]));
+    const dates = [...new Set([...Object.keys(data.days || {}), ...weights.keys()])].filter(inMonth).sort();
+    let inspirationCount = 0;
+    dates.forEach((date) => {
+      const day = data.days?.[date] || {};
+      (day.tasks || []).filter((task) => task.done).forEach((task) => tasks.push({ date, text: task.text }));
+      if (day.fitness) workouts.push(date);
+      Object.entries(day.routines || {}).forEach(([id, done]) => {
+        if (!done) return;
+        if (!routines.has(id)) routines.set(id, { id, title: names.get(id) || "", dates: [] });
+        routines.get(id).dates.push(date);
+      });
+      if (String(day.inspiration || day.inspirationEn || "").trim()) inspirationCount += 1;
+      if (String(day.notes || "").trim()) reviews.push({ date, text: day.notes });
+      if (Number(day.water) > 0 || weights.has(date) || [day.mood, day.energy, day.food, day.calories].some((value) => String(value ?? "").trim())) {
+        health.push({ ...day, date, weight: weights.get(date) });
+      }
+    });
+    (data.milestones || []).filter((item) => item.done && inMonth(item.completedAt)).forEach((item) => {
+      tasks.push({ date: item.completedAt, text: item.title, source: "long-term" });
+    });
+    tasks.sort((a, b) => a.date.localeCompare(b.date));
+    const projects = (data.projects || []).map((project) => ({
+      id: project.id,
+      title: project.title,
+      updates: (project.logs || []).filter((log) => inMonth(log.date) && String(log.text || "").trim()).slice().sort((a, b) => a.date.localeCompare(b.date))
+    })).filter((project) => project.updates.length);
+    return { tasks, routines: [...routines.values()], workouts, health, reviews, projects, inspirationCount };
+  }
+
+  function renderMonthlyActivity() {
+    const target = document.getElementById("monthlyActivityPanel");
+    if (!target) return;
+    const monthNumber = Number(monthlyActivityMonth.slice(5, 7));
+    const title = uiText(`${monthNumber}月行动回顾`, `${MONTHS_EN[monthNumber - 1]} in review`);
+    const report = monthlyActivityFor(monthlyActivityMonth);
+    const routineCount = report.routines.reduce((sum, item) => sum + item.dates.length, 0);
+    const updateCount = report.projects.reduce((sum, project) => sum + project.updates.length, 0);
+    const highlights = [
+      report.tasks.length ? uiText(`完成 ${report.tasks.length} 项待办`, `${report.tasks.length} tasks completed`) : "",
+      report.workouts.length ? uiText(`完成 ${report.workouts.length} 天运动`, `${report.workouts.length} workout days`) : "",
+      report.projects.length ? uiText(`推进 ${report.projects.length} 个项目`, `${report.projects.length} projects advanced`) : "",
+      routineCount ? uiText(`完成 ${routineCount} 次日常安排`, `${routineCount} routines kept`) : "",
+      report.health.length ? uiText(`留下 ${report.health.length} 天健康记录`, `${report.health.length} days with health records`) : "",
+      report.reviews.length ? uiText(`写下 ${report.reviews.length} 篇复盘`, `${report.reviews.length} daily reviews`) : "",
+      report.inspirationCount ? uiText(`捕捉 ${report.inspirationCount} 天灵感`, `${report.inspirationCount} days with inspiration`) : ""
+    ].filter(Boolean);
+    const narrative = highlights.length
+      ? uiText(`这个月，${highlights.slice(0, 3).join("，")}。`, `This month: ${highlights.slice(0, 3).join("; ")}.`)
+      : uiText("这个月还没有活动记录，下一次小小的行动会从这里开始。", "No activity recorded this month yet. Your next small step starts here.");
+    const empty = `<p class="monthly-empty">${uiText("本月暂无记录", "No records this month")}</p>`;
+    const shortDate = (date) => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
+    const row = (date, text, source = "") => `<li><time datetime="${esc(date)}">${shortDate(date)}</time><span>${source === "long-term" ? `<small class="monthly-task-source">${uiText("长期待办", "Long-term")}</small>` : ""}${esc(text)}</span></li>`;
+    const group = (title, content) => `<section class="monthly-detail-group"><h4>${title}</h4><div class="monthly-detail-body">${content || empty}</div></section>`;
+    const healthText = (day) => [
+      Number(day.water) > 0 ? uiText(`饮水 ${day.water} 杯`, `Water ${day.water} cups`) : "",
+      day.weight != null ? `${uiText("体重", "Weight")} ${day.weight} kg` : "",
+      String(day.calories ?? "").trim() ? `${day.calories} kcal` : "",
+      day.mood ? `${uiText("心情", "Mood")} ${uiText(day.mood, TRANSLATIONS[day.mood] || day.mood)}` : "",
+      day.energy ? `${uiText("精力", "Energy")} ${uiText(day.energy, TRANSLATIONS[day.energy] || day.energy)}` : "",
+      day.food ? `${uiText("饮食", "Food")}: ${day.food}` : ""
+    ].filter(Boolean).join(" · ");
+    target.innerHTML = `
+      <div class="card-head monthly-activity-head"><div><h3>${title}</h3><small>${uiText("把完成的小事，串成一个月的进展。", "See how your everyday actions add up.")}</small></div><div class="monthly-navigation"><button class="date-nav-btn" type="button" data-action="monthly-prev" aria-label="${uiText("上个月", "Previous month")}">‹</button><label><span class="sr-only">${uiText("统计月份", "Report month")}</span><input class="input" type="month" id="monthlyActivityMonth" value="${monthlyActivityMonth}" /></label><button class="date-nav-btn" type="button" data-action="monthly-next" aria-label="${uiText("下个月", "Next month")}">›</button></div></div>
+      <p class="monthly-narrative">${esc(narrative)}</p>
+      <div class="monthly-metrics">
+        ${footprintMetricMarkup(uiText("完成待办", "Tasks completed"), report.tasks.length, uiText("项已完成事项", "completed tasks"))}
+        ${footprintMetricMarkup(uiText("日常安排", "Daily routines"), routineCount, uiText("次日常练习", "routine completions"))}
+        ${footprintMetricMarkup(uiText("完成运动", "Workout days"), report.workouts.length, uiText("天运动记录", "completed workout days"))}
+        ${footprintMetricMarkup(uiText("推进项目", "Projects advanced"), report.projects.length, uiText(`个项目 · ${updateCount} 条推进`, `projects · ${updateCount} updates`))}
+        ${footprintMetricMarkup(uiText("健康记录", "Health records"), report.health.length, uiText("天有健康记录", "days with health records"))}
+      </div>
+      <div class="monthly-footer"><span>${uiText(`另有 ${report.inspirationCount} 天留下了灵感`, `Inspiration captured on ${report.inspirationCount} days`)}</span><button class="text-btn" type="button" data-action="toggle-monthly-details" aria-expanded="${monthlyActivityExpanded}" aria-controls="monthlyActivityDetails">${monthlyActivityExpanded ? uiText("收起明细 ↑", "Hide details ↑") : uiText("展开本月明细 ↓", "Explore this month ↓")}</button></div>
+      <div class="monthly-details" id="monthlyActivityDetails" ${monthlyActivityExpanded ? "" : "hidden"}>
+        ${group(uiText("完成了哪些待办", "Tasks you completed"), report.tasks.length ? `<ul>${report.tasks.map((item) => row(item.date, item.text, item.source)).join("")}</ul>` : "")}
+        ${group(uiText("项目向前走了这些步", "Steps your projects took"), report.projects.length ? report.projects.map((project) => `<div class="monthly-project-record"><strong>${esc(project.title)}</strong><ul>${project.updates.map((log) => row(log.date, log.text)).join("")}</ul></div>`).join("") : "")}
+        ${group(uiText("这些日子动了起来", "Days you worked out"), report.workouts.length ? `<ul>${report.workouts.map((date) => row(date, localizedPlanTitle(planFor(date).title))).join("")}</ul>` : "")}
+        ${group(uiText("坚持了哪些日常", "Routines you kept"), report.routines.length ? `<ul>${report.routines.map((item) => `<li class="monthly-routine-record"><strong>${esc(item.title || uiText("已移除的日常项目", "Removed routine"))}</strong><span>${item.dates.length} ${uiText("次", "times")} · ${item.dates.map(shortDate).join("、")}</span></li>`).join("")}</ul>` : "")}
+        ${group(uiText("照顾自己的记录", "How you cared for yourself"), report.health.length ? `<ul>${report.health.map((day) => row(day.date, healthText(day))).join("")}</ul>` : "")}
+        ${group(uiText("当天复盘", "Daily reviews"), report.reviews.length ? `<ul>${report.reviews.map((review) => row(review.date, review.text)).join("")}</ul>` : "")}
+      </div>`;
+  }
+
   function renderFootprints() {
     const target = document.getElementById("footprintsPanel");
     const metricsTarget = document.getElementById("footprintsMetricsPanel");
     if (!target || !metricsTarget) return;
+    renderMonthlyActivity();
     const keys = footprintDateKeys();
     const years = [...new Set(keys.map((key) => key.slice(0, 4)))].sort().reverse();
     const filteredKeys = keys.filter((key) => {
@@ -4399,6 +4739,8 @@
 
   document.addEventListener("click", async (event) => {
     if (!event.target.closest("#globalSearchField")) closeGlobalSearch();
+    if (!event.target.closest(".project-actions-menu")) document.querySelectorAll(".project-actions-menu[open]").forEach((menu) => { menu.open = false; });
+    if (!event.target.closest(".project-icon-picker")) document.querySelectorAll(".project-icon-picker[open]").forEach((menu) => { menu.open = false; });
     if (event.target.id === "projectAreasModal") {
       closeProjectAreasManager();
       return;
@@ -4436,7 +4778,76 @@
     const actionButton = event.target.closest("[data-action]");
     if (!actionButton) return;
     const action = actionButton.dataset.action;
+    if (action === "toggle-calendar-panel") {
+      const panel = actionButton.dataset.calendarPanel;
+      if (expandedCalendarPanels.has(panel)) expandedCalendarPanels.delete(panel); else expandedCalendarPanels.add(panel);
+      updateCalendarPanelPreviews(panel);
+      return;
+    }
+    if (action === "check-backup-updates") {
+      if (!backupDirectory) { notify(uiText("请先开启自动备份并选择文件夹", "Enable scheduled backups and choose a folder first.")); return; }
+      try {
+        if (await backupDirectory.queryPermission({ mode: "readwrite" }) !== "granted" && await backupDirectory.requestPermission({ mode: "readwrite" }) !== "granted") {
+          externalCheckFailed = true; renderBackupSync(); return;
+        }
+      } catch { externalCheckFailed = true; renderBackupSync(); return; }
+      flushSave();
+      if (await checkExternalBackups(true)) {
+        if (externalBackup) reviewBackup(externalBackup, externalBackup.name);
+      } else notify(uiText("没有发现需要导入的新版本", "No different backup version found."));
+      return;
+    }
+    if (action === "review-external-backup") { if (externalBackup) reviewBackup(externalBackup, externalBackup.name); return; }
+    if (action === "close-backup-review") { closeBackupReview(); return; }
+    if (action === "apply-backup-import") { applyReviewedBackup(); return; }
+    if (action === "keep-local-backup") {
+      if (!externalBackup) return;
+      ignoredBackupVersions.add(backupVersionKey(externalBackup));
+      (externalBackup.sync?.ancestors || []).forEach((revision) => ignoredBackupVersions.add(revision));
+      backupPreferences.ignoredVersions = [...ignoredBackupVersions].slice(-10000);
+      try { persistBackupPreferences(); } catch { notify(uiText("无法保存忽略设置，未继续备份", "Could not save this choice; backups remain paused.")); return; }
+      externalBackup = null;
+      externalCheckAt = 0;
+      closeBackupReview();
+      renderBackupSync();
+      void runAutomaticBackup();
+      return;
+    }
+    if (action === "download-import-recovery") {
+      const snapshot = localStorage.getItem(RECOVERY_STORE);
+      if (!snapshot) return;
+      const url = URL.createObjectURL(new Blob([snapshot], { type: "application/json" }));
+      const link = document.createElement("a");
+      link.href = url; link.download = `kinetic-before-import-${todayKey()}.json`; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      return;
+    }
+    if (action === "monthly-prev" || action === "monthly-next") {
+      const date = fromKey(`${monthlyActivityMonth}-01`);
+      date.setMonth(date.getMonth() + (action === "monthly-prev" ? -1 : 1));
+      monthlyActivityMonth = keyOf(date).slice(0, 7);
+      renderMonthlyActivity();
+      return;
+    }
+    if (action === "toggle-monthly-details") {
+      monthlyActivityExpanded = !monthlyActivityExpanded;
+      renderMonthlyActivity();
+      return;
+    }
     const id = actionButton.dataset.id;
+    if (action === "move-project-up" || action === "move-project-down") {
+      const cards = [...document.querySelectorAll("#projectList [data-project-row]")];
+      const index = cards.findIndex((card) => card.dataset.projectRow === id);
+      const neighbor = cards[index + (action === "move-project-up" ? -1 : 1)];
+      if (neighbor) reorderProject(id, neighbor.dataset.projectRow);
+      return;
+    }
+    if (action === "edit-project") {
+      editingProjectIds.add(id);
+      renderProjects();
+      document.querySelectorAll("[data-project-title]").forEach((input) => { if (input.dataset.projectTitle === id) input.focus({ preventScroll: true }); });
+      return;
+    }
 
     if (action === "open-search-result") {
       openGlobalSearchResult(Number(actionButton.dataset.searchIndex));
@@ -4900,18 +5311,21 @@
       const title = prompt("项目名称");
       if (title?.trim()) {
         state.projects.unshift({ id: uid("project"), title: title.trim(), description: "", symbol: PROJECT_ICONS[Math.floor(Math.random() * PROJECT_ICONS.length)].id, area: "其他", status: "未开始", progress: 0, next: "", daily: {}, logs: [], createdAt: todayKey(), completed: false });
+        editingProjectIds.add(state.projects[0].id);
         save();
         renderProjects();
         renderHome();
       }
       return;
     }
-    if (action === "cycle-project-symbol") {
+    if (action === "select-project-symbol") {
       const project = state.projects.find((item) => item.id === id);
       if (!project) return;
-      nextProjectSymbol(project);
+      if (!PROJECT_ICONS.some((item) => item.id === actionButton.dataset.symbol)) return;
+      project.symbol = actionButton.dataset.symbol;
       save();
       renderProjects();
+      document.querySelector(`#project-card-${CSS.escape(project.id)} .project-icon-picker summary`)?.focus({ preventScroll: true });
       renderHome();
       renderCalendar();
       return;
@@ -4919,6 +5333,8 @@
     if (action === "delete-project") {
       if (!confirm("删除这个项目及其历史记录吗？")) return;
       state.projects = state.projects.filter((project) => project.id !== id);
+      editingProjectIds.delete(id);
+      projectTextDrafts.delete(id);
       save();
       renderProjects();
       renderHome();
@@ -5075,6 +5491,7 @@
         try { await backupDirectoryStorage(true, null); } catch { /* Disabled preferences prevent further writes. */ }
       }
       localStorage.removeItem(STORE);
+      localStorage.removeItem(RECOVERY_STORE);
       localStorage.setItem(RESET_MARKER, "true");
       location.reload();
     }
@@ -5294,9 +5711,33 @@
       footprintsZoom = 3;
       renderFootprints();
     }
+    if (target.matches("#monthlyActivityMonth") && /^\d{4}-(0[1-9]|1[0-2])$/.test(target.value)) {
+      monthlyActivityMonth = target.value;
+      renderMonthlyActivity();
+    }
   });
 
   document.addEventListener("dragstart", (event) => {
+    const projectHandle = event.target.closest?.("[data-project-drag]");
+    if (projectHandle) {
+      projectDragState = projectHandle.dataset.projectDrag;
+      projectHandle.closest("[data-project-row]").classList.add("is-dragging");
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", projectDragState);
+      }
+      return;
+    }
+    const routineHandle = event.target.closest?.("[data-routine-drag]");
+    if (routineHandle) {
+      routineDragState = routineHandle.dataset.routineDrag;
+      routineHandle.closest("[data-routine-row]").classList.add("is-dragging");
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", routineDragState);
+      }
+      return;
+    }
     const masterTodoHandle = event.target.closest?.("[data-master-todo-drag]");
     const masterTodoRow = masterTodoHandle?.closest("[data-master-todo-row]");
     if (masterTodoHandle && masterTodoRow) {
@@ -5323,6 +5764,22 @@
   });
 
   document.addEventListener("dragover", (event) => {
+    const projectCard = event.target.closest?.("[data-project-row]");
+    if (projectCard && projectDragState) {
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+      document.querySelectorAll("[data-project-row].is-drag-over").forEach((card) => card.classList.remove("is-drag-over"));
+      projectCard.classList.add("is-drag-over");
+      return;
+    }
+    const routineRow = event.target.closest?.("[data-routine-row]");
+    if (routineRow && routineDragState) {
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+      document.querySelectorAll("[data-routine-row].is-drag-over").forEach((row) => row.classList.remove("is-drag-over"));
+      routineRow.classList.add("is-drag-over");
+      return;
+    }
     const masterTodoRow = event.target.closest?.("[data-master-todo-row]");
     if (masterTodoRow && masterTodoDragState) {
       event.preventDefault();
@@ -5341,6 +5798,25 @@
   });
 
   document.addEventListener("drop", (event) => {
+    const projectCard = event.target.closest?.("[data-project-row]");
+    if (projectCard && projectDragState) {
+      event.preventDefault();
+      const sourceId = projectDragState;
+      projectDragState = null;
+      document.querySelectorAll("[data-project-row].is-drag-over, [data-project-row].is-dragging").forEach((card) => card.classList.remove("is-drag-over", "is-dragging"));
+      reorderProject(sourceId, projectCard.dataset.projectRow);
+      return;
+    }
+    const routineRow = event.target.closest?.("[data-routine-row]");
+    if (routineRow && routineDragState) {
+      event.preventDefault();
+      const sourceId = routineDragState;
+      const rect = routineRow.getBoundingClientRect();
+      routineDragState = null;
+      document.querySelectorAll("[data-routine-row].is-drag-over, [data-routine-row].is-dragging").forEach((row) => row.classList.remove("is-drag-over", "is-dragging"));
+      reorderRoutine(sourceId, routineRow.dataset.routineRow, event.clientY > rect.top + rect.height / 2);
+      return;
+    }
     const masterTodoRow = event.target.closest?.("[data-master-todo-row]");
     if (masterTodoRow && masterTodoDragState) {
       event.preventDefault();
@@ -5374,6 +5850,10 @@
   });
 
   document.addEventListener("dragend", () => {
+    projectDragState = null;
+    document.querySelectorAll("[data-project-row].is-drag-over, [data-project-row].is-dragging").forEach((card) => card.classList.remove("is-drag-over", "is-dragging"));
+    routineDragState = null;
+    document.querySelectorAll("[data-routine-row].is-drag-over, [data-routine-row].is-dragging").forEach((row) => row.classList.remove("is-drag-over", "is-dragging"));
     masterTodoDragState = null;
     document.querySelectorAll(".master-todo-row.is-drag-over, .master-todo-row.is-dragging").forEach((item) => item.classList.remove("is-drag-over", "is-dragging"));
     workoutDragState = null;
@@ -5381,6 +5861,36 @@
   });
 
   document.addEventListener("keydown", (event) => {
+    const projectHandle = event.target.closest?.("[data-project-drag]");
+    if (projectHandle && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
+      event.preventDefault();
+      const cards = [...document.querySelectorAll("#projectList [data-project-row]")];
+      const index = cards.findIndex((card) => card.dataset.projectRow === projectHandle.dataset.projectDrag);
+      const columns = getComputedStyle(document.getElementById("projectList")).gridTemplateColumns.split(" ").length;
+      const offset = { ArrowUp: -columns, ArrowDown: columns, ArrowLeft: -1, ArrowRight: 1 }[event.key];
+      const neighbor = cards[index + offset];
+      const id = projectHandle.dataset.projectDrag;
+      if (neighbor && reorderProject(id, neighbor.dataset.projectRow)) [...document.querySelectorAll("[data-project-drag]")].find((handle) => handle.dataset.projectDrag === id)?.focus({ preventScroll: true });
+      return;
+    }
+    if (event.key === "Escape") {
+      const picker = document.querySelector(".project-icon-picker[open]");
+      if (picker) { picker.open = false; picker.querySelector("summary").focus(); }
+      const menu = document.querySelector(".project-actions-menu[open]");
+      if (menu) { menu.open = false; menu.querySelector("summary").focus(); }
+    }
+    const routineHandle = event.target.closest?.("[data-routine-drag]");
+    if (routineHandle && ["ArrowUp", "ArrowDown"].includes(event.key)) {
+      event.preventDefault();
+      const id = routineHandle.dataset.routineDrag;
+      const items = currentRoutineItems();
+      const index = items.findIndex((item) => item.id === id);
+      const neighbor = items[index + (event.key === "ArrowUp" ? -1 : 1)];
+      if (neighbor && reorderRoutine(id, neighbor.id, event.key === "ArrowDown")) {
+        [...document.querySelectorAll("[data-routine-drag]")].find((handle) => handle.dataset.routineDrag === id)?.focus();
+      }
+      return;
+    }
     const handle = event.target.closest?.("[data-master-todo-drag]");
     if (!handle || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
     const pending = state.milestones.filter((item) => !item.done);
@@ -5481,6 +5991,16 @@
       }
       scheduleSave();
     }
+    if (target.matches("[data-project-description], [data-project-next]")) {
+      const id = target.dataset.projectDescription || target.dataset.projectNext;
+      const project = state.projects.find((item) => item.id === id);
+      if (project) {
+        const draft = projectTextDrafts.get(id) || { description: project.description || "", actions: new Map() };
+        if (target.matches("[data-project-description]")) draft.description = target.value;
+        else draft.actions.set(target.closest("[data-project-update]").dataset.projectUpdateDate, target.value);
+        projectTextDrafts.set(id, draft);
+      }
+    }
     if (target.matches("[data-project-title]")) {
       const project = state.projects.find((item) => item.id === target.dataset.projectTitle);
       if (project) {
@@ -5566,8 +6086,11 @@
       if (project) {
         const recordDate = isDateKey(form.dataset.projectUpdateDate) ? form.dataset.projectUpdateDate : projectRecordDate(project);
         updateProjectDayRecord(project, recordDate, description, next);
+        editingProjectIds.delete(project.id);
+        projectTextDrafts.delete(project.id);
         save();
         renderProjects();
+        document.querySelectorAll('[data-action="edit-project"]').forEach((button) => { if (button.dataset.id === project.id) button.focus({ preventScroll: true }); });
         renderHome();
         renderCalendar();
         notify("项目日期记录已更新");
@@ -5657,26 +6180,16 @@
     void runAutomaticBackup();
   });
 
-  document.getElementById("importInput").addEventListener("change", async (event) => {
+  document.addEventListener("change", async (event) => {
+    if (!event.target.matches("#importInput, #cloudImportInput")) return;
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    if (file.size > 2e6) {
-      alert("备份文件过大，无法导入。");
-      return;
-    }
+    if (file.size > 2e6) { alert(uiText("备份文件过大，无法导入。", "Backup file is too large.")); return; }
     try {
-      const parsed = JSON.parse(await file.text());
-      const data = parsed.data || parsed;
-      if (!data || typeof data !== "object" || !Array.isArray(data.projects) || !Array.isArray(data.goals) || !data.days) throw new Error("bad");
-      if (!confirm("导入会替换当前设备的工作台记录，是否继续？")) return;
-      localStorage.setItem(STORE, JSON.stringify(data));
-      state = loadState();
-      save();
-      renderAll();
-      notify("备份已恢复");
+      reviewBackup(parseBackupText(await file.text()), file.name);
     } catch {
-      alert("无法识别这个备份文件，请选择由本工作台导出的 JSON 文件。");
+      alert(uiText("无法识别或不兼容的备份文件，请选择本工作台当前格式的 JSON 备份。", "Invalid or incompatible backup. Choose a current-format workbench JSON backup."));
     }
   });
 
