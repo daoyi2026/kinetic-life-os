@@ -92,6 +92,57 @@ const source = readFileSync(new URL("../app-v2.js", import.meta.url), "utf8");
 const names = ["readBackupPreferences", "persistBackupPreferences", "supportsBackupDirectory", "nextBackupAt", "backupPayload", "backupIssueText", "renderAutoBackupSettings", "runAutomaticBackup", "addProjectHistory", "latestProjectLogOn", "projectDayRecord", "updateProjectDayRecord", "projectAreaOptions", "normalizeProjectAreas", "addProjectArea", "renameProjectArea", "deleteProjectArea", "isCompletedProject", "planFor", "collectSearchEntries", "normalizedSearchText", "searchWorkbench", "searchTextMarkup", "resetCalendarPanelDates", "shiftCalendarPanelDate", "calendarDayNavMarkup", "renderDayDashboard"];
 
 names.push("monthlyActivityFor", "reorderRoutine", "reorderProject", "dailyActivitySummary");
+names.push("projectRecordDates", "projectRecordDate", "shiftProjectRecordDate", "resetDateContextToToday");
+names.push("moveTodoBetweenLists");
+
+test("moving tasks between lists removes the source and preserves notes, status and unrelated records", () => {
+  const { context: app } = harness();
+  app.state.milestones = [{ id: "long", title: "Plan", note: "Keep this note", done: false, createdAt: "2026-10-01" }];
+  app.state.days = { "2026-10-22": { tasks: [] }, "2026-10-05": { tasks: [{ id: "past", text: "Done task", done: true }] } };
+  app.ensureDay = (date) => app.state.days[date];
+  assert.equal(app.moveTodoBetweenLists("today", "long", "2026-10-05"), true);
+  assert.equal(app.state.milestones.length, 0);
+  assert.equal(app.state.days["2026-10-22"].tasks[0].text, "Plan");
+  assert.equal(app.state.days["2026-10-22"].tasks[0].note, "Keep this note");
+  assert.equal(app.state.days["2026-10-05"].tasks.length, 1);
+  assert.equal(app.moveTodoBetweenLists("master", "long", "2026-10-22"), true);
+  assert.equal(app.state.days["2026-10-22"].tasks.length, 0);
+  assert.equal(app.state.milestones[0].title, "Plan");
+  assert.equal(app.state.milestones[0].note, "Keep this note");
+  assert.equal(app.state.milestones[0].createdAt, "2026-10-01");
+  assert.equal(app.moveTodoBetweenLists("master", "past", "2026-10-05"), true);
+  assert.equal(app.state.milestones[1].done, true);
+  assert.equal(app.state.milestones[1].completedAt, "2026-10-05");
+  const before = JSON.stringify(app.state);
+  assert.equal(app.moveTodoBetweenLists("today", "missing"), false);
+  assert.equal(app.moveTodoBetweenLists("master", "missing", "2026-10-04"), false);
+  assert.equal(JSON.stringify(app.state), before);
+});
+
+test("opening resets all calendar contexts and project dates without changing records", () => {
+  const { context: app } = harness();
+  const project = { id: "a", reviewDate: "2025-01-01", logs: [{ date: "2026-10-01", text: "Past" }, { date: "2026-11-01", text: "Future" }] };
+  app.state.projects = [project];
+  const before = JSON.stringify(project);
+  assert.equal(app.projectRecordDate(project), "2026-10-22");
+  assert.equal(app.shiftProjectRecordDate(project, -1), true);
+  assert.equal(app.projectRecordDate(project), "2026-10-01");
+  assert.equal(app.shiftProjectRecordDate(project, 1), true);
+  assert.equal(app.projectRecordDate(project), "2026-11-01");
+  app.selectedDate = "2025-01-01";
+  app.selectedFitnessDate = "2025-01-01";
+  app.monthlyActivityMonth = "2025-01";
+  app.resetDateContextToToday();
+  assert.equal(app.selectedDate, "2026-10-22");
+  assert.equal(app.selectedFitnessDate, "2026-10-22");
+  assert.ok(Object.values(app.calendarPanelDates).every((date) => date === "2026-10-22"));
+  assert.equal(app.calendarYear, 2026);
+  assert.equal(app.monthCursor.getMonth(), 9);
+  assert.equal(app.fitnessMonthCursor.getMonth(), 9);
+  assert.equal(app.monthlyActivityMonth, "2026-10");
+  assert.equal(app.projectRecordDate(project), "2026-10-22");
+  assert.equal(JSON.stringify(project), before);
+});
 names.push("backupDataContent", "parseBackupText", "backupRelation", "backupVersionKey", "checkExternalBackups", "renderBackupSync", "applyReviewedBackup", "closeBackupReview", "updateCalendarPanelPreviews", "save");
 
 test("daily summaries show compact counts, unique projects, and honest inspiration status", () => {
@@ -144,6 +195,7 @@ test("project sorting changes active order without moving archives or changing r
 function functionSource(name) {
   const start = source.search(new RegExp(`^  (?:async )?function ${name}\\(`, "m"));
   assert.notEqual(start, -1, `Missing function: ${name}`);
+  if (name === "resetDateContextToToday") return source.slice(start, source.indexOf("\n  }", start) + 4);
   const end = source.slice(start + 1).search(/\n  (?:async )?function /);
   return source.slice(start, end < 0 ? undefined : start + 1 + end);
 }
@@ -321,6 +373,7 @@ function harness() {
     backupReviewButton: null,
     editingProjectIds: new Set(),
     projectTextDrafts: new Map(),
+    projectReviewDates: new Map(),
     expandedCalendarPanels: new Set(),
     editingWorkoutDate: null,
     renderAll() {},

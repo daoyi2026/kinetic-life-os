@@ -461,7 +461,9 @@ html[lang="en"] .date-nav-btn[data-action="fitness-calendar-today"] { min-width:
 .todo-list::-webkit-scrollbar { width: 6px; }
 .todo-list::-webkit-scrollbar-track { background: transparent; }
 .todo-list::-webkit-scrollbar-thumb { border-radius: 999px; background: transparent; }
-.todo-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) 34px 34px; gap: 6px; align-items: center; min-height: 46px; padding: 5px 0; border-bottom: 1px solid #e9ece8; }
+.todo-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 6px; align-items: center; min-height: 46px; padding: 5px 0; border-bottom: 1px solid #e9ece8; }
+.todo-row-actions { display: flex; align-items: center; gap: 2px; }
+.todo-row-actions .mini-btn { width: 28px; min-width: 28px; }
 .todo-row:last-child { border-bottom: 0; }
 .todo-row.done .inline-input { color: var(--muted); text-decoration: line-through; }
 .todo-row .inline-input { min-height: 38px; padding: 7px 9px; border-color: transparent; background: transparent; }
@@ -684,6 +686,9 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 .backup-import-dialog p { font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
 
 .master-todo { display: grid; gap: 5px; }
+#masterTodoList { max-height: 320px; overflow-y: auto; }
+#masterTodoList.is-expanded { max-height: none; overflow: visible; }
+.master-todo-expand { margin-top: 8px; }
 .master-todo-row { display: grid; grid-template-columns: 22px 24px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 9px 0; border-bottom: 1px solid #e9ece8; }
 .master-todo-row:last-child { border-bottom: 0; }
 .master-todo-row.is-dragging { opacity: .45; }
@@ -772,7 +777,7 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 
 .calendar-stack { display: grid; gap: 16px; }
 .calendar-overview-card { padding: 24px; }
-.calendar-overview-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, .85fr); gap: 0; align-items: start; }
+.calendar-overview-grid { display: grid; grid-template-columns: minmax(0, 1fr) 272px; gap: 0; align-items: start; }
 .calendar-annual-pane { min-width: 0; padding-right: 24px; }
 .annual-calendar-head { flex-wrap: wrap; margin-bottom: 14px; }
 .annual-calendar-head .calendar-month { font: 600 22px/1.2 var(--serif); }
@@ -805,6 +810,7 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 .calendar-health-pane .day-summary { gap: 8px; }
 .calendar-health-pane .summary-item { padding: 10px; }
 .calendar-health-summary { grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 0; }
+.calendar-health-pane .calendar-health-readonly-summary { grid-template-columns: repeat(auto-fit, minmax(100px, 120px)); }
 .calendar-health-summary .summary-item strong { overflow-wrap: anywhere; font-size: 12px; }
 .calendar-health-readonly-summary .summary-item { position: relative; display: flex; min-height: 68px; align-items: center; justify-content: flex-end; }
 .calendar-health-readonly-summary .summary-item small { position: absolute; inset-block-start: 10px; inset-inline-start: 10px; }
@@ -816,6 +822,12 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 .calendar-health-pane .health-notes-grid { grid-template-columns: 1fr; }
 .calendar-health-pane .health-notes-grid .wide { grid-column: auto; }
 .calendar-health-readonly-notes { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.calendar-health-readonly-layout { display: grid; grid-template-columns: minmax(0, 1fr); }
+@container (min-width: 800px) {
+  .calendar-health-readonly-layout { grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+  .calendar-health-readonly-layout .calendar-health-readonly-summary { grid-template-columns: repeat(5, minmax(0, 120px)); }
+  .calendar-health-readonly-layout .calendar-health-readonly-notes { padding-top: 0; }
+}
 .health-readonly-note { min-width: 0; display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: start; gap: 10px; }
 .health-readonly-note small { display: block; }
 .health-readonly-note p { display: -webkit-box; margin: 0; overflow: hidden; color: var(--muted); line-height: 1.45; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
@@ -1071,12 +1083,14 @@ body.modal-open { overflow: hidden; }
 .project-drag-handle:active { cursor: grabbing; }
 [data-project-row].is-dragging { opacity: .45; }
 [data-project-row].is-drag-over { outline: 2px solid var(--green); outline-offset: -2px; }
-.project-card.is-editing .project-status-control { top: 100px; right: 22px; }
+.project-card.is-editing .project-title-top { align-items: center; padding-right: 0; }
+.project-card.is-editing .project-status-control { position: static; flex: 0 0 104px; margin-left: auto; }
 .project-reading-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
 .project-reading-card { display: flex; flex-direction: column; }
 .project-reading-icon { width: 32px; height: 32px; display: grid; place-items: center; color: var(--green); }
 .project-reading-icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.project-reading-status { margin-left: auto; color: var(--muted); font-size: 12px; }
+.project-reading-status { width: 104px; min-width: 0; min-height: 38px; margin-left: auto; padding: 7px 24px 7px 10px; color: var(--muted); font-size: 12px; }
+.project-reading-meta > .tag { min-width: 0; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
 .project-reading-card .project-reading-title { margin: 18px 0 20px; font: 600 22px/1.45 var(--serif); overflow-wrap: anywhere; }
 .project-reading-progress { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 9px; font-size: 12px; color: var(--muted); }
 .project-reading-progress strong { color: var(--ink); font-size: 16px; font-variant-numeric: tabular-nums; }
